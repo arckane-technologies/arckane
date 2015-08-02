@@ -13,6 +13,10 @@ libraryDependencies ++= Seq(
   specs2 % Test
 )
 
+libraryDependencies ++= Seq(
+  ws
+)
+
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
 
 // Play provides two styles of routers, one expects its actions to be injected, the
