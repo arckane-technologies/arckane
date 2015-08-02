@@ -14,7 +14,8 @@ libraryDependencies ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  ws
+  ws,
+  "org.scalaz" %% "scalaz-core" % "7.1.3"
 )
 
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"

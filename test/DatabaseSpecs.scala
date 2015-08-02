@@ -1,9 +1,12 @@
 import scala.concurrent._
 import scala.concurrent.duration._
 
+import scalaz._
+
 import org.specs2.mutable._
 import play.api.test._
 import play.api.test.Helpers._
+import play.api.libs.ws._
 
 import utils.Database
 
@@ -11,8 +14,11 @@ class DatabaseSpecs extends Specification {
 
   "Database" should {
 
-    "Ping to the query path" in new WithApplication {
-      Await.result(Database.ping, 2 seconds) must beEqualTo(true)
+    "Database must be reachable" in new WithApplication {
+      Await.result(Database.reachable, 2 seconds) match {
+        case Success(response: WSResponse) => success
+        case Failure(error: String) => ko(error)
+      }
     }
   }
 }
