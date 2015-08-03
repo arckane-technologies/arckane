@@ -35,22 +35,42 @@ object Database {
     incomingTypedRelationships: String
   )
 
+  case class Relationship (
+    id: Int,
+    start: String,
+    property: String,
+    self: String,
+    properties: String,
+    rtype: String,
+    end: String
+  )
+
   implicit val nodeReads: Reads[Node] = (
     (JsPath \ "metadata" \ "id").read[Int] and
-    (JsPath \ "outgoingRelationships").read[String] and
+    (JsPath \ "outgoing_relationships").read[String] and
     (JsPath \ "labels").read[String] and
-    (JsPath \ "allTypedRelationships").read[String] and
+    (JsPath \ "all_typed_relationships").read[String] and
     (JsPath \ "traverse").read[String] and
     (JsPath \ "self").read[String] and
     (JsPath \ "property").read[String] and
     (JsPath \ "properties").read[String] and
-    (JsPath \ "outgoingTypedRelationships").read[String] and
-    (JsPath \ "incomingRelationships").read[String] and
-    (JsPath \ "createRelationship").read[String] and
-    (JsPath \ "pagedTraverse").read[String] and
-    (JsPath \ "allRelationships").read[String] and
-    (JsPath \ "incomingTypedRelationships").read[String]
+    (JsPath \ "outgoing_typed_relationships").read[String] and
+    (JsPath \ "incoming_relationships").read[String] and
+    (JsPath \ "create_relationship").read[String] and
+    (JsPath \ "paged_traverse").read[String] and
+    (JsPath \ "all_relationships").read[String] and
+    (JsPath \ "incoming_typed_relationships").read[String]
   )(Node.apply _)
+
+  implicit val relationshipReads: Reads[Relationship] = (
+    (JsPath \ "metadata" \ "id").read[Int] and
+    (JsPath \ "start").read[String] and
+    (JsPath \ "property").read[String] and
+    (JsPath \ "self").read[String] and
+    (JsPath \ "properties").read[String] and
+    (JsPath \ "type").read[String] and
+    (JsPath \ "end").read[String]
+  )(Relationship.apply _)
 
   type Error = String
 
@@ -65,7 +85,7 @@ object Database {
   val queryPath = "http://" + address + "/db/data/"
 
   def withAuth (path: String): WSRequest =
-    WS.url(queryPath + path).withAuth(user, password, WSAuthScheme.BASIC)
+    WS.url(path).withAuth(user, password, WSAuthScheme.BASIC)
 
   def statusMustBe (response: WSResponse, status: Int, info: String): Validation[Error, WSResponse] = {
     if (response.status != status) {
@@ -80,34 +100,53 @@ object Database {
   def deserializeNode (obj: JsValue): Validation[Error , Node] = obj.validate[Node] match {
     case s: JsSuccess[Node] => Success(s.get)
     case e: JsError =>
-      val error = JsError.toJson(e).toString()
+      println(obj.toString)
+      val error = "JsError when trying to deserialize a Node: " + JsError.toJson(e).toString()
       dblog.error(error)
       Failure(error)
   }
 
-  def validateAndDeserialize (response: WSResponse, status: Int, attempt: String): Validation[Error, Node] = for {
-    _ <- statusMustBe(response, 200, "get node")
-    node <- deserializeNode(response.json)
+  def deserializeRealtionship (obj: JsValue): Validation[Error , Relationship] = obj.validate[Relationship] match {
+    case s: JsSuccess[Relationship] => Success(s.get)
+    case e: JsError =>
+      val error = "JsError when trying to deserialize a Relationship: " + JsError.toJson(e).toString()
+      dblog.error(error)
+      Failure(error)
+  }
+
+  def validateAnd[A] (response: WSResponse, status: Int, attempt: String)(deserialize: JsValue => Validation[Error, A]): Validation[Error, A] = for {
+    _ <- statusMustBe(response, status, attempt)
+    node <- deserialize(response.json)
   } yield node
 
   def reachable: Future[Validation[Error, WSResponse]] = for {
-    response <- withAuth("").head()
+    response <- withAuth(queryPath).head()
     validation <- Future(statusMustBe(response, 200, "reach the database"))
   } yield validation
 
-  def getNode (node: Int): Future[Validation[Error, Node]] = for {
-    response <- withAuth("node/" + node.toString).get()
-    node <- Future(validateAndDeserialize(response, 200, "get node"))
+  def getNode (id: Int): Future[Validation[Error, Node]] = for {
+    response <- withAuth(queryPath + "node/" + id).get()
+    node <- Future(validateAnd(response, 200, "get node")(deserializeNode))
   } yield node
 
   def createNode (properties: JsValue): Future[Validation[Error, Node]] = for {
-    response <- withAuth("node").post(properties)
-    node <- Future(validateAndDeserialize(response, 201, "create node"))
+    response <- withAuth(queryPath + "node").post(properties)
+    node <- Future(validateAnd(response, 201, "create node")(deserializeNode))
   } yield node
 
-  def addLabel (node: Int, label: String): Future[Validation[Error, WSResponse]] = for {
-      response <- withAuth("node/" + node.toString + "/labels").post(JsString(label))
+  def addLabel (node: Node, label: String): Future[Validation[Error, WSResponse]] = for {
+      response <- withAuth(node.labels).post(JsString(label))
       validation <- Future(statusMustBe(response, 204, "add label"))
   } yield validation
+
+  def deleteNode (node: Node): Future[Validation[Error, WSResponse]] = for {
+      response <- withAuth(node.self).delete()
+      validation <- Future(statusMustBe(response, 204, "delete node"))
+  } yield validation
+
+  def getRelationship (id: Int): Future[Validation[Error, Relationship]] = for {
+    response <- withAuth(queryPath + "relationship/" + id).get()
+    relationship <- Future(validateAndDeserializeRelationship(response, 200, "get node"))
+  } yield relationship
 
 }
