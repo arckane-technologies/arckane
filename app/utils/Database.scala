@@ -151,10 +151,20 @@ object Database {
     validation <- Future(statusMustBe(response, 204, "add label"))
   } yield validation
 
+  def addLabel (node: Validation[Error, Node], label: String): Future[Validation[Error, WSResponse]] = node match {
+    case Success(node) => addLabel(node, label)
+    case e: Failure[Error] => Future(e)
+  }
+
   def updateNodeProperties (node: Node, properties: JsValue): Future[Validation[Error, WSResponse]] = for {
     response <- withAuth(node.properties).put(properties)
     validation <- Future(statusMustBe(response, 204, "update node properties"))
   } yield validation
+
+  def updateNodeProperties (node: Validation[Error, Node], properties: JsValue): Future[Validation[Error, WSResponse]] = node match {
+    case Success(node) => updateNodeProperties(node, properties)
+    case e: Failure[Error] => Future(e)
+  }
 
   def getNodeProperties (node: Node): Future[Validation[Error, JsValue]] = for {
     response <- withAuth(node.properties).get()
@@ -179,14 +189,19 @@ object Database {
     } yield relationship)
   } yield validation
 
-  def createRelationship (source: Node, target: Node, relType: String): Future[Validation[Error, Relationship]] {
+  def createRelationship (source: Node, target: Node, relType: String): Future[Validation[Error, Relationship]] = for {
     response <- withAuth(source.createRelationship).post(Json.obj(
       "to" -> target.self,
       "type" -> relType
     ))
     validation <- Future(for {
-      _ <- statusMustBe(response, 204, "create relationship")
+      _ <- statusMustBe(response, 201, "create relationship")
       relationship <- deserializeRelationship(response)
     } yield relationship)
+  } yield validation
+
+  def deleteRelationship (relationship: Relationship): Future[Validation[Error, WSResponse]] = for {
+    response <- withAuth(relationship.self).delete()
+    validation <- Future(statusMustBe(response, 204, "delete relationship"))
   } yield validation
 }
