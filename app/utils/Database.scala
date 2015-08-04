@@ -35,8 +35,6 @@ object Database {
     incomingTypedRelationships: String
   )
 
-  val emptyNode = Node(-1,"","","","","","","","","","","","","")
-
   case class Relationship (
     id: Int,
     start: String,
