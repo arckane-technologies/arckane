@@ -98,7 +98,7 @@ class DatabaseSpecs extends Specification {
       nodeProperties match {
         case Success(properties: JsValue) => (properties \ "foo").validate[String] match {
           case s: JsSuccess[String] => s.get must beEqualTo("baz")
-          case e: JsError => ko("Did not get a String from the path 'baz' with error: " + JsError.toJson(e).toString())
+          case e: JsError => ko("Did not get a String from the path 'foo' with error: " + JsError.toJson(e).toString())
         }
         case Failure(error: Error) => ko(error)
       }
