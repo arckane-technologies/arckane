@@ -35,18 +35,6 @@ object Database {
     incomingTypedRelationships: String
   )
 
-  case class Relationship (
-    id: Int,
-    start: String,
-    property: String,
-    self: String,
-    properties: String,
-    rtype: String,
-    end: String
-  )
-
-  type Error = String
-
   private implicit val nodeReads: Reads[Node] = (
     (JsPath \ "metadata" \ "id").read[Int] and
     (JsPath \ "outgoing_relationships").read[String] and
@@ -64,6 +52,16 @@ object Database {
     (JsPath \ "incoming_typed_relationships").read[String]
   )(Node.apply _)
 
+  case class Relationship (
+    id: Int,
+    start: String,
+    property: String,
+    self: String,
+    properties: String,
+    rtype: String,
+    end: String
+  )
+
   private implicit val relationshipReads: Reads[Relationship] = (
     (JsPath \ "metadata" \ "id").read[Int] and
     (JsPath \ "start").read[String] and
@@ -73,6 +71,23 @@ object Database {
     (JsPath \ "type").read[String] and
     (JsPath \ "end").read[String]
   )(Relationship.apply _)
+
+  case class Transaction (self: String, commit: String, expires: String)
+
+  private implicit val transactionReads: Reads[Transaction] = (
+    (JsPath \ "commit").read[String] and
+    (JsPath \ "commit").read[String] and
+    (JsPath \ "transaction" \ "expires").read[String]
+  )(Transaction.apply _)
+
+  case class TransactionError (code: String, message: String)
+
+  private implicit val transactionErrorReads: Reads[TransactionError] = (
+      (JsPath \ "code").read[String] and
+      (JsPath \ "message").read[String]
+  )(TransactionError.apply _)
+
+  type Error = String
 
   private val dblog = Logger(this.getClass())
 
@@ -84,6 +99,7 @@ object Database {
 
   private val queryPath = "http://" + address + "/db/data/"
 
+  private val transactionalEndpoint = "http://" + address + "/db/data/transaction/"
   // UTIL FUNCTIONS
 
   private def withAuth (path: String): WSRequest =
@@ -102,7 +118,7 @@ object Database {
   private def deserializeNode (response: WSResponse): Validation[Error, Node] = response.json.validate[Node] match {
     case s: JsSuccess[Node] => Success(s.get)
     case e: JsError =>
-      val error = "JsError when trying to serialize a Node: " + JsError.toJson(e).toString()
+      val error = "JsError when trying to deserialize a Node: " + JsError.toJson(e).toString()
       dblog.error(error)
       Failure(error)
   }
@@ -110,7 +126,7 @@ object Database {
   private def deserializeRelationship (response: WSResponse): Validation[Error, Relationship] = response.json.validate[Relationship] match {
     case s: JsSuccess[Relationship] => Success(s.get)
     case e: JsError =>
-      val error = "JsError when trying to serialize a Relationship: " + JsError.toJson(e).toString()
+      val error = "JsError when trying to deserialize a Relationship: " + JsError.toJson(e).toString()
       dblog.error(error)
       Failure(error)
   }
@@ -202,4 +218,41 @@ object Database {
     response <- withAuth(relationship.self).delete()
     validation <- Future(statusMustBe(response, 204, "delete relationship"))
   } yield validation
+
+  // TRANSACTIONS
+
+  private def checkForTransactionErrors (response: WSResponse): Validation[Error, WSResponse] = (response.json \ "errors").validate[Seq[TransactionError]] match {
+    case s: JsSuccess[List[Transaction]@unchecked] =>
+      if (s.get.length > 0)
+        Failure(s.get.toString)
+      else
+        Success(response)
+    case e: JsError =>
+      val error = "JsError when trying to deserialize errors in a transaction: " + JsError.toJson(e).toString()
+      dblog.error(error)
+      Failure(error)
+  }
+
+  private def getTransaction (response: WSResponse): Validation[Error, Transaction] = response.json.validate[Transaction] match {
+    case s: JsSuccess[Transaction] => Success(s.get)
+    case e: JsError =>
+      val error = "JsError when trying to deserialize a transaction: " + JsError.toJson(e).toString()
+      dblog.error(error)
+      Failure(error)
+  }
+
+  def openTransaction: Future[Validation[Error, Transaction]] = for {
+    response <- withAuth(transactionalEndpoint).post(Json.obj("statements" -> Json.arr()))
+    validation <- Future(for {
+      _ <- statusMustBe(response, 201, "open a transaction")
+      _ <- checkForTransactionErrors(response)
+      transaction <- getTransaction(response)
+    } yield transaction)
+  } yield validation
+
+  //def excecute
+
+  //def commit
+
+  //def rollback
 }
