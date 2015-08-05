@@ -300,4 +300,9 @@ object Database {
     case Success(tx) => rollback(tx)
     case e: Failure[Error] => Future(e)
   }
+
+  def allOrNothing[A] (tx: Validation[Error, Transaction], fin: Validation[Error, A]): Future[Validation[Error, WSResponse]] = fin match {
+    case Success(_) => commit(tx)
+    case Failure(_) => rollback(tx)
+  }
 }
