@@ -15,38 +15,44 @@ sealed trait User {
 
   val node: Node
 
-  val id: Int = node.id
+  val id: Int
 
-  val username: String
+  val email: String
 
   val password: String
 
   val influence: Double
 }
 
-object UserFunctions {
+object UserOps {
 
-  def createUser (uname: String, upass: String)(implicit influenceRatio: Int => Double): Future[Validation[Error, User]] = for {
+  def createUser (
+    umail: String,
+    upass: String
+  )(implicit decisionSystem: DecisionSystem): Future[Validation[Error, User]] = for {
     tx <- openTransaction
     countResult <- executeUserBaseCount(tx)
-    uinfl <- extractInfluence(countResult, influenceRatio)
-    userResult <- executeUserCreation(tx, uname, upass, uinfl)
+    uinfl <- extractInfluence(countResult, decisionSystem.influenceRatio)
+    userResult <- executeUserCreation(tx, umail, upass, uinfl)
     unode <- extractUserNode(userResult)
-    user <- instantiateUser(uname, upass, uinfl, unode)
+    user <- instantiateUser(umail, upass, uinfl, unode)
     _ <- allOrNothing(tx, user)
   } yield user
 
   private def executeUserBaseCount (tx: Validation[Error, Transaction]): Future[Validation[Error, TxResult]] =
     execute(tx, Json.arr(Json.obj("statement" -> "MATCH (n: Person) RETURN count(n)")))
 
-  private def extractInfluence (tx: Validation[Error, TxResult], influenceRatio: Int => Double): Future[Validation[Error, Double]] = tx match {
-    case Success(result) => Future(Success(influenceRatio(result.head("count(n)").as[Int])))
+  private def extractInfluence (
+    tx: Validation[Error, TxResult],
+    influenceRatio: Int => Double
+  ): Future[Validation[Error, Double]] = tx match {
+    case Success(result) => Future(Success(influenceRatio((result.head("count(n)") \ "row")(0).as[Int])))
     case e: Failure[Error] => Future(e)
   }
 
   private def executeUserCreation (
     tx: Validation[Error, Transaction],
-    uname: String,
+    umail: String,
     upass: String,
     uinfl: Validation[Error, Double]
   ): Future[Validation[Error, TxResult]] = uinfl match {
@@ -54,7 +60,7 @@ object UserFunctions {
       "statement" -> "CREATE (n:Person {props}) RETURN n",
       "parameters" -> Json.obj(
         "props" -> Json.obj(
-          "username" -> uname,
+          "email" -> umail,
           "password" -> upass,
           "influence" -> influence
         )),
@@ -64,7 +70,7 @@ object UserFunctions {
   }
 
   private def extractUserNode (tx: Validation[Error, TxResult]): Future[Validation[Error, Node]] = tx match {
-    case Success(result: TxResult) => (result.head("n") \ "rest").validate[Node] match {
+    case Success(result: TxResult) => (result.head("n") \ "rest")(0).validate[Node] match {
       case s: JsSuccess[Node] =>
         Future(Success(s.get))
       case e: JsError =>
@@ -76,14 +82,15 @@ object UserFunctions {
   }
 
   private def instantiateUser (
-    uname: String,
+    umail: String,
     upass: String,
     uinfl: Validation[Error, Double],
     unode: Validation[Error, Node]
   ): Future[Validation[Error, User]] = (unode, uinfl) match {
     case (Success(userNode), Success(userInfluence)) => Future(Success(new User {
       val node: Node = userNode
-      val username: String = uname
+      val id: Int = userNode.id
+      val email: String = umail
       val password: String = upass
       val influence: Double = userInfluence
     }))
