@@ -80,12 +80,14 @@ object Database {
     (JsPath \ "transaction" \ "expires").read[String]
   )(Transaction.apply _)
 
-  case class TransactionError (code: String, message: String)
+  case class TxError (code: String, message: String)
 
-  private implicit val transactionErrorReads: Reads[TransactionError] = (
+  private implicit val transactionErrorReads: Reads[TxError] = (
       (JsPath \ "code").read[String] and
       (JsPath \ "message").read[String]
-  )(TransactionError.apply _)
+  )(TxError.apply _)
+
+  type TxResult = List[Map[String, JsValue]]
 
   type Error = String
 
@@ -100,6 +102,7 @@ object Database {
   private val queryPath = "http://" + address + "/db/data/"
 
   private val transactionalEndpoint = "http://" + address + "/db/data/transaction/"
+
   // UTIL FUNCTIONS
 
   private def withAuth (path: String): WSRequest =
@@ -221,7 +224,7 @@ object Database {
 
   // TRANSACTIONS
 
-  private def checkForTransactionErrors (response: WSResponse): Validation[Error, WSResponse] = (response.json \ "errors").validate[Seq[TransactionError]] match {
+  private def checkForTransactionErrors (response: WSResponse): Validation[Error, WSResponse] = (response.json \ "errors").validate[Seq[TxError]] match {
     case s: JsSuccess[List[Transaction]@unchecked] =>
       if (s.get.length > 0)
         Failure(s.get.toString)
@@ -234,12 +237,20 @@ object Database {
   }
 
   private def getTransaction (response: WSResponse): Validation[Error, Transaction] = response.json.validate[Transaction] match {
-    case s: JsSuccess[Transaction] => Success(s.get)
+    case s: JsSuccess[Transaction] =>
+      val old = s.get
+      Success(Transaction(old.commit.reverse.drop(7).reverse, old.commit, old.expires))
     case e: JsError =>
       val error = "JsError when trying to deserialize a transaction: " + JsError.toJson(e).toString()
       dblog.error(error)
       Failure(error)
   }
+
+  private def getTxResult (response: WSResponse): Validation[Error, TxResult] =
+    Success((response.json \ "results").as[List[JsValue]].map(extractResult(_)))
+
+  private def extractResult (js: JsValue): Map[String, JsValue] =
+    ((js \ "columns").as[List[String]] zip (js \ "data").as[List[JsValue]]).toMap
 
   def openTransaction: Future[Validation[Error, Transaction]] = for {
     response <- withAuth(transactionalEndpoint).post(Json.obj("statements" -> Json.arr()))
@@ -250,9 +261,43 @@ object Database {
     } yield transaction)
   } yield validation
 
-  //def excecute
+  def excecute (tx: Transaction, statements: JsValue): Future[Validation[Error, TxResult]] = for {
+    response <- withAuth(tx.self).post(Json.obj("statements" -> statements))
+    validation <- Future(for {
+      _ <- statusMustBe(response, 200, "execute statements in transaction")
+      _ <- checkForTransactionErrors(response)
+      result <- getTxResult(response)
+    } yield result)
+  } yield validation
 
-  //def commit
+  def excecute (tx: Validation[Error, Transaction], statements: JsValue): Future[Validation[Error, TxResult]] = tx match {
+    case Success(tx) => excecute(tx, statements)
+    case e: Failure[Error] => Future(e)
+  }
 
-  //def rollback
+  def commit (tx: Transaction): Future[Validation[Error, WSResponse]] = for {
+    response <- withAuth(tx.commit).post(Json.obj("statements" -> Json.arr()))
+    validation <- Future(for {
+      _ <- statusMustBe(response, 200, "commit a transaction")
+      wsresponse <- checkForTransactionErrors(response)
+    } yield wsresponse)
+  } yield validation
+
+  def commit (tx: Validation[Error, Transaction]): Future[Validation[Error, WSResponse]] = tx match {
+    case Success(tx: Transaction) => commit(tx)
+    case e: Failure[Error] => Future(e)
+  }
+
+  def rollback (tx: Transaction): Future[Validation[Error, WSResponse]] = for {
+    response <- withAuth(tx.self).delete()
+    validation <- Future(for {
+      _ <- statusMustBe(response, 200, "rollback a transaction")
+      wsresponse <- checkForTransactionErrors(response)
+    } yield wsresponse)
+  } yield validation
+
+  def rollback (tx: Validation[Error, Transaction]): Future[Validation[Error, WSResponse]] = tx match {
+    case Success(tx) => rollback(tx)
+    case e: Failure[Error] => Future(e)
+  }
 }
