@@ -35,7 +35,7 @@ object Database {
     incomingTypedRelationships: String
   )
 
-  private implicit val nodeReads: Reads[Node] = (
+  implicit val nodeReads: Reads[Node] = (
     (JsPath \ "metadata" \ "id").read[Int] and
     (JsPath \ "outgoing_relationships").read[String] and
     (JsPath \ "labels").read[String] and
@@ -62,7 +62,7 @@ object Database {
     end: String
   )
 
-  private implicit val relationshipReads: Reads[Relationship] = (
+  implicit val relationshipReads: Reads[Relationship] = (
     (JsPath \ "metadata" \ "id").read[Int] and
     (JsPath \ "start").read[String] and
     (JsPath \ "property").read[String] and
@@ -261,7 +261,7 @@ object Database {
     } yield transaction)
   } yield validation
 
-  def excecute (tx: Transaction, statements: JsValue): Future[Validation[Error, TxResult]] = for {
+  def execute (tx: Transaction, statements: JsValue): Future[Validation[Error, TxResult]] = for {
     response <- withAuth(tx.self).post(Json.obj("statements" -> statements))
     validation <- Future(for {
       _ <- statusMustBe(response, 200, "execute statements in transaction")
@@ -270,8 +270,8 @@ object Database {
     } yield result)
   } yield validation
 
-  def excecute (tx: Validation[Error, Transaction], statements: JsValue): Future[Validation[Error, TxResult]] = tx match {
-    case Success(tx) => excecute(tx, statements)
+  def execute (tx: Validation[Error, Transaction], statements: JsValue): Future[Validation[Error, TxResult]] = tx match {
+    case Success(tx) => execute(tx, statements)
     case e: Failure[Error] => Future(e)
   }
 
