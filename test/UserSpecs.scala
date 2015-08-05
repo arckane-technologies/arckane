@@ -38,7 +38,7 @@ class UserSpecs extends Specification {
 
     "Create user" in new WithApplication with TestUsers {
       user1 match {
-        case Success(user: User) => println(user); success
+        case Success(user: User) => success
         case Failure(error: Error) => ko(error)
       }
     }

@@ -11,18 +11,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 
 import utils.Database._
 
-sealed trait User {
-
-  val node: Node
-
-  val id: Int
-
-  val email: String
-
-  val password: String
-
-  val influence: Double
-}
+case class User (id: Int, node: Node, email: String, password: String, influence: Double)
 
 object UserOps {
 
@@ -87,13 +76,14 @@ object UserOps {
     uinfl: Validation[Error, Double],
     unode: Validation[Error, Node]
   ): Future[Validation[Error, User]] = (unode, uinfl) match {
-    case (Success(userNode), Success(userInfluence)) => Future(Success(new User {
-      val node: Node = userNode
-      val id: Int = userNode.id
-      val email: String = umail
-      val password: String = upass
-      val influence: Double = userInfluence
-    }))
+    case (Success(userNode), Success(userInfluence)) =>
+      Future(Success(User(
+        userNode.id,
+        userNode,
+        umail,
+        upass,
+        userInfluence
+      )))
     case (e: Failure[Error], _) =>
       Future(e)
     case (_, e: Failure[Error]) =>

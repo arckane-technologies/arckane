@@ -13,11 +13,11 @@ object DecisionSystem {
     def commitRatio (crowdSize: Int, influence: Double): Double =
       2.0
 
-    def commitModifier (life: Double, influence: Double): Double =
+    def commitModifier (commit: Double, influence: Double): Double =
       0.1
 
     def influenceRatio (crowdSize: Int): Double =
-      2.0
+      crowdSize + 1.0
 
     def influenceModifier (targetsInfluence: Double, votersInfluence: Double): Double =
       0.1
@@ -32,7 +32,7 @@ trait DecisionSystem {
 
   def commitRatio (crowdSize: Int, influence: Double): Double
 
-  def commitModifier (life: Double, influence: Double): Double
+  def commitModifier (commit: Double, influence: Double): Double
 
   def influenceRatio (crowdSize: Int): Double
 
