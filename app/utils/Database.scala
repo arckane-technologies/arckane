@@ -2,8 +2,7 @@ package utils
 
 import scala.concurrent.Future
 
-import scalaz._
-import Scalaz._
+import scalaz.{Validation, Success, Failure}
 import scalaz.Validation.FlatMap._
 
 import play.api._
