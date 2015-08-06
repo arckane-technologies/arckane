@@ -35,14 +35,23 @@ object UserOps {
     user <- instantiateUser(node, props)
   } yield user
 
-  def deleteUser (user: User): Future[Validation[Err, TxResult]] = for {
-    tx <- openTransaction
-    deleteResult <- execute(tx, Json.arr(Json.obj("statement" -> ("MATCH (n:Person) WHERE id(n)=" + user.id.toString + " DELETE n"))))
-    _ <- allOrNothing(tx, deleteResult)
-  } yield deleteResult
-
   def deleteUser (user: Validation[Err, User]): Future[Validation[Err, TxResult]] =
-    ifSucceeds(user)(deleteUser)
+    ifSucceeds(user) { user: User =>
+      for {
+        tx <- openTransaction
+        deleteResult <- execute(tx, Json.arr(Json.obj("statement" -> ("MATCH (n:Person) WHERE id(n)=" + user.id.toString + " DELETE n"))))
+        _ <- allOrNothing(tx, deleteResult)
+      } yield deleteResult
+    }
+
+  def deleteAllUserRelationships (user: Validation[Err, User]): Future[Validation[Err, TxResult]] =
+    ifSucceeds(user) { user: User =>
+      for {
+        tx <- openTransaction
+        deleteResult <- execute(tx, Json.arr(Json.obj("statement" -> ("MATCH (n:Person)-[r]-() WHERE id(n)=" + user.id.toString + " DELETE r"))))
+        _ <- allOrNothing(tx, deleteResult)
+      } yield deleteResult
+    }
 
   private def executeUserBaseCount (tx: Validation[Err, Transaction]): Future[Validation[Err, TxResult]] =
     execute(tx, Json.arr(Json.obj("statement" -> "MATCH (n: Person) RETURN count(n)")))
