@@ -23,12 +23,16 @@ class UserSpecs extends Specification {
 
     import decision.DecisionSystem._
     lazy val user1 = Await.result(createUser("user1@test.org", "pass1"), 2 seconds)
+    lazy val user1Id = user1 match {
+      case Success(user: User) => user.id
+      case Failure(error: Error) => println(error); -1
+    }
 
     abstract override def around[T: AsResult](t: => T): Result = {
       super.around {
         try t // Execute test
         finally {
-          // delete users and relationships
+          Await.result(deleteUser(user1), 2 seconds)
         }
       }
     }
@@ -39,6 +43,13 @@ class UserSpecs extends Specification {
     "Create user" in new WithApplication with TestUsers {
       user1 match {
         case Success(user: User) => success
+        case Failure(error: Error) => ko(error)
+      }
+    }
+
+    "Get user" in new WithApplication with TestUsers {
+      Await.result(getUser(user1Id), 2 seconds) match {
+        case Success(user: User) => user.id must beEqualTo(user1Id)
         case Failure(error: Error) => ko(error)
       }
     }

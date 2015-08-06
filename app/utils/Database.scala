@@ -190,6 +190,11 @@ object Database {
     } yield json)
   } yield validation
 
+  def getNodeProperties (node: Validation[Error, Node]): Future[Validation[Error, JsValue]] = node match {
+    case Success(node) => getNodeProperties(node)
+    case e: Failure[Error] => Future(e)
+  }
+
   def deleteNode (node: Node): Future[Validation[Error, WSResponse]] = for {
       response <- withAuth(node.self).delete()
       validation <- Future(statusMustBe(response, 204, "delete node"))

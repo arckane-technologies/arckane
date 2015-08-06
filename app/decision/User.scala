@@ -28,6 +28,23 @@ object UserOps {
     _ <- allOrNothing(tx, user)
   } yield user
 
+  def getUser (id: Int): Future[Validation[Error, User]] = for {
+    node <- getNode(id)
+    props <- getNodeProperties(node)
+    user <- instantiateUser(node, props)
+  } yield user
+
+  def deleteUser (user: User): Future[Validation[Error, TxResult]] = for {
+    tx <- openTransaction
+    deleteResult <- execute(tx, Json.arr(Json.obj("statement" -> ("MATCH (n:Person) WHERE id(n)=" + user.id.toString + " DELETE n"))))
+    _ <- allOrNothing(tx, deleteResult)
+  } yield deleteResult
+
+  def deleteUser (user: Validation[Error, User]): Future[Validation[Error, TxResult]] = user match {
+    case Success(user) => deleteUser(user)
+    case e: Failure[Error] => Future(e)
+  }
+
   private def executeUserBaseCount (tx: Validation[Error, Transaction]): Future[Validation[Error, TxResult]] =
     execute(tx, Json.arr(Json.obj("statement" -> "MATCH (n: Person) RETURN count(n)")))
 
@@ -87,6 +104,23 @@ object UserOps {
     case (e: Failure[Error], _) =>
       Future(e)
     case (_, e: Failure[Error]) =>
+      Future(e)
+  }
+
+  private def instantiateUser (
+    node: Validation[Error, Node],
+    props: Validation[Error, JsValue]
+  ): Future[Validation[Error, User]] = (node, props) match {
+    case (Success(node), Success(props)) => Future(Success(User(
+      node.id,
+      node,
+      (props \ "email").as[String],
+      (props \ "password").as[String],
+      (props \ "influence").as[Double]
+    )))
+    case (_, e: Failure[Error]) =>
+      Future(e)
+    case (e: Failure[Error], _) =>
       Future(e)
   }
 }
