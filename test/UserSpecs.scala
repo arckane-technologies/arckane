@@ -21,7 +21,7 @@ class UserSpecs extends Specification {
 
   trait TestUsers extends Around with Scope {
 
-    import decision.DecisionSystem._
+    import decision.SimpleLogarithmicCommunity._
     lazy val user1 = Await.result(createUser("user1@test.org", "pass1"), 2 seconds)
     lazy val user1Id = user1 match {
       case Success(user: User) => user.id
