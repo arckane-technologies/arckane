@@ -13,9 +13,9 @@ import play.api.test.Helpers._
 import play.api.libs.json._
 import play.api.libs.ws._
 
-import utils.Database._
-import decision.User
 import decision.UserOps._
+import utils.DatabaseOps.Node
+import utils.ValidationOps._
 
 class UserSpecs extends Specification {
 
@@ -25,7 +25,7 @@ class UserSpecs extends Specification {
     lazy val user1 = Await.result(createUser("user1@test.org", "pass1"), 2 seconds)
     lazy val user1Id = user1 match {
       case Success(user: User) => user.id
-      case Failure(error: Error) => println(error); -1
+      case Failure(error: Err) => println(error); -1
     }
 
     abstract override def around[T: AsResult](t: => T): Result = {
@@ -43,14 +43,14 @@ class UserSpecs extends Specification {
     "Create user" in new WithApplication with TestUsers {
       user1 match {
         case Success(user: User) => success
-        case Failure(error: Error) => ko(error)
+        case Failure(error: Err) => ko(error.toString)
       }
     }
 
     "Get user" in new WithApplication with TestUsers {
       Await.result(getUser(user1Id), 2 seconds) match {
         case Success(user: User) => user.id must beEqualTo(user1Id)
-        case Failure(error: Error) => ko(error)
+        case Failure(error: Err) => ko(error.toString)
       }
     }
   }

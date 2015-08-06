@@ -15,7 +15,9 @@ import play.api.libs.concurrent.Execution.Implicits._
 
 import play.api.libs.functional.syntax._
 
-object Database {
+import utils.ValidationOps._
+
+object DatabaseOps {
 
   case class Node (
     id: Int,
@@ -79,16 +81,20 @@ object Database {
     (JsPath \ "transaction" \ "expires").read[String]
   )(Transaction.apply _)
 
-  case class TxError (code: String, message: String)
+  case class DeserializedTxErr (code: String, message: String)
 
-  private implicit val transactionErrorReads: Reads[TxError] = (
+  private implicit val transactionErrReads: Reads[DeserializedTxErr] = (
       (JsPath \ "code").read[String] and
       (JsPath \ "message").read[String]
-  )(TxError.apply _)
+  )(DeserializedTxErr.apply _)
+
+  case class TxErr (message: String) extends Err
+
+  case class DeserializationErr (message: String) extends Err
+
+  case class StatusErr (message: String) extends Err
 
   type TxResult = List[Map[String, JsValue]]
-
-  type Error = String
 
   private val dblog = Logger(this.getClass())
 
@@ -107,44 +113,44 @@ object Database {
   private def withAuth (path: String): WSRequest =
     WS.url(path).withAuth(user, password, WSAuthScheme.BASIC)
 
-  private def statusMustBe (response: WSResponse, status: Int, info: String): Validation[Error, WSResponse] = {
+  private def statusMustBe (response: WSResponse, status: Int, info: String): Validation[Err, WSResponse] = {
     if (response.status != status) {
-      val error = "Faulty response when attempting to (" + info + "): " + response.toString
-      dblog.error(error)
+      val error = StatusErr("Faulty response when attempting to (" + info + "): " + response.toString)
+      dblog.error(error.toString)
       Failure(error)
     } else {
       Success(response)
     }
   }
 
-  private def deserializeNode (response: WSResponse): Validation[Error, Node] = response.json.validate[Node] match {
+  private def deserializeNode (response: WSResponse): Validation[Err, Node] = response.json.validate[Node] match {
     case s: JsSuccess[Node] => Success(s.get)
     case e: JsError =>
-      val error = "JsError when trying to deserialize a Node: " + JsError.toJson(e).toString()
-      dblog.error(error)
+      val error = DeserializationErr("JsError when trying to deserialize a Node: " + JsError.toJson(e).toString())
+      dblog.error(error.toString)
       Failure(error)
   }
 
-  private def deserializeRelationship (response: WSResponse): Validation[Error, Relationship] = response.json.validate[Relationship] match {
+  private def deserializeRelationship (response: WSResponse): Validation[Err, Relationship] = response.json.validate[Relationship] match {
     case s: JsSuccess[Relationship] => Success(s.get)
     case e: JsError =>
-      val error = "JsError when trying to deserialize a Relationship: " + JsError.toJson(e).toString()
-      dblog.error(error)
+      val error = DeserializationErr("JsError when trying to deserialize a Relationship: " + JsError.toJson(e).toString())
+      dblog.error(error.toString)
       Failure(error)
   }
 
-  private def getJson (response: WSResponse): Validation[Error, JsValue] = Success(response.json)
+  private def getJson (response: WSResponse): Validation[Err, JsValue] = Success(response.json)
 
   // QUERIES: UTIL
 
-  def reachable: Future[Validation[Error, WSResponse]] = for {
+  def reachable: Future[Validation[Err, WSResponse]] = for {
     response <- withAuth(queryPath).head()
     validation <- Future(statusMustBe(response, 200, "reach the database"))
   } yield validation
 
   // QUERIES: NODES
 
-  def getNode (id: Int): Future[Validation[Error, Node]] = for {
+  def getNode (id: Int): Future[Validation[Err, Node]] = for {
     response <- withAuth(queryPath + "node/" + id).get()
     validation <- Future(for {
       _ <- statusMustBe(response, 200, "get node")
@@ -152,7 +158,7 @@ object Database {
     } yield node)
   } yield validation
 
-  def createNode (properties: JsValue): Future[Validation[Error, Node]] = for {
+  def createNode (properties: JsValue): Future[Validation[Err, Node]] = for {
     response <- withAuth(queryPath + "node").post(properties)
     validation <- Future(for {
       _ <- statusMustBe(response, 201, "create node")
@@ -160,49 +166,46 @@ object Database {
     } yield node)
   } yield validation
 
-  def createNode: Future[Validation[Error, Node]] = createNode(Json.obj())
+  def createNode: Future[Validation[Err, Node]] = createNode(Json.obj())
 
-  def addLabel (node: Node, label: String): Future[Validation[Error, WSResponse]] = for {
-    response <- withAuth(node.labels).post(JsString(label))
-    validation <- Future(statusMustBe(response, 204, "add label"))
-  } yield validation
+  def addLabel (node: Validation[Err, Node], label: String): Future[Validation[Err, WSResponse]] =
+    ifSucceeds(node) { node: Node =>
+      for {
+        response <- withAuth(node.labels).post(JsString(label))
+        validation <- Future(statusMustBe(response, 204, "add label"))
+      } yield validation
+    }
 
-  def addLabel (node: Validation[Error, Node], label: String): Future[Validation[Error, WSResponse]] = node match {
-    case Success(node) => addLabel(node, label)
-    case e: Failure[Error] => Future(e)
-  }
+  def updateNodeProperties (node: Validation[Err, Node], properties: JsValue): Future[Validation[Err, WSResponse]] =
+    ifSucceeds(node) { node: Node =>
+      for {
+        response <- withAuth(node.properties).put(properties)
+        validation <- Future(statusMustBe(response, 204, "update node properties"))
+      } yield validation
+    }
 
-  def updateNodeProperties (node: Node, properties: JsValue): Future[Validation[Error, WSResponse]] = for {
-    response <- withAuth(node.properties).put(properties)
-    validation <- Future(statusMustBe(response, 204, "update node properties"))
-  } yield validation
+  def getNodeProperties (node: Validation[Err, Node]): Future[Validation[Err, JsValue]] =
+    ifSucceeds(node) { node: Node =>
+      for {
+        response <- withAuth(node.properties).get()
+        validation <- Future(for {
+          _ <- statusMustBe(response, 200, "get node properties")
+          json <- getJson(response)
+        } yield json)
+      } yield validation
+    }
 
-  def updateNodeProperties (node: Validation[Error, Node], properties: JsValue): Future[Validation[Error, WSResponse]] = node match {
-    case Success(node) => updateNodeProperties(node, properties)
-    case e: Failure[Error] => Future(e)
-  }
-
-  def getNodeProperties (node: Node): Future[Validation[Error, JsValue]] = for {
-    response <- withAuth(node.properties).get()
-    validation <- Future(for {
-      _ <- statusMustBe(response, 200, "get node properties")
-      json <- getJson(response)
-    } yield json)
-  } yield validation
-
-  def getNodeProperties (node: Validation[Error, Node]): Future[Validation[Error, JsValue]] = node match {
-    case Success(node) => getNodeProperties(node)
-    case e: Failure[Error] => Future(e)
-  }
-
-  def deleteNode (node: Node): Future[Validation[Error, WSResponse]] = for {
-      response <- withAuth(node.self).delete()
-      validation <- Future(statusMustBe(response, 204, "delete node"))
-  } yield validation
+  def deleteNode (node: Validation[Err, Node]): Future[Validation[Err, WSResponse]] =
+    ifSucceeds(node) { node: Node =>
+      for {
+        response <- withAuth(node.self).delete()
+        validation <- Future(statusMustBe(response, 204, "delete node"))
+      } yield validation
+    }
 
   // QUERIES: RELATIONSHIPS
 
-  def getRelationship (id: Int): Future[Validation[Error, Relationship]] = for {
+  def getRelationship (id: Int): Future[Validation[Err, Relationship]] = for {
     response <- withAuth(queryPath + "relationship/" + id).get()
     validation <- Future(for {
       _ <- statusMustBe(response, 200, "get node")
@@ -210,102 +213,102 @@ object Database {
     } yield relationship)
   } yield validation
 
-  def createRelationship (source: Node, target: Node, relType: String): Future[Validation[Error, Relationship]] = for {
-    response <- withAuth(source.createRelationship).post(Json.obj(
-      "to" -> target.self,
-      "type" -> relType
-    ))
-    validation <- Future(for {
-      _ <- statusMustBe(response, 201, "create relationship")
-      relationship <- deserializeRelationship(response)
-    } yield relationship)
-  } yield validation
+  def createRelationship (source: Validation[Err, Node], target: Validation[Err, Node], relType: String): Future[Validation[Err, Relationship]] =
+    ifSucceeds(source, target) { (source: Node, target: Node) =>
+      for {
+        response <- withAuth(source.createRelationship).post(Json.obj(
+          "to" -> target.self,
+          "type" -> relType
+        ))
+        validation <- Future(for {
+          _ <- statusMustBe(response, 201, "create relationship")
+          relationship <- deserializeRelationship(response)
+        } yield relationship)
+      } yield validation
+    }
 
-  def deleteRelationship (relationship: Relationship): Future[Validation[Error, WSResponse]] = for {
-    response <- withAuth(relationship.self).delete()
-    validation <- Future(statusMustBe(response, 204, "delete relationship"))
-  } yield validation
+  def deleteRelationship (relationship: Validation[Err, Relationship]): Future[Validation[Err, WSResponse]] =
+    ifSucceeds(relationship) { relationship: Relationship =>
+      for {
+        response <- withAuth(relationship.self).delete()
+        validation <- Future(statusMustBe(response, 204, "delete relationship"))
+      } yield validation
+    }
 
   // TRANSACTIONS
 
-  private def checkForTransactionErrors (response: WSResponse): Validation[Error, WSResponse] = (response.json \ "errors").validate[Seq[TxError]] match {
+  private def checkForTransactionErrs (response: WSResponse): Validation[Err, WSResponse] = (response.json \ "errors").validate[Seq[DeserializedTxErr]] match {
     case s: JsSuccess[List[Transaction]@unchecked] =>
       if (s.get.length > 0)
-        Failure(s.get.toString)
+        Failure(TxErr(s.get.toString))
       else
         Success(response)
     case e: JsError =>
-      val error = "JsError when trying to deserialize errors in a transaction: " + JsError.toJson(e).toString()
-      dblog.error(error)
+      val error = DeserializationErr("JsError when trying to deserialize errors in a transaction: " + JsError.toJson(e).toString())
+      dblog.error(error.toString)
       Failure(error)
   }
 
-  private def getTransaction (response: WSResponse): Validation[Error, Transaction] = response.json.validate[Transaction] match {
+  private def getTransaction (response: WSResponse): Validation[Err, Transaction] = response.json.validate[Transaction] match {
     case s: JsSuccess[Transaction] =>
       val old = s.get
       Success(Transaction(old.commit.reverse.drop(7).reverse, old.commit, old.expires))
     case e: JsError =>
-      val error = "JsError when trying to deserialize a transaction: " + JsError.toJson(e).toString()
-      dblog.error(error)
+      val error = DeserializationErr("JsError when trying to deserialize a transaction: " + JsError.toJson(e).toString())
+      dblog.error(error.toString)
       Failure(error)
   }
 
-  private def getTxResult (response: WSResponse): Validation[Error, TxResult] =
+  private def getTxResult (response: WSResponse): Validation[Err, TxResult] =
     Success((response.json \ "results").as[List[JsValue]].map(extractResult(_)))
 
   private def extractResult (js: JsValue): Map[String, JsValue] =
     ((js \ "columns").as[List[String]] zip (js \ "data").as[List[JsValue]]).toMap
 
-  def openTransaction: Future[Validation[Error, Transaction]] = for {
+  def openTransaction: Future[Validation[Err, Transaction]] = for {
     response <- withAuth(transactionalEndpoint).post(Json.obj("statements" -> Json.arr()))
     validation <- Future(for {
       _ <- statusMustBe(response, 201, "open a transaction")
-      _ <- checkForTransactionErrors(response)
+      _ <- checkForTransactionErrs(response)
       transaction <- getTransaction(response)
     } yield transaction)
   } yield validation
 
-  def execute (tx: Transaction, statements: JsValue): Future[Validation[Error, TxResult]] = for {
-    response <- withAuth(tx.self).post(Json.obj("statements" -> statements))
-    validation <- Future(for {
-      _ <- statusMustBe(response, 200, "execute statements in transaction")
-      _ <- checkForTransactionErrors(response)
-      result <- getTxResult(response)
-    } yield result)
-  } yield validation
+  def execute (tx: Validation[Err, Transaction], statements: JsValue): Future[Validation[Err, TxResult]] =
+    ifSucceeds(tx) { tx: Transaction =>
+      for {
+        response <- withAuth(tx.self).post(Json.obj("statements" -> statements))
+        validation <- Future(for {
+          _ <- statusMustBe(response, 200, "execute statements in transaction")
+          _ <- checkForTransactionErrs(response)
+          result <- getTxResult(response)
+        } yield result)
+      } yield validation
+    }
 
-  def execute (tx: Validation[Error, Transaction], statements: JsValue): Future[Validation[Error, TxResult]] = tx match {
-    case Success(tx) => execute(tx, statements)
-    case e: Failure[Error] => Future(e)
-  }
+  def commit (tx: Validation[Err, Transaction]): Future[Validation[Err, WSResponse]] =
+    ifSucceeds(tx) { tx: Transaction =>
+      for {
+        response <- withAuth(tx.commit).post(Json.obj("statements" -> Json.arr()))
+        validation <- Future(for {
+          _ <- statusMustBe(response, 200, "commit a transaction")
+          wsresponse <- checkForTransactionErrs(response)
+        } yield wsresponse)
+      } yield validation
+    }
 
-  def commit (tx: Transaction): Future[Validation[Error, WSResponse]] = for {
-    response <- withAuth(tx.commit).post(Json.obj("statements" -> Json.arr()))
-    validation <- Future(for {
-      _ <- statusMustBe(response, 200, "commit a transaction")
-      wsresponse <- checkForTransactionErrors(response)
-    } yield wsresponse)
-  } yield validation
+  def rollback (tx: Validation[Err, Transaction]): Future[Validation[Err, WSResponse]] =
+    ifSucceeds(tx) { tx: Transaction =>
+      for {
+        response <- withAuth(tx.self).delete()
+        validation <- Future(for {
+          _ <- statusMustBe(response, 200, "rollback a transaction")
+          wsresponse <- checkForTransactionErrs(response)
+        } yield wsresponse)
+      } yield validation
+    }
 
-  def commit (tx: Validation[Error, Transaction]): Future[Validation[Error, WSResponse]] = tx match {
-    case Success(tx: Transaction) => commit(tx)
-    case e: Failure[Error] => Future(e)
-  }
-
-  def rollback (tx: Transaction): Future[Validation[Error, WSResponse]] = for {
-    response <- withAuth(tx.self).delete()
-    validation <- Future(for {
-      _ <- statusMustBe(response, 200, "rollback a transaction")
-      wsresponse <- checkForTransactionErrors(response)
-    } yield wsresponse)
-  } yield validation
-
-  def rollback (tx: Validation[Error, Transaction]): Future[Validation[Error, WSResponse]] = tx match {
-    case Success(tx) => rollback(tx)
-    case e: Failure[Error] => Future(e)
-  }
-
-  def allOrNothing[A] (tx: Validation[Error, Transaction], fin: Validation[Error, A]): Future[Validation[Error, WSResponse]] = fin match {
+  def allOrNothing[A] (tx: Validation[Err, Transaction], fin: Validation[Err, A]): Future[Validation[Err, WSResponse]] = fin match {
     case Success(_) => commit(tx)
     case Failure(_) => rollback(tx)
   }

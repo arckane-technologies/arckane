@@ -9,16 +9,17 @@ import play.api.Logger
 import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits._
 
-import utils.Database._
-
-case class User (id: Int, node: Node, email: String, password: String, influence: Double)
+import utils.DatabaseOps._
+import utils.ValidationOps._
 
 object UserOps {
+
+  case class User (id: Int, node: Node, email: String, password: String, influence: Double)
 
   def createUser (
     umail: String,
     upass: String
-  )(implicit decisionSystem: DecisionSystem): Future[Validation[Error, User]] = for {
+  )(implicit decisionSystem: DecisionSystem): Future[Validation[Err, User]] = for {
     tx <- openTransaction
     countResult <- executeUserBaseCount(tx)
     uinfl <- extractInfluence(countResult, decisionSystem.influenceRatio)
@@ -28,41 +29,36 @@ object UserOps {
     _ <- allOrNothing(tx, user)
   } yield user
 
-  def getUser (id: Int): Future[Validation[Error, User]] = for {
+  def getUser (id: Int): Future[Validation[Err, User]] = for {
     node <- getNode(id)
     props <- getNodeProperties(node)
     user <- instantiateUser(node, props)
   } yield user
 
-  def deleteUser (user: User): Future[Validation[Error, TxResult]] = for {
+  def deleteUser (user: User): Future[Validation[Err, TxResult]] = for {
     tx <- openTransaction
     deleteResult <- execute(tx, Json.arr(Json.obj("statement" -> ("MATCH (n:Person) WHERE id(n)=" + user.id.toString + " DELETE n"))))
     _ <- allOrNothing(tx, deleteResult)
   } yield deleteResult
 
-  def deleteUser (user: Validation[Error, User]): Future[Validation[Error, TxResult]] = user match {
-    case Success(user) => deleteUser(user)
-    case e: Failure[Error] => Future(e)
-  }
+  def deleteUser (user: Validation[Err, User]): Future[Validation[Err, TxResult]] =
+    ifSucceeds(user)(deleteUser)
 
-  private def executeUserBaseCount (tx: Validation[Error, Transaction]): Future[Validation[Error, TxResult]] =
+  private def executeUserBaseCount (tx: Validation[Err, Transaction]): Future[Validation[Err, TxResult]] =
     execute(tx, Json.arr(Json.obj("statement" -> "MATCH (n: Person) RETURN count(n)")))
 
-  private def extractInfluence (
-    tx: Validation[Error, TxResult],
-    influenceRatio: Int => Double
-  ): Future[Validation[Error, Double]] = tx match {
-    case Success(result) => Future(Success(influenceRatio((result.head("count(n)") \ "row")(0).as[Int])))
-    case e: Failure[Error] => Future(e)
-  }
+  private def extractInfluence (tx: Validation[Err, TxResult], influenceRatio: Int => Double): Future[Validation[Err, Double]] =
+    ifSucceeds(tx) { result: TxResult =>
+      Future(Success(influenceRatio((result.head("count(n)") \ "row")(0).as[Int])))
+    }
 
   private def executeUserCreation (
-    tx: Validation[Error, Transaction],
+    tx: Validation[Err, Transaction],
     umail: String,
     upass: String,
-    uinfl: Validation[Error, Double]
-  ): Future[Validation[Error, TxResult]] = uinfl match {
-    case Success(influence) => execute(tx, Json.arr(Json.obj(
+    uinfl: Validation[Err, Double]
+  ): Future[Validation[Err, TxResult]] = ifSucceeds(uinfl) { influence: Double =>
+    execute(tx, Json.arr(Json.obj(
       "statement" -> "CREATE (n:Person {props}) RETURN n",
       "parameters" -> Json.obj(
         "props" -> Json.obj(
@@ -72,55 +68,45 @@ object UserOps {
         )),
       "resultDataContents" -> Json.arr("REST")
     )))
-    case e: Failure[Error] => Future(e)
   }
 
-  private def extractUserNode (tx: Validation[Error, TxResult]): Future[Validation[Error, Node]] = tx match {
-    case Success(result: TxResult) => (result.head("n") \ "rest")(0).validate[Node] match {
-      case s: JsSuccess[Node] =>
-        Future(Success(s.get))
-      case e: JsError =>
-        val error = "JsError when trying to deserialize a Node: " + JsError.toJson(e).toString()
-        Logger.error(error)
-        Future(Failure(error))
+  private def extractUserNode (tx: Validation[Err, TxResult]): Future[Validation[Err, Node]] =
+    ifSucceeds(tx) { result: TxResult =>
+      (result.head("n") \ "rest")(0).validate[Node] match {
+        case s: JsSuccess[Node] =>
+          Future(Success(s.get))
+        case e: JsError =>
+          val error = DeserializationErr("JsError when trying to deserialize a Node: " + JsError.toJson(e).toString())
+          Logger.error(error.toString)
+          Future(Failure(error))
+      }
     }
-    case e: Failure[Error] => Future(e)
-  }
 
   private def instantiateUser (
     umail: String,
     upass: String,
-    uinfl: Validation[Error, Double],
-    unode: Validation[Error, Node]
-  ): Future[Validation[Error, User]] = (unode, uinfl) match {
-    case (Success(userNode), Success(userInfluence)) =>
-      Future(Success(User(
-        userNode.id,
-        userNode,
-        umail,
-        upass,
-        userInfluence
-      )))
-    case (e: Failure[Error], _) =>
-      Future(e)
-    case (_, e: Failure[Error]) =>
-      Future(e)
+    uinfl: Validation[Err, Double],
+    unode: Validation[Err, Node]
+  ): Future[Validation[Err, User]] = ifSucceeds(unode, uinfl) { (userNode: Node, userInfluence: Double) =>
+    Future(Success(User(
+      userNode.id,
+      userNode,
+      umail,
+      upass,
+      userInfluence
+    )))
   }
 
   private def instantiateUser (
-    node: Validation[Error, Node],
-    props: Validation[Error, JsValue]
-  ): Future[Validation[Error, User]] = (node, props) match {
-    case (Success(node), Success(props)) => Future(Success(User(
+    node: Validation[Err, Node],
+    props: Validation[Err, JsValue]
+  ): Future[Validation[Err, User]] = ifSucceeds(node, props) { (node: Node, props: JsValue) =>
+    Future(Success(User(
       node.id,
       node,
       (props \ "email").as[String],
       (props \ "password").as[String],
       (props \ "influence").as[Double]
     )))
-    case (_, e: Failure[Error]) =>
-      Future(e)
-    case (e: Failure[Error], _) =>
-      Future(e)
   }
 }
