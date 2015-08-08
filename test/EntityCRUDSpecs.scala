@@ -15,41 +15,51 @@ import play.api.libs.ws._
 
 import decision.UserOps._
 import utils.DatabaseOps.Node
+import utils.Persistent
+import utils.PersistentOps._
 import utils.ValidationOps._
 
-class UserSpecs extends Specification {
+class EntityCRUDSpecs extends Specification {
 
-  trait TestUsers extends Around with Scope {
+  trait TestEntities extends Around with Scope {
 
-    import decision.SimpleLogarithmicCommunity._
-    lazy val user1 = Await.result(createUser("user1@test.org", "pass1"), 2 seconds)
+    lazy val user1 = Await.result(create(UserProps("user1@test.org", "pass1")), 2 seconds)
     lazy val user1Id = user1 match {
       case Success(user: User) => user.id
       case Failure(error: Err) => println(error); -1
     }
+    lazy val getUser = Await.result(get[User](user1Id), 2 seconds)
+    lazy val deleteUser1 = Await.result(delete(user1), 2 seconds)
 
     abstract override def around[T: AsResult](t: => T): Result = {
       super.around {
         try t // Execute test
         finally {
-          Await.result(deleteUser(user1), 2 seconds)
+          deleteUser1
         }
       }
     }
   }
 
-  "User basic opperations" should {
+  "Entities CRUD opperations" should {
 
-    "Create user" in new WithApplication with TestUsers {
+    "Create" in new WithApplication with TestEntities {
       user1 match {
         case Success(user: User) => success
         case Failure(error: Err) => ko(error.toString)
       }
     }
 
-    "Get user" in new WithApplication with TestUsers {
-      Await.result(getUser(user1Id), 2 seconds) match {
-        case Success(user: User) => user.id must beEqualTo(user1Id)
+    "Get" in new WithApplication with TestEntities {
+      getUser match {
+        case Success(user: User) => user.props.email must beEqualTo("user1@test.org")
+        case Failure(error: Err) => ko(error.toString)
+      }
+    }
+
+    "Delete" in new WithApplication with TestEntities {
+      deleteUser1 match {
+        case Success(_) => success
         case Failure(error: Err) => ko(error.toString)
       }
     }

@@ -108,7 +108,9 @@ object DatabaseOps {
 
   private val transactionalEndpoint = "http://" + address + "/db/data/transaction/"
 
-  // UTIL FUNCTIONS
+  /**
+    * Util Functions
+    */
 
   private def withAuth (path: String): WSRequest =
     WS.url(path).withAuth(user, password, WSAuthScheme.BASIC)
@@ -141,14 +143,18 @@ object DatabaseOps {
 
   private def getJson (response: WSResponse): Validation[Err, JsValue] = Success(response.json)
 
-  // QUERIES: UTIL
+  /**
+    * Util Database
+    */
 
   def reachable: Future[Validation[Err, WSResponse]] = for {
     response <- withAuth(queryPath).head()
     validation <- Future(statusMustBe(response, 200, "reach the database"))
   } yield validation
 
-  // QUERIES: NODES
+  /**
+    * Node
+    */
 
   def getNode (id: Int): Future[Validation[Err, Node]] = for {
     response <- withAuth(queryPath + "node/" + id).get()
@@ -203,7 +209,9 @@ object DatabaseOps {
       } yield validation
     }
 
-  // QUERIES: RELATIONSHIPS
+  /**
+    * Relationshipa
+    */
 
   def getRelationship (id: Int): Future[Validation[Err, Relationship]] = for {
     response <- withAuth(queryPath + "relationship/" + id).get()
@@ -235,7 +243,9 @@ object DatabaseOps {
       } yield validation
     }
 
-  // TRANSACTIONS
+  /**
+    * Transactions
+    */
 
   private def checkForTransactionErrs (response: WSResponse): Validation[Err, WSResponse] = (response.json \ "errors").validate[Seq[DeserializedTxErr]] match {
     case s: JsSuccess[List[Transaction]@unchecked] =>

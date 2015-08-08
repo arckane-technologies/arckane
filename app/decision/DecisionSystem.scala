@@ -11,12 +11,6 @@ object SimpleLogarithmicCommunity {
     */
   implicit val simpleLogarithmicCommunity = new DecisionSystem {
 
-    def lifeRatio (crowdSize: Int, influence: Double): Double =
-      1.0
-
-    def lifeModifier (life: Double, influence: Double): Double =
-      influence
-
     def commitRatio (crowdSize: Int, influence: Double): Double =
       1.0
 
@@ -34,10 +28,6 @@ object SimpleLogarithmicCommunity {
 trait DecisionSystem {
 
   import scala.math._
-
-  def lifeRatio (crowdSize: Int, influence: Double): Double
-
-  def lifeModifier (life: Double, influence: Double): Double
 
   def commitRatio (crowdSize: Int, influence: Double): Double
 
