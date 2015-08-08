@@ -5,6 +5,7 @@ import scala.concurrent._
 import scalaz.{Validation, Success, Failure}
 import play.api.Logger
 import play.api.libs.json._
+import play.api.libs.ws.WSResponse
 import play.api.libs.concurrent.Execution.Implicits._
 
 import utils.DatabaseOps._
@@ -101,7 +102,11 @@ object PersistentOps {
       } yield deleteResult
     }
 
-  private def count[E <: Entity] (tx: Validation[Err, Transaction])(implicit per: Persistent[E, _]): Future[Validation[Err, Int]] = for {
+  def set[E <: Entity] (entity: Validation[Err, E], prop: String, value: JsValue): Future[Validation[Err, WSResponse]] =
+    ifSucceeds(entity) { entity: E => setNodeProperty(Success(entity.node), prop, value) }
+
+  def count[E <: Entity] (implicit per: Persistent[E, _]): Future[Validation[Err, Int]] = for {
+    tx <- openTransaction
     txr <- execute(tx, Json.arr(Json.obj("statement" -> ("MATCH (n: " + per.tag + ") RETURN count(n)"))))
     count <- extractCount(txr)
   } yield count

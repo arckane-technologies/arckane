@@ -24,18 +24,28 @@ class EntityCRUDSpecs extends Specification {
   trait TestEntities extends Around with Scope {
 
     lazy val user1 = Await.result(create(UserProps("user1@test.org", "pass1")), 2 seconds)
+    lazy val user2 = Await.result(create(UserProps("user2@test.org", "pass1")), 2 seconds)
     lazy val user1Id = user1 match {
       case Success(user: User) => user.id
       case Failure(error: Err) => println(error); -1
     }
-    lazy val getUser = Await.result(get[User](user1Id), 2 seconds)
+    lazy val user2Id = user2 match {
+      case Success(user: User) => user.id
+      case Failure(error: Err) => println(error); -1
+    }
+    lazy val setPass2 = Await.result(set(user2, "password", JsString("pass2")), 2 seconds)
+    lazy val countUsers = Await.result(count[User], 2 seconds)
+    lazy val getUser1 = Await.result(get[User](user1Id), 2 seconds)
+    lazy val getUser2 = Await.result(get[User](user2Id), 2 seconds)
     lazy val deleteUser1 = Await.result(delete(user1), 2 seconds)
+    lazy val deleteUser2 = Await.result(delete(user2), 2 seconds)
 
     abstract override def around[T: AsResult](t: => T): Result = {
       super.around {
         try t // Execute test
         finally {
           deleteUser1
+          deleteUser2
         }
       }
     }
@@ -51,8 +61,27 @@ class EntityCRUDSpecs extends Specification {
     }
 
     "Get" in new WithApplication with TestEntities {
-      getUser match {
+      getUser1 match {
         case Success(user: User) => user.props.email must beEqualTo("user1@test.org")
+        case Failure(error: Err) => ko(error.toString)
+      }
+    }
+
+    "Set prop" in new WithApplication with TestEntities {
+      setPass2 match {
+        case Success(_) => getUser2 match {
+          case Success(user: User) => user.props.password must beEqualTo("pass2")
+          case Failure(error: Err) => ko(error.toString)
+        }
+        case Failure(error: Err) => ko(error.toString)
+      }
+    }
+
+    "Count" in new WithApplication with TestEntities {
+      user1
+      user2
+      countUsers match {
+        case Success(n) => n must beEqualTo(2)
         case Failure(error: Err) => ko(error.toString)
       }
     }

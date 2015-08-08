@@ -182,6 +182,14 @@ object DatabaseOps {
       } yield validation
     }
 
+  def setNodeProperty (node: Validation[Err, Node], prop: String, value: JsValue): Future[Validation[Err, WSResponse]] =
+    ifSucceeds(node) { node: Node =>
+      for {
+        response <- withAuth(node.properties + "/" + prop).put(value)
+        validation <- Future(statusMustBe(response, 204, "set a node property"))
+      } yield validation
+    }
+
   def updateNodeProperties (node: Validation[Err, Node], properties: JsValue): Future[Validation[Err, WSResponse]] =
     ifSucceeds(node) { node: Node =>
       for {
