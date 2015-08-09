@@ -15,10 +15,11 @@ import utils.ValidationOps._
 object UserOps {
 
   case class User (id: Int, node: Node, props: UserProps) extends Entity
-  case class UserProps (email: String, password: String)
+  case class UserProps (url: String, email: String, password: String)
 
   implicit val userPropsWrites = new Writes[UserProps] {
     def writes(props: UserProps) = Json.obj(
+      "url" -> props.url,
       "email" -> props.email,
       "password" -> props.password
     )
@@ -33,6 +34,7 @@ object UserOps {
   }
 
   implicit val userPropsReads = (
+    (JsPath \ "url").read[String] and
     (JsPath \ "email").read[String] and
     (JsPath \ "password").read[String]
   )(UserProps.apply _)
