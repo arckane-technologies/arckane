@@ -261,19 +261,7 @@ object DatabaseOps {
   } yield validation
 
   def createRelationship (source: Validation[Err, Node], target: Validation[Err, Node], relType: String): Future[Validation[Err, Relationship]] =
-    ifSucceeds(source, target) { (source: Node, target: Node) =>
-      for {
-        response <- withAuth(source.createRelationship).post(Json.obj(
-          "to" -> target.self,
-          "type" -> relType
-        ))
-        validation <- Future(for {
-          _ <- statusMustBe(response, 201, "create relationship")
-          relationship <- deserializeRelationship(response)
-        } yield relationship)
-      } yield validation
-    }
-
+    ifSucceeds(source, target)(createRelationshipHelper(relType, Json.obj(), _:Node, _:Node))
 
   def createRelationship (source: Node, target: Node, relType: String, data: JsValue): Future[Validation[Err, Relationship]] =
     createRelationshipHelper(relType, data, source, target)
