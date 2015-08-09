@@ -243,6 +243,21 @@ object DatabaseOps {
       } yield validation
     }
 
+  def createRelationship (source: Validation[Err, Node], target: Validation[Err, Node], relType: String, data: JsValue): Future[Validation[Err, Relationship]] =
+    ifSucceeds(source, target) { (source: Node, target: Node) =>
+      for {
+        response <- withAuth(source.createRelationship).post(Json.obj(
+          "to" -> target.self,
+          "type" -> relType,
+          "data" -> data
+        ))
+        validation <- Future(for {
+          _ <- statusMustBe(response, 201, "create relationship")
+          relationship <- deserializeRelationship(response)
+        } yield relationship)
+      } yield validation
+    }
+
   def deleteRelationship (relationship: Validation[Err, Relationship]): Future[Validation[Err, WSResponse]] =
     ifSucceeds(relationship) { relationship: Relationship =>
       for {

@@ -1,16 +1,9 @@
 package decision
 
-import scala.concurrent._
-
-import scalaz.{Validation, Success, Failure}
-import scalaz.Validation.FlatMap._
-
-import play.api.Logger
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import play.api.libs.concurrent.Execution.Implicits._
 
-import utils.DatabaseOps._
+import utils.DatabaseOps.Node
 import utils.Persistent
 import utils.Entity
 
