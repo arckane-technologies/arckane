@@ -36,6 +36,25 @@ object DatabaseOps {
     incomingTypedRelationships: String
   )
 
+  implicit val nodeWrites = new Writes[Node] {
+    def writes(node: Node) = Json.obj(
+      "metadata" -> Json.obj("id" -> node.id),
+      "outgoing_relationships" -> node.outgoingRelationships,
+      "labels" -> node.labels,
+      "all_typed_relationships" -> node.allTypedRelationships,
+      "traverse" -> node.traverse,
+      "self" -> node.self,
+      "property" -> node.property,
+      "properties" -> node.properties,
+      "outgoing_typed_relationships" -> node.outgoingTypedRelationships,
+      "incoming_relationships" -> node.incomingRelationships,
+      "create_relationship" -> node.createRelationship,
+      "paged_traverse" -> node.pagedTraverse,
+      "all_relationships" -> node.allRelationships,
+      "incoming_typed_relationships" -> node.incomingTypedRelationships
+    )
+  }
+
   implicit val nodeReads: Reads[Node] = (
     (JsPath \ "metadata" \ "id").read[Int] and
     (JsPath \ "outgoing_relationships").read[String] and
@@ -62,6 +81,18 @@ object DatabaseOps {
     rtype: String,
     end: String
   )
+
+  implicit val relationshipWrites = new Writes[Relationship] {
+    def writes(relationship: Relationship) = Json.obj(
+      "metadata" -> Json.obj("id" -> relationship.id),
+      "start" -> relationship.start,
+      "property" -> relationship.property,
+      "self" -> relationship.self,
+      "properties" -> relationship.properties,
+      "type" -> relationship.rtype,
+      "end" -> relationship.end
+    )
+  }
 
   implicit val relationshipReads: Reads[Relationship] = (
     (JsPath \ "metadata" \ "id").read[Int] and
@@ -243,20 +274,25 @@ object DatabaseOps {
       } yield validation
     }
 
+
+  def createRelationship (source: Node, target: Node, relType: String, data: JsValue): Future[Validation[Err, Relationship]] =
+    createRelationshipHelper(relType, data, source, target)
+
   def createRelationship (source: Validation[Err, Node], target: Validation[Err, Node], relType: String, data: JsValue): Future[Validation[Err, Relationship]] =
-    ifSucceeds(source, target) { (source: Node, target: Node) =>
-      for {
-        response <- withAuth(source.createRelationship).post(Json.obj(
-          "to" -> target.self,
-          "type" -> relType,
-          "data" -> data
-        ))
-        validation <- Future(for {
-          _ <- statusMustBe(response, 201, "create relationship")
-          relationship <- deserializeRelationship(response)
-        } yield relationship)
-      } yield validation
-    }
+    ifSucceeds(source, target)(createRelationshipHelper(relType, data, _:Node, _:Node))
+
+  private def createRelationshipHelper (relType: String, data: JsValue, source: Node, target: Node): Future[Validation[Err, Relationship]] =
+    for {
+      response <- withAuth(source.createRelationship).post(Json.obj(
+        "to" -> target.self,
+        "type" -> relType,
+        "data" -> data
+      ))
+      validation <- Future(for {
+        _ <- statusMustBe(response, 201, "create relationship")
+        relationship <- deserializeRelationship(response)
+      } yield relationship)
+    } yield validation
 
   def deleteRelationship (relationship: Validation[Err, Relationship]): Future[Validation[Err, WSResponse]] =
     ifSucceeds(relationship) { relationship: Relationship =>
