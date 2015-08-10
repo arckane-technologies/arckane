@@ -260,11 +260,14 @@ object DatabaseOps {
     } yield relationship)
   } yield validation
 
-  def createRelationship (source: Validation[Err, Node], target: Validation[Err, Node], relType: String): Future[Validation[Err, Relationship]] =
-    ifSucceeds(source, target)(createRelationshipHelper(relType, Json.obj(), _:Node, _:Node))
+  def createRelationship (source: Node, target: Node, relType: String): Future[Validation[Err, Relationship]] =
+    createRelationshipHelper(relType, Json.obj(), source, target)
 
   def createRelationship (source: Node, target: Node, relType: String, data: JsValue): Future[Validation[Err, Relationship]] =
     createRelationshipHelper(relType, data, source, target)
+
+  def createRelationship (source: Validation[Err, Node], target: Validation[Err, Node], relType: String): Future[Validation[Err, Relationship]] =
+    ifSucceeds(source, target)(createRelationshipHelper(relType, Json.obj(), _:Node, _:Node))
 
   def createRelationship (source: Validation[Err, Node], target: Validation[Err, Node], relType: String, data: JsValue): Future[Validation[Err, Relationship]] =
     ifSucceeds(source, target)(createRelationshipHelper(relType, data, _:Node, _:Node))

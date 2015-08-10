@@ -8,47 +8,57 @@ import play.api.libs.functional.syntax._
 import play.api.libs.concurrent.Execution.Implicits._
 
 import utils.DatabaseOps._
-import utils.Persistent
-import utils.Entity
 import utils.ValidationOps._
+import utils.Tagged
+import utils.Persistent
+import utils.{Entity, EntityProps}
 
 object UserOps {
 
-  case class User (id: Int, node: Node, props: UserProps) extends Entity
-  case class UserProps (url: String, email: String, password: String)
+  case class User (props: EntityProps, node: Node) extends Entity
 
-  implicit val userPropsWrites = new Writes[UserProps] {
-    def writes(props: UserProps) = Json.obj(
+  implicit val userTag = new Tagged[User] {
+    val tag: String = "User"
+  }
+
+  case class UserBasicInfo (url: String, email: String) extends EntityProps
+
+  implicit val userBasicInfoWrites = new Writes[UserBasicInfo] {
+    def writes(props: UserBasicInfo) = Json.obj(
       "url" -> props.url,
-      "email" -> props.email,
+      "email" -> props.email
+    )
+  }
+
+  implicit val userBasicInfoReads = (
+    (JsPath \ "url").read[String] and
+    (JsPath \ "email").read[String]
+  )(UserBasicInfo.apply _)
+
+  implicit object UserBasicInfoPersistence extends Persistent[User, UserBasicInfo] {
+    def instantiate (props: UserBasicInfo, node: Node) = User(props, node)
+  }
+
+  case class UserPassword (password: String) extends EntityProps
+
+  implicit val userPasswordWrites = new Writes[UserPassword] {
+    def writes(props: UserPassword) = Json.obj(
       "password" -> props.password
     )
   }
 
-  implicit val userWrites = new Writes[User] {
-    def writes(user: User) = Json.obj(
-      "id" -> user.id,
-      "node" -> user.node,
-      "props" -> user.props
-    )
+  implicit val userPasswordReads =
+    (__ \ "password").read[String].map(v => UserPassword(v))
+
+  implicit object UserPasswordPersistence extends Persistent[User, UserPassword] {
+    def instantiate (props: UserPassword, node: Node) = User(props, node)
   }
 
-  implicit val userPropsReads = (
-    (JsPath \ "url").read[String] and
-    (JsPath \ "email").read[String] and
-    (JsPath \ "password").read[String]
-  )(UserProps.apply _)
+  /*
+   * User Ops.
+   */
 
-  implicit val userReads = (
-    (JsPath \ "id").read[Int] and
-    (JsPath \ "node").read[Node] and
-    (JsPath \ "props").read[UserProps]
-  )(User.apply _)
-
-  implicit object UserPersistent extends Persistent[User, UserProps] {
-    val tag: String = "User"
-    val entityWrites: Writes[UserProps] = userPropsWrites
-    val entityReads: Reads[UserProps] = userPropsReads
-    def instantiate (props: UserProps, node: Node) = User(node.id, node, props)
-  }
+  def infuse (user: User, entity: Entity): Future[Validation[Err, Relationship]] = for {
+    relationship <- createRelationship(user.node, entity.node, "INFUSES")
+  } yield relationship
 }
