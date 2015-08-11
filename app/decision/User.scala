@@ -15,28 +15,29 @@ import utils.{Entity, EntityProps}
 
 object UserOps {
 
-  case class User (props: EntityProps, node: Node) extends Entity
+  case class User (props: EntityProps, url: String, node: Node) extends Entity
 
   implicit val userTag = new Tagged[User] {
     val tag: String = "User"
   }
 
-  case class UserBasicInfo (url: String, email: String) extends EntityProps
+  case class UserBasicInfo (email: String) extends EntityProps
 
   implicit val userBasicInfoWrites = new Writes[UserBasicInfo] {
     def writes(props: UserBasicInfo) = Json.obj(
-      "url" -> props.url,
       "email" -> props.email
     )
   }
 
-  implicit val userBasicInfoReads = (
-    (JsPath \ "url").read[String] and
-    (JsPath \ "email").read[String]
-  )(UserBasicInfo.apply _)
+  implicit val userBasicInfoReads =
+    (__ \ "email").read[String].map(v => UserBasicInfo(v))
+  //(
+  //  (JsPath \ "url").read[String] and
+  //  (JsPath \ "email").read[String]
+  //)(UserBasicInfo.apply _)
 
   implicit object UserBasicInfoPersistence extends Persistent[User, UserBasicInfo] {
-    def instantiate (props: UserBasicInfo, node: Node) = User(props, node)
+    def instantiate (props: UserBasicInfo, url: String, node: Node) = User(props, url, node)
   }
 
   case class UserPassword (password: String) extends EntityProps
@@ -51,7 +52,7 @@ object UserOps {
     (__ \ "password").read[String].map(v => UserPassword(v))
 
   implicit object UserPasswordPersistence extends Persistent[User, UserPassword] {
-    def instantiate (props: UserPassword, node: Node) = User(props, node)
+    def instantiate (props: UserPassword, url: String, node: Node) = User(props, url, node)
   }
 
   /*

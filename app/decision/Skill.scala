@@ -15,30 +15,28 @@ import utils.{Entity, EntityProps}
 
 object SkillOps {
 
-  case class Skill (props: EntityProps, node: Node) extends Entity
+  case class Skill (props: EntityProps, url: String, node: Node) extends Entity
 
   implicit val skillTag = new Tagged[Skill] {
     val tag = "Skill"
   }
 
-  case class SkillBasicInfo (url: String, name: String, description: String) extends EntityProps
+  case class SkillBasicInfo (name: String, description: String) extends EntityProps
 
   implicit val SkillBasicInfoWrites = new Writes[SkillBasicInfo] {
     def writes(props: SkillBasicInfo) = Json.obj(
-      "url" -> props.url,
       "name" -> props.name,
       "description" -> props.description
     )
   }
 
   implicit val skillBasicInfoReads = (
-    (JsPath \ "url").read[String] and
     (JsPath \ "name").read[String] and
     (JsPath \ "description").read[String]
   )(SkillBasicInfo.apply _)
 
   implicit object SkillPersistent extends Persistent[Skill, SkillBasicInfo] {
-    def instantiate (props: SkillBasicInfo, node: Node) = Skill(props, node)
+    def instantiate (props: SkillBasicInfo, url: String, node: Node) = Skill(props, url, node)
   }
 
   def requires (source: Skill, target: Skill, relevance: Int): Future[Validation[Err, Relationship]] = for {

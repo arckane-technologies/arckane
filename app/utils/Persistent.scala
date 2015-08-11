@@ -12,95 +12,111 @@ import utils.DatabaseOps._
 import utils.ValidationOps._
 
 trait Persistent[E <: Entity, P] {
-  def instantiate (props: P, node: Node): E
+  def instantiate (props: P, url: String, node: Node): E
 }
 
 object PersistentOps {
 
-  private def instantiation[E <: Entity, P] (props: P, node: Node)(implicit per: Persistent[E, P]): Future[Validation[Err, E]] =
-    Future(Success(per.instantiate(props, node)))
-
-  private def instantiationA[E <: Entity, P] (props: P, node: Validation[Err, Node])(implicit per: Persistent[E, P]): Future[Validation[Err, E]] =
-    ifSucceeds(node)(instantiation(props, _))
-
-  private def instantiationB[E <: Entity, P] (props: JsValue, node: Validation[Err, Node])(implicit propsReads: Reads[P], per: Persistent[E, P]): Future[Validation[Err, E]] =
-    props.validate[P] match {
-      case p: JsSuccess[P] =>
-        instantiationA(p.get, node)
-      case e: JsError =>
-        val error = DeserializationErr("JsError when trying to deserialize an Entity: " + JsError.toJson(e).toString())
-        Logger.error(error.toString)
-        Future(Failure(error))
-    }
-
-  private def instantiationC[E <: Entity, P] (props: Validation[Err, JsValue], node: Validation[Err, Node])(implicit propsReads: Reads[P], per: Persistent[E, P]): Future[Validation[Err, E]] =
-    ifSucceeds(props, node) { (props, node) => props.validate[P] match {
-      case p: JsSuccess[P] =>
-        instantiation(p.get, node)
-      case e: JsError =>
-        val error = DeserializationErr("JsError when trying to deserialize an Entity: " + JsError.toJson(e).toString())
-        Logger.error(error.toString)
-        Future(Failure(error))
-    }}
-
-  private def newUniqueId (tx: Validation[Err, Transaction]): Future[Validation[Err, Int]] =
-    for {
-      result <- execute(tx, "MERGE (id:UniqueId{name:'General Entities IDs'}) ON CREATE SET id.count = 1 ON MATCH SET id.count = id.count + 1 RETURN id.count")
-      uid <- ifSucceeds(result) { result: TxResult => ifSucceeds((result.head("id.count") \ "row")(0).validate[Int])(identity) }
-    } yield uid
-
   def create[E <: Entity, P] (props: P)(implicit propsWrites: Writes[P], t: Tagged[E], per: Persistent[E, P]): Future[Validation[Err, E]] =
     for {
       tx <- openTransaction
-      result <- executeCreation(tx, props)
-      node <- extractNode(result)
-      entity <- instantiationA(props, node)
+      url <- newUrl(tx)
+      result <- executeCreation(tx, url, props)
+      node <- extractRESTNode(result)
+      entity <- ifSucceedsF(url, node)(per.instantiate(props, _, _))
       _ <- allOrNothing(tx, entity)
     } yield entity
 
-  private def executeCreation[E <: Entity, P] (tx: Validation[Err, Transaction], props: P)(implicit propsWrites: Writes[P], t: Tagged[E], per: Persistent[E, P]): Future[Validation[Err, TxResult]] =
-    execute(tx, Json.arr(Json.obj(
-      "statement" -> ("CREATE (n:" + t.tag + " {props}) RETURN n"),
-      "parameters" -> Json.obj("props" -> Json.toJson(props)),
-      "resultDataContents" -> Json.arr("REST")
-    )))
+  def get[E <: Entity, P] (url: String)(implicit propsReads: Reads[P], t: Tagged[E], per: Persistent[E, P]): Future[Validation[Err, E]] =
+    for {
+      tx <- openTransaction
+      result <- executeGet(tx, url)
+      node <- extractRESTNode(result)
+      props <- getNodeProperties(node)
+      entity <- ifSucceeds(props, node) { (props, node) =>
+                  ifSucceeds(props.validate[P])(per.instantiate(_, url, node))
+                }
+      _ <- allOrNothing(tx, entity)
+    } yield entity
 
-  private def extractNode (txr: Validation[Err, TxResult]): Future[Validation[Err, Node]] =
-    ifSucceeds(txr) { result: TxResult => ifSucceeds((result.head("n") \ "rest")(0).validate[Node])(identity) }
+  def set[E <: Entity] (entity: E, prop: String, value: JsValue): Future[Validation[Err, WSResponse]] =
+    setNodeProperty(Success(entity.node), prop, value)
 
-  def get[E <: Entity, P] (id: Int)(implicit propsReads: Reads[P], per: Persistent[E, P]): Future[Validation[Err, E]] = for {
-    node <- getNode(id)
-    props <- getNodeProperties(node)
-    entity <- instantiationC[E, P](props, node)
-  } yield entity
+  def set[E <: Entity] (entity: Validation[Err, E], prop: String, value: JsValue): Future[Validation[Err, WSResponse]] =
+    ifSucceeds(entity)(set(_, prop, value))
 
   def delete[E <: Entity] (entity: Validation[Err, E])(implicit t: Tagged[E]): Future[Validation[Err, TxResult]] =
     ifSucceeds(entity) { entity: E =>
       for {
         tx <- openTransaction
-        deleteResult <- execute(tx, Json.arr(Json.obj("statement" -> ("MATCH (n:" + t.tag + ") WHERE id(n)=" + entity.node.id.toString + " DELETE n"))))
-        _ <- allOrNothing(tx, deleteResult)
-      } yield deleteResult
+        result <- executeDelete(tx, entity)
+        _ <- allOrNothing(tx, result)
+      } yield result
     }
 
   def deleteRelationships[E <: Entity] (entity: Validation[Err, E])(implicit t: Tagged[E]): Future[Validation[Err, TxResult]] =
     ifSucceeds(entity) { entity: E =>
       for {
         tx <- openTransaction
-        deleteResult <- execute(tx, Json.arr(Json.obj("statement" -> ("MATCH (n:" + t.tag + ")-[r]-() WHERE id(n)=" + entity.node.id.toString + " DELETE r"))))
+        deleteResult <- executeDeleteRels(tx, entity)
         _ <- allOrNothing(tx, deleteResult)
       } yield deleteResult
     }
 
-  def set[E <: Entity] (entity: Validation[Err, E], prop: String, value: JsValue): Future[Validation[Err, WSResponse]] =
-    ifSucceeds(entity) { entity: E => setNodeProperty(Success(entity.node), prop, value) }
-
   def count[E <: Entity] (implicit t: Tagged[E]): Future[Validation[Err, Int]] = for {
     tx <- openTransaction
     txr <- execute(tx, Json.arr(Json.obj("statement" -> ("MATCH (n: " + t.tag + ") RETURN count(n)"))))
-    count <- extractCount(txr)
+    count <- ifSucceeds(txr) { result: TxResult =>
+      ifSucceeds((result.head("count(n)") \ "row")(0).validate[Int])(identity)
+    }
   } yield count
 
-  private def extractCount (txr: Validation[Err, TxResult]): Future[Validation[Err, Int]] =
-    ifSucceeds(txr) { result: TxResult => ifSucceeds((result.head("count(n)") \ "row")(0).validate[Int])(identity) }
+  private def newUrl[E <: Entity] (tx: Validation[Err, Transaction])(implicit t: Tagged[E]): Future[Validation[Err, String]] =
+    for {
+      result <- execute(tx, "MERGE (id:UniqueId{name:'General Entities IDs'}) ON CREATE SET id.count = 1 ON MATCH SET id.count = id.count + 1 RETURN id.count")
+      url <- ifSucceeds(result) { result: TxResult =>
+        ifSucceeds((result.head("id.count") \ "row")(0).validate[Int]) { uid: Int =>
+          ("/"+t.tag.toLowerCase+"/"+uid.toString)
+        }
+      }
+    } yield url
+
+  private def executeCreation[E <: Entity, P] (tx: Validation[Err, Transaction], url: Validation[Err, String], props: P)(implicit propsWrites: Writes[P], t: Tagged[E]): Future[Validation[Err, TxResult]] =
+    ifSucceeds(url) { url: String =>
+      execute(tx, Json.arr(Json.obj(
+        "statement" -> ("CREATE (n:"+t.tag+" {props}) RETURN n"),
+        "parameters" -> Json.obj(
+          "props" -> (Json.obj("url" -> url) ++ Json.toJson(props).as[JsObject])
+        ),
+        "resultDataContents" -> Json.arr("REST")
+      )))
+    }
+
+  private def executeGet[E <: Entity, P] (tx: Validation[Err, Transaction], url: String)(implicit t: Tagged[E]): Future[Validation[Err, TxResult]] =
+    execute(tx, Json.arr(Json.obj(
+      "statement" -> ("MATCH (n:"+t.tag+" {url: {urlmatcher}}) RETURN n"),
+      "parameters" -> Json.obj(
+        "urlmatcher" -> url
+      ),
+      "resultDataContents" -> Json.arr("REST")
+    )))
+
+  private def executeDelete[E <: Entity] (tx: Validation[Err, Transaction], entity: E)(implicit t: Tagged[E]): Future[Validation[Err, TxResult]] =
+    execute(tx, Json.arr(Json.obj(
+      "statement" -> ("MATCH (n:"+t.tag+" {url: {urlmatcher}}) DELETE n"),
+      "parameters" -> Json.obj(
+        "urlmatcher" -> entity.url
+      )
+    )))
+
+  private def executeDeleteRels[E <: Entity] (tx: Validation[Err, Transaction], entity: E)(implicit t: Tagged[E]): Future[Validation[Err, TxResult]] =
+    execute(tx, Json.arr(Json.obj(
+      "statement" -> ("MATCH (n:"+t.tag+" {url: {urlmatcher}})-[r]-() DELETE r"),
+      "parameters" -> Json.obj(
+        "urlmatcher" -> entity.url
+      )
+    )))
+
+  private def extractRESTNode (txr: Validation[Err, TxResult]): Future[Validation[Err, Node]] =
+    ifSucceeds(txr) { result: TxResult => ifSucceeds((result.head("n") \ "rest")(0).validate[Node])(identity) }
 }

@@ -23,20 +23,20 @@ class EntityCRUDSpecs extends Specification {
 
   trait TestEntities extends Around with Scope {
 
-    lazy val user1 = Await.result(create(UserBasicInfo("arckane.com/user1", "user1@test.org")), 2 seconds)
-    lazy val user2 = Await.result(create(UserBasicInfo("arckane.com/user2", "user2@test.org")), 2 seconds)
-    lazy val user1Id = user1 match {
-      case Success(user: User) => user.node.id
-      case Failure(error: Err) => println(error); -1
+    lazy val user1 = Await.result(create(UserBasicInfo("user1@test.org")), 2 seconds)
+    lazy val user2 = Await.result(create(UserBasicInfo("user2@test.org")), 2 seconds)
+    lazy val user1Url = user1 match {
+      case Success(user: User) => user.url
+      case Failure(error: Err) => println(error); ""
     }
-    lazy val user2Id = user2 match {
-      case Success(user: User) => user.node.id
-      case Failure(error: Err) => println(error); -1
+    lazy val user2Url = user2 match {
+      case Success(user: User) => user.url
+      case Failure(error: Err) => println(error); ""
     }
-    lazy val setUrl2 = Await.result(set(user2, "url", JsString("arckane.com/awesome")), 2 seconds)
+    lazy val setEmail2 = Await.result(set(user2, "email", JsString("user2@other.com")), 2 seconds)
     lazy val countUsers = Await.result(count[User], 2 seconds)
-    lazy val getUser1 = Await.result(get[User, UserBasicInfo](user1Id), 2 seconds)
-    lazy val getUser2 = Await.result(get[User, UserBasicInfo](user2Id), 2 seconds)
+    lazy val getUser1 = Await.result(get[User, UserBasicInfo](user1Url), 2 seconds)
+    lazy val getUser2 = Await.result(get[User, UserBasicInfo](user2Url), 2 seconds)
     lazy val deleteUser1 = Await.result(delete(user1), 2 seconds)
     lazy val deleteUser2 = Await.result(delete(user2), 2 seconds)
 
@@ -62,15 +62,15 @@ class EntityCRUDSpecs extends Specification {
 
     "Get" in new WithApplication with TestEntities {
       getUser1 match {
-        case Success(User(props: UserBasicInfo, node: Node)) => props.email must beEqualTo("user1@test.org")
+        case Success(User(props: UserBasicInfo, _, _)) => props.email must beEqualTo("user1@test.org")
         case Failure(error: Err) => ko(error.toString)
       }
     }
 
     "Set prop" in new WithApplication with TestEntities {
-      setUrl2 match {
+      setEmail2 match {
         case Success(_) => getUser2 match {
-          case Success(User(props: UserBasicInfo, node: Node)) => props.url must beEqualTo("arckane.com/awesome")
+          case Success(User(props: UserBasicInfo, _, _)) => props.email must beEqualTo("user2@other.com")
           case Failure(error: Err) => ko(error.toString)
         }
         case Failure(error: Err) => ko(error.toString)

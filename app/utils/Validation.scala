@@ -38,6 +38,16 @@ object ValidationOps {
     case (x: Failure[Err], _) => Future(x)
   }
 
+  def ifSucceedsF[A, B, C] (
+    a: Validation[Err, A],
+    b: Validation[Err, B]
+  )(f: (A, B) => C): Future[Validation[Err, C]] = (a, b) match {
+    case (Success(x), Success(y)) => Future(Success(f(x, y)))
+    case (Failure(x), Failure(y)) => Future(Failure(ListOfErrors(x :: y :: Nil)))
+    case (_, y: Failure[Err]) => Future(y)
+    case (x: Failure[Err], _) => Future(x)
+  }
+
   def ifSucceeds[A, B] (validation: JsResult[A])(f: A => B): Future[Validation[Err, B]] =
     validation match {
       case s: JsSuccess[A] =>
