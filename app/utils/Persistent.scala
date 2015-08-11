@@ -17,6 +17,12 @@ trait Persistent[E <: Entity, P] {
 
 object PersistentOps {
 
+  def getNode[E <: Entity, P] (tx: Validation[Err, Transaction], url: String)(implicit t: Tagged[E]): Future[Validation[Err, Node]] =
+    for {
+      result <- executeGet(tx, url)
+      node <- extractRESTNode(result)
+    } yield node
+
   def create[E <: Entity, P] (props: P)(implicit propsWrites: Writes[P], t: Tagged[E], per: Persistent[E, P]): Future[Validation[Err, E]] =
     for {
       tx <- openTransaction
@@ -30,8 +36,7 @@ object PersistentOps {
   def get[E <: Entity, P] (url: String)(implicit propsReads: Reads[P], t: Tagged[E], per: Persistent[E, P]): Future[Validation[Err, E]] =
     for {
       tx <- openTransaction
-      result <- executeGet(tx, url)
-      node <- extractRESTNode(result)
+      node <- getNode(tx, url)
       props <- getNodeProperties(node)
       entity <- ifSucceeds(props, node) { (props, node) =>
                   ifSucceeds(props.validate[P])(per.instantiate(_, url, node))
