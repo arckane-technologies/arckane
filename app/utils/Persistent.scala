@@ -43,6 +43,12 @@ object PersistentOps {
         Future(Failure(error))
     }}
 
+  private def newUniqueId (tx: Validation[Err, Transaction]): Future[Validation[Err, Int]] =
+    for {
+      result <- execute(tx, "MERGE (id:UniqueId{name:'General Entities IDs'}) ON CREATE SET id.count = 1 ON MATCH SET id.count = id.count + 1 RETURN id.count")
+      uid <- ifSucceeds(result) { result: TxResult => ifSucceeds((result.head("id.count") \ "row")(0).validate[Int])(identity) }
+    } yield uid
+
   def create[E <: Entity, P] (props: P)(implicit propsWrites: Writes[P], t: Tagged[E], per: Persistent[E, P]): Future[Validation[Err, E]] =
     for {
       tx <- openTransaction
@@ -60,16 +66,7 @@ object PersistentOps {
     )))
 
   private def extractNode (txr: Validation[Err, TxResult]): Future[Validation[Err, Node]] =
-    ifSucceeds(txr) { result: TxResult =>
-      (result.head("n") \ "rest")(0).validate[Node] match {
-        case s: JsSuccess[Node] =>
-          Future(Success(s.get))
-        case e: JsError =>
-          val error = DeserializationErr("JsError when trying to deserialize a Node: " + JsError.toJson(e).toString())
-          Logger.error(error.toString)
-          Future(Failure(error))
-      }
-    }
+    ifSucceeds(txr) { result: TxResult => ifSucceeds((result.head("n") \ "rest")(0).validate[Node])(identity) }
 
   def get[E <: Entity, P] (id: Int)(implicit propsReads: Reads[P], per: Persistent[E, P]): Future[Validation[Err, E]] = for {
     node <- getNode(id)
@@ -105,7 +102,5 @@ object PersistentOps {
   } yield count
 
   private def extractCount (txr: Validation[Err, TxResult]): Future[Validation[Err, Int]] =
-    ifSucceeds(txr) { result: TxResult =>
-      Future(Success((result.head("count(n)") \ "row")(0).as[Int]))
-    }
+    ifSucceeds(txr) { result: TxResult => ifSucceeds((result.head("count(n)") \ "row")(0).validate[Int])(identity) }
 }

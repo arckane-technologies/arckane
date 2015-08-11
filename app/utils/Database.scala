@@ -334,6 +334,9 @@ object DatabaseOps {
     } yield transaction)
   } yield validation
 
+  def execute (tx: Validation[Err, Transaction], statement: String): Future[Validation[Err, TxResult]] =
+    execute(tx, Json.arr(Json.obj("statement" -> statement)))
+
   def execute (tx: Validation[Err, Transaction], statements: JsValue): Future[Validation[Err, TxResult]] =
     ifSucceeds(tx) { tx: Transaction =>
       for {

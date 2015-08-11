@@ -4,7 +4,11 @@ import scala.concurrent._
 
 import scalaz.{Validation, Success, Failure}
 
+import play.api.Logger
+import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits._
+
+import utils.DatabaseOps.DeserializationErr
 
 object ValidationOps {
 
@@ -33,4 +37,14 @@ object ValidationOps {
     case (_, y: Failure[Err]) => Future(y)
     case (x: Failure[Err], _) => Future(x)
   }
+
+  def ifSucceeds[A, B] (validation: JsResult[A])(f: A => B): Future[Validation[Err, B]] =
+    validation match {
+      case s: JsSuccess[A] =>
+        Future(Success(f(s.get)))
+      case e: JsError =>
+        val error = DeserializationErr("JsError when trying to deserialize a db result: " + JsError.toJson(e).toString())
+        Logger.error(error.toString)
+        Future(Failure(error))
+    }
 }
