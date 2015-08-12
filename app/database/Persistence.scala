@@ -95,6 +95,20 @@ package object persistence {
       )
     } yield Unit
 
+    def relate[A, B] (that: Arcklet[A, B], relType: String, props: JsObject): Future[Unit] = for {
+      tx <- openTransaction
+      result <- tx lastly Json.obj(
+        "statement" -> (s"""MATCH (a:${arcklet.tag.str})(b:${that.tag.str})
+                            WHERE a.url = {aurl} AND b.url = {burl}
+                            CREATE (a)-[r:${relType} {props}]->(b)"""),
+        "parameters" -> Json.obj(
+          "aurl" -> arcklet.url,
+          "burl" -> that.url,
+          "props" -> props
+        )
+      )
+    } yield Unit
+
     def deleteRelationships (tx: Transaction): Future[Arcklet[T, P]] = for {
       _ <- tx execute Json.obj(
         "statement" -> ("MATCH (n:"+arcklet.tag.str+" {url: {urlmatcher}})-[r]-() DELETE r"),
