@@ -303,13 +303,14 @@ package object neo4j {
     def lastly (statement: String): Future[TxResult] =
       tx lastly Json.obj("statement" -> statement)
 
-    def finish: Future[TxResult] =
-      tx lastly Json.arr()
+    def finish: Future[Unit] = for {
+      _ <- tx lastly Json.arr()
+    } yield Unit
 
-    def rollback (tx: Transaction): Future[Transaction] = for {
+    def rollback: Future[Unit] = for {
       response <- withAuth(tx.self).delete()
       _ <- response statusMustBe 200
       _ <- response.checkForTransactionErrs
-    } yield tx
+    } yield Unit
   }
 }

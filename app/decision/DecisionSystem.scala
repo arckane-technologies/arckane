@@ -12,6 +12,13 @@ package object system {
       else (a - 1, b + 1)
   }
 
+  /* Influence transfer inverse. */
+  def notPi (t: (Int, Int)): (Int, Int) = t match {
+    case (a, b) =>
+      if (a <= 1) (a, b)
+      else (a - 1, b - 1)
+  }
+
   /* Less amount of users wont pass the decision. */
   val minVoters = 10
 

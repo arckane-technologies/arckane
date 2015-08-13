@@ -82,9 +82,8 @@ package object persistence {
       )
     } yield Arcklet(arcklet.tag, arcklet.url, prop -> value)
 
-    def relate[A, B] (that: Arcklet[A, B], relType: String): Future[Unit] = for {
-      tx <- openTransaction
-      result <- tx lastly Json.obj(
+    def relate[A, B] (that: Arcklet[A, B], tx: Transaction, relType: String): Future[Unit] = for {
+      _ <- tx lastly Json.obj(
         "statement" -> (s"""MATCH (a:${arcklet.tag.str}),(b:${that.tag.str})
                             WHERE a.url = {aurl} AND b.url = {burl}
                             CREATE (a)-[r:${relType}]->(b)"""),
@@ -95,9 +94,8 @@ package object persistence {
       )
     } yield Unit
 
-    def relate[A, B] (that: Arcklet[A, B], relType: String, props: JsObject): Future[Unit] = for {
-      tx <- openTransaction
-      result <- tx lastly Json.obj(
+    def relate[A, B] (that: Arcklet[A, B], tx: Transaction, relType: String, props: JsObject): Future[Unit] = for {
+      _ <- tx lastly Json.obj(
         "statement" -> (s"""MATCH (a:${arcklet.tag.str}),(b:${that.tag.str})
                             WHERE a.url = {aurl} AND b.url = {burl}
                             CREATE (a)-[r:${relType} {props}]->(b)"""),
@@ -107,6 +105,18 @@ package object persistence {
           "props" -> props
         )
       )
+    } yield Unit
+
+    def relate[A, B] (that: Arcklet[A, B], relType: String): Future[Unit] = for {
+      tx <- openTransaction
+      _ <- arcklet relate(that, tx, relType)
+      _ <- tx.finish
+    } yield Unit
+
+    def relate[A, B] (that: Arcklet[A, B], relType: String, props: JsObject): Future[Unit] = for {
+      tx <- openTransaction
+      _ <- arcklet relate(that, tx, relType, props)
+      _ <- tx.finish
     } yield Unit
 
     def deleteRelationships (tx: Transaction): Future[Arcklet[T, P]] = for {
