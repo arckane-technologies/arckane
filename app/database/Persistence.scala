@@ -85,7 +85,7 @@ package object persistence {
     def relate[A, B] (that: Arcklet[A, B], relType: String): Future[Unit] = for {
       tx <- openTransaction
       result <- tx lastly Json.obj(
-        "statement" -> (s"""MATCH (a:${arcklet.tag.str})(b:${that.tag.str})
+        "statement" -> (s"""MATCH (a:${arcklet.tag.str}),(b:${that.tag.str})
                             WHERE a.url = {aurl} AND b.url = {burl}
                             CREATE (a)-[r:${relType}]->(b)"""),
         "parameters" -> Json.obj(
@@ -98,7 +98,7 @@ package object persistence {
     def relate[A, B] (that: Arcklet[A, B], relType: String, props: JsObject): Future[Unit] = for {
       tx <- openTransaction
       result <- tx lastly Json.obj(
-        "statement" -> (s"""MATCH (a:${arcklet.tag.str})(b:${that.tag.str})
+        "statement" -> (s"""MATCH (a:${arcklet.tag.str}),(b:${that.tag.str})
                             WHERE a.url = {aurl} AND b.url = {burl}
                             CREATE (a)-[r:${relType} {props}]->(b)"""),
         "parameters" -> Json.obj(
@@ -135,7 +135,7 @@ package object persistence {
     } yield arcklet
   }
 
-  private implicit class PersistenceTxOps (tx: Transaction) {
+  implicit class PersistenceTxOps (tx: Transaction) {
 
     def createUrl[T] (tag: Tag[T]): Future[String] = for {
       result <- tx execute """MERGE (id:UniqueId{name:'General Entities IDs'})
@@ -148,7 +148,7 @@ package object persistence {
     } yield url
   }
 
-  private implicit class PersistenceTxResultOps (txr: TxResult) {
+  implicit class PersistenceTxResultOps (txr: TxResult) {
 
     def get[P](implicit reads: Reads[P]): Future[P] =
       proceed((txr.head("n") \ "row")(0).validate[P])(identity)

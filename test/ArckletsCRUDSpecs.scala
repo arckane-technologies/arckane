@@ -60,7 +60,7 @@ class ArckletsCRUDSpecs extends Specification {
     "Count" in new WithApplication with TestEntities {
       user1
       user2
-      countUsers must beEqualTo(2)
+      countUsers must be_>(0)
     }
 
     "Delete" in new WithApplication with TestEntities {

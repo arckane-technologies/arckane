@@ -1,5 +1,24 @@
 package decision
 
+package object system {
+
+  /* Initial influence. */
+  val phi: Int = 5
+
+  /* Influence transfer. */
+  def pi (t: (Int, Int)): (Int, Int) = t match {
+    case (a, b) =>
+      if (a <= 1) (a, b)
+      else (a - 1, b + 1)
+  }
+
+  /* Less amount of users wont pass the decision. */
+  val minVoters = 10
+
+  /* Commit threshold. */
+  def alpha (votes: List[Int]): Boolean = votes.length > minVoters && votes.sum > 0
+}
+
 object SimpleLogarithmicCommunity {
 
   /** In a Simple Logarithmic Community generations of members are formed
