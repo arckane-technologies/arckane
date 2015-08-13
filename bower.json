@@ -1,0 +1,19 @@
+{
+  "name": "arckane",
+  "version": "0.0.0",
+  "directory": "public/",
+  "authors": [
+    "Francisco Arámburo <atfm05@gmail.com>"
+  ],
+  "license": "Private",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.0.0"
+  }
+}
