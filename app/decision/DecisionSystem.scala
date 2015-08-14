@@ -10,6 +10,9 @@ package object system {
   /* Initial influence. */
   val phi: Int = 5
 
+  /* Minimun amount of influence a user can have. */
+  val minInfluence: Int = 1
+
   /* Influence transfer. */
   def pi (t: (Int, Int)): (Int, Int) = t match {
     case (a, b) =>

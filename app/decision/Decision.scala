@@ -86,9 +86,9 @@ package object decisions {
       votes <- extractVotes(result)
     } yield alpha(votes)
 
-    private def extractVotes (result: TxResult): Future[List[Int]] = Future {(
-      (((result.head("infusers.influence") \ "row").as[Seq[Int]] map (-_)) ++
-      (result.head("drainers.influence") \ "row").as[Seq[Int]]).toList
-    )}
+    private def extractVotes (result: TxResult): Future[List[Int]] = Future(
+      result("infusers.influence").map(_.as[Int]).map(-_) ++
+      result("drainers.influence").map(_.as[Int])
+    )
   }
 }

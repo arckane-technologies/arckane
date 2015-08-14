@@ -23,7 +23,7 @@ package object persistence {
           "urlmatcher" -> url
         )
       )
-      props <- Future((result.head("n") \ "row")(0).as[JsObject])
+      props <- Future(result("n")(0).as[JsObject])
     } yield Arcklet(tag, url, props)
 
     def getWith[P] (url: String)(implicit pr: Reads[P]): Future[Arcklet[T, P]] = for {
@@ -34,7 +34,7 @@ package object persistence {
           "urlmatcher" -> url
         )
       )
-      props <- result.get[P]
+      props <- Future(result("n")(0).as[P])
     } yield Arcklet(tag, url, props)
 
     def create (props: JsObject): Future[Arcklet[T, JsObject]] = for {
@@ -63,7 +63,7 @@ package object persistence {
       tx <- openTransaction
       result <- tx lastly Json.obj(
         "statement" -> ("MATCH (n:"+tag.str+") RETURN count(n)"))
-      count <- proceed((result.head("count(n)") \ "row")(0).validate[Int])(identity)
+      count <- Future(result("count(n)")(0).as[Int])
     } yield count
   }
 
@@ -79,7 +79,7 @@ package object persistence {
           "prop" -> prop
         )
       )
-    } yield (result.head("n."+prop) \ "row")(0).as[A]
+    } yield result("n."+prop)(0).as[A]
 
     def set[A] (prop: String, value: A)(implicit pw: Writes[A]): Future[Arcklet[T, (String, A)]] = for {
       tx <- openTransaction
@@ -164,15 +164,9 @@ package object persistence {
                               ON CREATE SET id.count = 1
                               ON MATCH SET id.count = id.count + 1
                               RETURN id.count"""
-      url <- proceed((result.head("id.count") \ "row")(0).validate[Int]) {
-        case uid => "/"+tag.str.toLowerCase+"/"+uid.toString
+      url <- result("id.count")(0).as[Int] match {
+        case uid => Future("/"+tag.str.toLowerCase+"/"+uid.toString)
       }
     } yield url
-  }
-
-  implicit class PersistenceTxResultOps (txr: TxResult) {
-
-    def get[P](implicit reads: Reads[P]): Future[P] =
-      proceed((txr.head("n") \ "row")(0).validate[P])(identity)
   }
 }

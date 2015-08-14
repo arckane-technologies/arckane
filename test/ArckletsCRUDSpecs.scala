@@ -43,7 +43,7 @@ class ArckletsCRUDSpecs extends Specification {
     def await[A] (ft: Future[A]): A = Await.result(ft, 2 seconds)
   }
 
-  "Entities CRUD opperations" should {
+  "Arcklets CRUD opperations" should {
 
     "Create" in new WithApplication with TestEntities {
       user1.props.name must beEqualTo("Franco")

@@ -118,7 +118,7 @@ package object neo4j {
 
   case class StatusErr (message: String) extends RuntimeException(message)
 
-  type TxResult = List[Map[String, JsValue]]
+  type TxResult = Map[String, List[JsValue]]
 
   private val address = Play.current.configuration.getString("neo4j.address").get
 
@@ -136,13 +136,6 @@ package object neo4j {
 
   private def withAuth (path: String): WSRequest =
     WS.url(path).withAuth(user, password, WSAuthScheme.BASIC)
-
-  def proceed[A, B] (validation: JsResult[A])(f: A => B): Future[B] = validation match {
-    case s: JsSuccess[A] =>
-      Future(f(s.get))
-    case e: JsError =>
-      throw DeserializationErr("JsError when trying to deserialize a db result: " + JsError.toJson(e).toString())
-  }
 
   def reachable: Future[WSResponse] = for {
     response <- withAuth(queryPath).head()
@@ -163,26 +156,35 @@ package object neo4j {
       else
         response.future
 
-    def deserialize[A](implicit reads: Reads[A]): Future[A] = proceed(response.json.validate[A])(identity)
+    def deserialize[A](implicit reads: Reads[A]): Future[A] = Future(response.json.as[A])
 
-    def checkForTransactionErrs: Future[WSResponse] =
-      proceed((response.json \ "errors").validate[Seq[DeserializedTxErr]]) {
+    def checkForTransactionErrs: Future[WSResponse] = Future(
+      (response.json \ "errors").as[Seq[DeserializedTxErr]] match {
         case errs =>
           if (errs.length > 0)
             throw TxErr(errs.toString)
           else
             response
       }
+    )
 
-    def transaction: Future[Transaction] = proceed(response.json.validate[Transaction]) {
+    def transaction: Future[Transaction] = Future(response.json.as[Transaction] match {
       case tx => Transaction(tx.commit.reverse.drop(7).reverse, tx.commit, tx.expires)
+    })
+
+    def txResult: Future[TxResult] = {
+      lazy val columns = ((response.json \ "results")(0) \ "columns").as[List[String]] zip Stream.from(0)
+      lazy val data = ((response.json \ "results")(0) \ "data" \\ "row").map(_.as[List[JsValue]])
+      lazy val result = (columns map {
+        case (col, i) => (col -> (data.map {
+          case json => json(i).as[JsValue]
+        }).toList)
+      }).toMap
+      if ((response.json \ "results").as[Seq[JsValue]].length > 0)
+        Future(result)
+      else
+        Future(Map.empty[String, List[JsValue]])
     }
-
-    def txResult: Future[TxResult] =
-      Future((response.json \ "results").as[List[JsValue]].map(extractResult(_)))
-
-    private def extractResult (js: JsValue): Map[String, JsValue] =
-      ((js \ "columns").as[List[String]] zip (js \ "data").as[List[JsValue]]).toMap
   }
 
   /**
