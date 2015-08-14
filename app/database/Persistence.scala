@@ -69,6 +69,18 @@ package object persistence {
 
   implicit class ArckletOps[T, P] (arcklet: Arcklet[T, P]) {
 
+    def get[A] (prop: String)(implicit pr: Reads[A]): Future[A] = for {
+      tx <- openTransaction
+      result <- tx lastly Json.obj(
+        "statement" -> (s"""MATCH (n:${arcklet.tag.str} {url: {urlmatcher}})
+                            RETURN n.${prop}"""),
+        "parameters" -> Json.obj(
+          "urlmatcher" -> arcklet.url,
+          "prop" -> prop
+        )
+      )
+    } yield (result.head("n."+prop) \ "row")(0).as[A]
+
     def set[A] (prop: String, value: A)(implicit pw: Writes[A]): Future[Arcklet[T, (String, A)]] = for {
       tx <- openTransaction
       _ <- tx lastly Json.obj(
