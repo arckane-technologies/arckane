@@ -8,7 +8,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 
 import database.neo4j._
 import database.persistence._
-import decision.system.{phi, pi, notPi, alpha}
+import decision.system.{phi, pi, notPi}
 
 package object user {
 
@@ -61,17 +61,15 @@ package object user {
 
   implicit class UserArckletOps[P] (user: Arcklet[User, P]) {
 
-    private def setInfluences[B] (tx: Transaction, that: Arcklet[User, B], vals: (Int, Int)): Future[Unit] = for {
-      _ <- tx execute Json.obj(
-        "statement" -> s"""MATCH (ua:${user.tag.str} {url: {uaUrl}}),(ub:${that.tag.str} {url: {ubUrl}}) SET ua.influence={uaInf}, ub.influence={ubInf}""",
-        "parameters" -> Json.obj(
-          "uaUrl" -> user.url,
-          "ubUrl" -> that.url,
-          "uaInf" -> vals._1,
-          "ubInf" -> vals._2
-        )
-      )
-    } yield Unit
+    def infuseUser[B] (that: Arcklet[User, B]): Future[Unit] = influenciate(that, "INFUSES")
+
+    def infuse[A, B] (that: Arcklet[A, B]): Future[Unit] = user relate(that, "INFUSES")
+
+    def drainUser[B] (that: Arcklet[User, B]): Future[Unit] = influenciate(that, "DRAINS")
+
+    def drain[A, B] (that: Arcklet[A, B]): Future[Unit] = user relate(that, "DRAINS")
+
+    //def propose (ident: String, args: JsObject): Future[Unit] =
 
     private def influenciate[B] (that: Arcklet[User, B], reltype: String): Future[Unit] = for {
       tx <- openTransaction
@@ -98,12 +96,16 @@ package object user {
         else tx.rollback
     } yield Unit
 
-    def infuseUser[B] (that: Arcklet[User, B]): Future[Unit] = influenciate(that, "INFUSES")
-
-    def infuse[A, B] (that: Arcklet[A, B]): Future[Unit] = user relate(that, "INFUSES")
-
-    def drainUser[B] (that: Arcklet[User, B]): Future[Unit] = influenciate(that, "DRAINS")
-
-    def drain[A, B] (that: Arcklet[A, B]): Future[Unit] = user relate(that, "DRAINS")
+    private def setInfluences[B] (tx: Transaction, that: Arcklet[User, B], vals: (Int, Int)): Future[Unit] = for {
+      _ <- tx execute Json.obj(
+        "statement" -> s"""MATCH (ua:${user.tag.str} {url: {uaUrl}}),(ub:${that.tag.str} {url: {ubUrl}}) SET ua.influence={uaInf}, ub.influence={ubInf}""",
+        "parameters" -> Json.obj(
+          "uaUrl" -> user.url,
+          "ubUrl" -> that.url,
+          "uaInf" -> vals._1,
+          "ubInf" -> vals._2
+        )
+      )
+    } yield Unit
   }
 }
