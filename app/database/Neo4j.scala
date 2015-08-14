@@ -173,17 +173,20 @@ package object neo4j {
     })
 
     def txResult: Future[TxResult] = {
-      lazy val columns = ((response.json \ "results")(0) \ "columns").as[List[String]] zip Stream.from(0)
-      lazy val data = ((response.json \ "results")(0) \ "data" \\ "row").map(_.as[List[JsValue]])
-      lazy val result = (columns map {
-        case (col, i) => (col -> (data.map {
-          case json => json(i).as[JsValue]
-        }).toList)
-      }).toMap
-      if ((response.json \ "results").as[Seq[JsValue]].length > 0)
+      val results = (response.json \ "results").as[Seq[JsValue]]
+      if (results.length > 0) {
+        val columns = (results(0) \ "columns").as[List[String]] zip Stream.from(0)
+        val data = (results(0) \ "data" \\ "row").map(_.as[List[JsValue]])
+        val result = (columns map {
+          case (col, i) => (col -> (data.map {
+            case json => json(i).as[JsValue]
+          }).toList)
+        }).toMap
         Future(result)
-      else
+      }
+      else {
         Future(Map.empty[String, List[JsValue]])
+      }
     }
   }
 
@@ -276,6 +279,14 @@ package object neo4j {
     _ <- response.checkForTransactionErrs
     transaction <- response.transaction
   } yield transaction
+
+  def query (statement: JsObject): Future[TxResult] = for {
+    tx <- openTransaction
+    result <- tx lastly statement
+  } yield result
+
+  def query (statement: String): Future[TxResult] =
+    query(Json.obj("statement" -> statement))
 
   implicit class TransactionOps (tx: Transaction) {
 

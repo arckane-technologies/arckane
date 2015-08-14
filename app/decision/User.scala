@@ -1,13 +1,16 @@
 package decision
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
+import akka.actor.ActorSystem
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.libs.concurrent.Execution.Implicits._
 
 import database.neo4j._
 import database.persistence._
+import decision.decisions._
 import decision.system.{phi, pi, notPi, minInfluence}
 
 package object user {
@@ -93,7 +96,13 @@ package object user {
 
     def drain[A, B] (that: Arcklet[A, B]): Future[Unit] = user relate(that, "DRAINS")
 
-    //def propose (ident: String, args: JsObject): Future[Unit] =
+    def propose (ident: String, description: String, args: JsObject)
+      (implicit electionsTime: FiniteDuration, minVoters: Int, actorsystem: ActorSystem): Future[Arcklet[Decision, DecisionManifest]] = for {
+      manifest <- DecisionTag createWith(DecisionManifest(ident, description))
+      args <- DecisionArgsTag create(args)
+      _ <- manifest relate(args, "WITH_ARGUMENTS")
+      _ <- Future(startElection(manifest, args))
+    } yield manifest
 
     private def influenciate[B] (that: Arcklet[User, B], reltype: String): Future[Unit] = for {
       tx <- openTransaction

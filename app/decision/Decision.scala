@@ -10,7 +10,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 
 import database.neo4j._
 import database.persistence._
-import decision.system.{alpha, electionsTime}
+import decision.system.{alpha, decisionMap}
 
 package object decisions {
 
@@ -46,10 +46,12 @@ package object decisions {
   trait DecisionArgs
   object DecisionArgsTag extends Tag[DecisionArgs]("DecisionArgs")
 
-  def startElection (manifest: Arcklet[Decision, DecisionManifest], args: Arcklet[DecisionArgs, JsObject])(implicit actorsystem: ActorSystem) = {
-    val current: Long = System.currentTimeMillis
-    val timeout: Long = electionsTime + manifest.props.createdOn - current
-    actorsystem.scheduler.scheduleOnce(timeout.milliseconds) {
+  def startElection (manifest: Arcklet[Decision, DecisionManifest], args: Arcklet[DecisionArgs, JsObject])
+    (implicit electionsTime: FiniteDuration, minVoters: Int, actorsystem: ActorSystem) = {
+    val current = System.currentTimeMillis.milliseconds
+    val created = manifest.props.createdOn.milliseconds
+    val timeout = electionsTime + created - current
+    actorsystem.scheduler.scheduleOnce(timeout) {
       for {
         passes <- manifest.assert
         _ <- if (passes) eleccionPasses(manifest, args)
@@ -59,11 +61,11 @@ package object decisions {
   }
 
   def eleccionPasses (manifest: Arcklet[Decision, DecisionManifest], args: Arcklet[DecisionArgs, JsObject]): Future[Unit] = for {
-    _ <- Future(1)
-  } yield Unit
+    _ <- manifest set(Json.obj("executed" -> true, "finishedOn" -> System.currentTimeMillis))
+  } yield decisionMap(manifest.props.ident, args.props)
 
   def eleccionFails (manifest: Arcklet[Decision, DecisionManifest], args: Arcklet[DecisionArgs, JsObject]): Future[Unit] = for {
-    _ <- Future(1)
+    _ <- manifest set("finishedOn", System.currentTimeMillis)
   } yield Unit
 
   /*
@@ -72,23 +74,26 @@ package object decisions {
 
   implicit class DecisionArckletOps[P] (decision: Arcklet[Decision, P]) {
 
-    def assert: Future[Boolean] = for {
+    def assert (implicit minVoters: Int): Future[Boolean] = for {
       tx <- openTransaction
-      result <- tx lastly Json.obj(
-        "statement" -> ("""MATCH (d:Decision {url: {durl}}),
-                                 (infusers:User)-[:INFUSES]->(d),
-                                 (drainers:User)-[:DRAINS]->(d)
-                           RETURN infusers.influence, drainers.influence"""),
-        "parameters" -> Json.obj(
-          "durl" -> decision.url
-        )
-      )
-      votes <- extractVotes(result)
+      infusers <- tx execute Json.obj(
+        "statement" -> "MATCH (u:User)-[:INFUSES]->(d:Decision {url: {durl}}) RETURN u.influence",
+        "parameters" -> Json.obj("durl" -> decision.url))
+      drainers <- tx lastly Json.obj(
+        "statement" -> "MATCH (u:User)-[:DRAINS]->(d:Decision {url: {durl}}) RETURN u.influence",
+        "parameters" -> Json.obj("durl" -> decision.url))
+      votes <- extractVotes(infusers, drainers)
     } yield alpha(votes)
 
-    private def extractVotes (result: TxResult): Future[List[Int]] = Future(
-      result("infusers.influence").map(_.as[Int]).map(-_) ++
-      result("drainers.influence").map(_.as[Int])
+    private def extractVotes (infusers: TxResult, drainers: TxResult): Future[List[Int]] = Future(
+      drainers("u.influence").map(_.as[Int]).map(-_) ++
+      infusers("u.influence").map(_.as[Int])
     )
+
+    def delete: Future[Unit] = for {
+      _ <- query(Json.obj(
+        "statement" -> "MATCH (d:Decision {url: {durl}}), (d)-[r]-(), (d)-[ra:WITH_ARGUMENTS]->(a:DecisionArgs) DELETE d, r, ra, a",
+        "parameters" -> Json.obj("durl" -> decision.url)))
+    } yield Unit
   }
 }
