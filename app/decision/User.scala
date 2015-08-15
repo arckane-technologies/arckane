@@ -16,7 +16,9 @@ import decision.system.{phi, pi, notPi, minInfluence}
 package object user {
 
   trait User
+
   object UserTag extends Tag[User]("User")
+
   case class UserInfo (
     email: String,
     name: String,
@@ -60,29 +62,26 @@ package object user {
 
     def create (props: JsObject): Future[Arcklet[User, JsObject]] = for {
       tx <- openTransaction
-      url <- tx createUrl userTag
-      result <- tx lastly Json.obj(
+      url <- userTag createUrl tx
+      _ <- tx lastly Json.obj(
         "statement" -> ("CREATE (n:"+userTag.str+" {props})"),
         "parameters" -> Json.obj(
           "props" -> (Json.obj(
             "url" -> url,
             "influence" -> phi
-          ) ++ props)
-        )
-      )
+          ) ++ props)))
     } yield Arcklet(userTag, url, props)
 
     def createWith[P] (props: P)(implicit pw: Writes[P]): Future[Arcklet[User, P]] = for {
       tx <- openTransaction
-      url <- tx createUrl userTag
-      result <- tx lastly Json.obj(
+      url <- userTag createUrl tx
+      _ <- tx lastly Json.obj(
         "statement" -> ("CREATE (n:"+userTag.str+" {props})"),
         "parameters" -> Json.obj(
           "props" -> (Json.obj(
             "url" -> url,
             "influence" -> phi
-        ) ++ Json.toJson(props).as[JsObject]))
-      )
+        ) ++ Json.toJson(props).as[JsObject])))
     } yield Arcklet(userTag, url, props)
   }
 
@@ -98,9 +97,11 @@ package object user {
 
     def propose (ident: String, description: String, args: JsObject)
       (implicit electionsTime: FiniteDuration, minVoters: Int, actorsystem: ActorSystem): Future[Arcklet[Decision, DecisionManifest]] = for {
-      manifest <- DecisionTag createWith(DecisionManifest(ident, description))
-      args <- DecisionArgsTag create(args)
-      _ <- manifest relate(args, "WITH_ARGUMENTS")
+      tx <- openTransaction
+      manifest <- DecisionTag createWith(tx, DecisionManifest(ident, description))
+      args <- DecisionArgsTag create(tx, args)
+      _ <- manifest relate(args, tx, "WITH_ARGUMENTS")
+      _ <- tx.finish
       _ <- Future(startElection(manifest, args))
     } yield manifest
 
@@ -110,23 +111,22 @@ package object user {
         "statement" -> s"""MATCH (ua:${user.tag.str} {url: {uaUrl}}),(ub:${that.tag.str} {url: {ubUrl}}) RETURN ua.influence, ub.influence""",
         "parameters" -> Json.obj(
           "uaUrl" -> user.url,
-          "ubUrl" -> that.url
-        )
-      )
-      influences <- Future((result("ua.influence")(0).as[Int] -> result("ub.influence")(0).as[Int]))
-      _ <-
-        if (influences._1 > minInfluence)
-          if (reltype == "INFUSES")
-            for {
-              _ <- setInfluences(tx, that, "INFUSES", pi(influences))
-              _ <- tx.finish
-            } yield Unit
-          else
-            for {
-              _ <- setInfluences(tx, that, "DRAINS", notPi(influences))
-              _ <- tx.finish
-            } yield Unit
-        else tx.rollback
+          "ubUrl" -> that.url))
+      influences <- Future((result(0)("ua.influence")(0).as[Int] -> result(0)("ub.influence")(0).as[Int]))
+      _ <- (influences._1, reltype) match {
+        case (inf, _) if inf <= minInfluence =>
+          tx.rollback
+        case (_, "INFUSES") =>
+          for {
+            _ <- setInfluences(tx, that, "INFUSES", pi(influences))
+            _ <- tx.finish
+          } yield Unit
+        case (_, "DRAINS") =>
+          for {
+            _ <- setInfluences(tx, that, "DRAINS", notPi(influences))
+            _ <- tx.finish
+          } yield Unit
+      }
     } yield Unit
 
     private def setInfluences[B] (tx: Transaction, that: Arcklet[User, B], reltype: String, vals: (Int, Int)): Future[Unit] = for {
@@ -136,9 +136,7 @@ package object user {
           "uaUrl" -> user.url,
           "ubUrl" -> that.url,
           "uaInf" -> vals._1,
-          "ubInf" -> vals._2
-        )
-      )
+          "ubInf" -> vals._2))
     } yield Unit
   }
 }

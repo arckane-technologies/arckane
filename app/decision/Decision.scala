@@ -15,7 +15,12 @@ import decision.system.{alpha, decisionMap}
 package object decisions {
 
   trait Decision
+
   object DecisionTag extends Tag[Decision]("Decision")
+
+  trait DecisionArgs
+
+  object DecisionArgsTag extends Tag[DecisionArgs]("DecisionArgs")
 
   case class DecisionManifest (
     ident: String,
@@ -42,9 +47,6 @@ package object decisions {
     (JsPath \ "finishedOn").read[Long] and
     (JsPath \ "executed").read[Boolean]
   )(DecisionManifest.apply _)
-
-  trait DecisionArgs
-  object DecisionArgsTag extends Tag[DecisionArgs]("DecisionArgs")
 
   def startElection (manifest: Arcklet[Decision, DecisionManifest], args: Arcklet[DecisionArgs, JsObject])
     (implicit electionsTime: FiniteDuration, minVoters: Int, actorsystem: ActorSystem) = {
@@ -76,18 +78,19 @@ package object decisions {
 
     def assert (implicit minVoters: Int): Future[Boolean] = for {
       tx <- openTransaction
-      infusers <- tx execute Json.obj(
-        "statement" -> "MATCH (u:User)-[:INFUSES]->(d:Decision {url: {durl}}) RETURN u.influence",
-        "parameters" -> Json.obj("durl" -> decision.url))
-      drainers <- tx lastly Json.obj(
-        "statement" -> "MATCH (u:User)-[:DRAINS]->(d:Decision {url: {durl}}) RETURN u.influence",
-        "parameters" -> Json.obj("durl" -> decision.url))
-      votes <- extractVotes(infusers, drainers)
+      result <- tx execute Json.arr(
+        Json.obj(
+          "statement" -> "MATCH (u:User)-[:INFUSES]->(d:Decision {url: {durl}}) RETURN u.influence",
+          "parameters" -> Json.obj("durl" -> decision.url)),
+        Json.obj(
+          "statement" -> "MATCH (u:User)-[:DRAINS]->(d:Decision {url: {durl}}) RETURN u.influence",
+          "parameters" -> Json.obj("durl" -> decision.url)))
+      votes <- extractVotes(result)
     } yield alpha(votes)
 
-    private def extractVotes (infusers: TxResult, drainers: TxResult): Future[List[Int]] = Future(
-      drainers("u.influence").map(_.as[Int]).map(-_) ++
-      infusers("u.influence").map(_.as[Int])
+    private def extractVotes (result: TxResult): Future[List[Int]] = Future(
+      result(0)("u.influence").map(_.as[Int]) ++
+      result(1)("u.influence").map(_.as[Int]).map(-_)
     )
 
     def delete: Future[Unit] = for {

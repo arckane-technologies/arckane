@@ -118,7 +118,8 @@ package object neo4j {
 
   case class StatusErr (message: String) extends RuntimeException(message)
 
-  type TxResult = Map[String, List[JsValue]]
+  /* First list is for results of every cypher query, then a map for each match and their list of value. */
+  type TxResult = List[Map[String, List[JsValue]]]
 
   private val address = Play.current.configuration.getString("neo4j.address").get
 
@@ -173,19 +174,21 @@ package object neo4j {
     })
 
     def txResult: Future[TxResult] = {
-      val results = (response.json \ "results").as[Seq[JsValue]]
+      val results = (response.json \ "results").as[List[JsValue]]
       if (results.length > 0) {
-        val columns = (results(0) \ "columns").as[List[String]] zip Stream.from(0)
-        val data = (results(0) \ "data" \\ "row").map(_.as[List[JsValue]])
-        val result = (columns map {
-          case (col, i) => (col -> (data.map {
-            case json => json(i).as[JsValue]
-          }).toList)
-        }).toMap
-        Future(result)
+        val rs = results.map { case result =>
+          val columns = (result \ "columns").as[List[String]] zip Stream.from(0)
+          val data = (result \ "data" \\ "row").map(_.as[List[JsValue]])
+          (columns.map { case (col, i) =>
+            (col -> (data.map { case json =>
+              json(i).as[JsValue]
+            }).toList)
+          }).toMap
+        }
+        Future(rs)
       }
       else {
-        Future(Map.empty[String, List[JsValue]])
+        Future(List.empty[Map[String, List[JsValue]]])
       }
     }
   }
@@ -280,10 +283,13 @@ package object neo4j {
     transaction <- response.transaction
   } yield transaction
 
-  def query (statement: JsObject): Future[TxResult] = for {
+  def query (statement: JsArray): Future[TxResult] = for {
     tx <- openTransaction
     result <- tx lastly statement
   } yield result
+
+  def query (statement: JsObject): Future[TxResult] =
+    query(Json.arr(statement))
 
   def query (statement: String): Future[TxResult] =
     query(Json.obj("statement" -> statement))
