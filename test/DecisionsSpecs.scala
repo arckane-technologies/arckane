@@ -49,7 +49,7 @@ class DecisionsSpecs extends Specification {
         _ <- user2.delete
         _ <- user3.delete
         _ <- user4.delete
-      } yield name, 2 seconds)
+      } yield name , 2 seconds)
 
       skillName must beEqualTo("Functional Programming")
     }
