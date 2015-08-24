@@ -1,6 +1,6 @@
 {
   "name": "arckane",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "directory": "public/",
   "authors": [
     "Francisco Arámburo <atfm05@gmail.com>"
@@ -14,7 +14,9 @@
     "tests"
   ],
   "dependencies": {
-    "polymer": "Polymer/polymer#^1.0.0",
-    "arckane-app": "git@bitbucket.org:FrancoAra/arckane-app.git#~0.0.1"
+    "polymer": "Polymer/polymer#^1.0.0"
+  },
+  "resolutions": {
+    "polymer": "^1.0.0"
   }
 }
