@@ -166,5 +166,12 @@ package object persistence {
       _ <- arcklet deleteNode tx
       _ <- tx.finish
     } yield Unit
+
+    def writes (implicit wr: Writes[P]): Writes[Arcklet[T, P]] = new Writes[Arcklet[T, P]] {
+      def writes(arcklet: Arcklet[T, P]) = Json.obj(
+        "type" -> arcklet.tag.str,
+        "url" -> arcklet.url
+      ) ++ Json.toJson(arcklet.props).as[JsObject]
+    }
   }
 }

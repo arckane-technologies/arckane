@@ -21,34 +21,19 @@ package object user {
 
   case class UserInfo (
     email: String,
-    name: String,
-    surname: String = "",
-    gender: String = "",
-    day: Int = 0,
-    month: Int = 0,
-    year: Int = 0
+    name: String
   )
 
   implicit val userInfoWrites = new Writes[UserInfo] {
     def writes(props: UserInfo) = Json.obj(
       "email" -> props.email,
-      "name" -> props.name,
-      "surname" -> props.surname,
-      "gender" -> props.gender,
-      "day" -> props.day,
-      "month" -> props.month,
-      "year" -> props.year
+      "name" -> props.name
     )
   }
 
   implicit val userInfoReads = (
     (JsPath \ "email").read[String] and
-    (JsPath \ "name").read[String] and
-    (JsPath \ "surname").read[String] and
-    (JsPath \ "gender").read[String] and
-    (JsPath \ "day").read[Int] and
-    (JsPath \ "month").read[Int] and
-    (JsPath \ "year").read[Int]
+    (JsPath \ "name").read[String]
   )(UserInfo.apply _)
 
   /*
@@ -83,6 +68,18 @@ package object user {
             "influence" -> phi
         ) ++ Json.toJson(props).as[JsObject])))
     } yield Arcklet(userTag, url, props)
+
+    def authenticate (email: String, password: String): Future[Option[JsObject]] = for {
+      result <- query(Json.obj(
+        "statement" -> ("MATCH (n:"+userTag.str+" {email: {emailmatch}, password: {passmatch}}) RETURN n.url, n.name"),
+        "parameters" -> Json.obj(
+          "emailmatch" -> email,
+          "passmatch" -> password
+        )))
+    } yield if (result(0)("n.url").length == 0)
+        None
+      else
+        Some(Json.obj("url" -> result(0)("n.url")(0), "email" -> email, "name" -> result(0)("n.name")(0)))
   }
 
   implicit class UserArckletOps[P] (user: Arcklet[User, P]) {

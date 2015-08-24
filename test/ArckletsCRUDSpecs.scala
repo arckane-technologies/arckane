@@ -1,8 +1,6 @@
 import scala.concurrent._
 import scala.concurrent.duration._
 
-import scalaz.{Validation, Success, Failure}
-
 import org.specs2.mutable._
 import org.specs2.execute.AsResult
 import org.specs2.execute.Result
