@@ -17,7 +17,8 @@
     "polymer": "Polymer/polymer#^1.0.0",
 
     "arckane-home": "git@bitbucket.org:arckane/arckane-home#~0.0",
-    "arckane-user-page": "git@bitbucket.org:arckane/arckane-user-page#~0.0"
+    "arckane-user-page": "git@bitbucket.org:arckane/arckane-user-page#~0.0",
+    "arckane-skill-page": "git@bitbucket.org:arckane/arckane-skill-page#~0.0"
   },
   "resolutions": {
     "polymer": "^1.0.0"
