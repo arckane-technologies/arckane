@@ -40,9 +40,10 @@ package object system {
   def alpha (votes: List[Int])(implicit mv: Int): Boolean = votes.length >= mv && votes.sum > 0
 
   val decisionMap: PartialFunction[(String, JsObject), Unit] = {
-    case ("rename skill", args) => for {
-      skill <- SkillTag get((args \ "skill").as[String])
-      _ <- skill set("name", (args \ "name").as[String])
-    } yield Unit
+    case ("rename skill", args) =>
+      SkillTag.get((args \ "skill").as[String]).map {
+        case Some(skill) => skill.set("name", (args \ "name").as[String])
+        case None => throw new RuntimeException("Wrong arguments for decision 'rename skill'")
+      }
   }
 }

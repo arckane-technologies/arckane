@@ -15,25 +15,27 @@ package object persistence {
 
   implicit class TagOps[T] (tag: Tag[T]) {
 
-    def get (url: String): Future[Arcklet[T, JsObject]] = for {
-      tx <- openTransaction
-      result <- tx lastly Json.obj(
+    def get (url: String): Future[Option[Arcklet[T, JsObject]]] = for {
+      result <- query(Json.obj(
         "statement" -> ("MATCH (n:"+tag.str+" {url: {urlmatcher}}) RETURN n"),
         "parameters" -> Json.obj(
           "urlmatcher" -> url
-        ))
-      props <- Future(result(0)("n")(0).as[JsObject])
-    } yield Arcklet(tag, url, props)
+        )))
+    } yield if (result(0)("n").length > 0)
+        Some(Arcklet(tag, url, result(0)("n")(0).as[JsObject]))
+      else
+        None
 
-    def getWith[P] (url: String)(implicit pr: Reads[P]): Future[Arcklet[T, P]] = for {
-      tx <- openTransaction
-      result <- tx lastly Json.obj(
+    def getWith[P] (url: String)(implicit pr: Reads[P]): Future[Option[Arcklet[T, P]]] = for {
+      result <- query(Json.obj(
         "statement" -> ("MATCH (n:"+tag.str+" {url: {urlmatcher}}) RETURN n"),
         "parameters" -> Json.obj(
           "urlmatcher" -> url
-        ))
-      props <- Future(result(0)("n")(0).as[P])
-    } yield Arcklet(tag, url, props)
+        )))
+    } yield if(result(0)("n").length > 0)
+        Some(Arcklet(tag, url, result(0)("n")(0).as[P]))
+      else
+        None
 
     def create (tx: Transaction, props: JsObject): Future[Arcklet[T, JsObject]] = for {
       url <- createUrl(tx)

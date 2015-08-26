@@ -45,12 +45,10 @@ class Application extends Controller {
     Ok(views.html.index()).withNewSession
   }
 
-  def user (id: String) = Action { request =>
-    // CHANGE ME: Load from db the user profile
-    request.session.get("name").map { name =>
-      Ok(views.html.user("/user/"+id, name))
-    }.getOrElse {
-      InternalServerError("Invalid name value in session.")
+  def user (id: String) = Action.async { request =>
+    UserTag.getWith[UserInfo]("/user/"+id).map {
+      case Some(arcklet) => Ok(views.html.user("/user/"+id, arcklet.props.name))
+      case None => NotFound("ERROR 404: User "+id+" not found.")
     }
   }
 }
