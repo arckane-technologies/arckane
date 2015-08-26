@@ -62,35 +62,9 @@ class Application extends Controller {
   }
 
   def skill (book: String, skill: String) = Action.async { request =>
-    Future(Ok("Hola :p"))
+    SkillTag.getPageData("/skill/"+skill, "/skillbook/"+book).map {
+      case Some(pageData) => Ok(views.html.skill(pageData("name"), pageData("skillbookName"), pageData("url"), pageData("skillbookUrl"), pageData("description"), pageData("data")))
+      case None => NotFound("ERROR 404: Skill "+skill+" not found.")
+    }
   }
-  /*
-  """{"related": [
-    {"name": "Variable", "infusionTarget": "/skill/123", "url": "/book/123/skill/123", "content": "Some description..."},
-    {"name": "Evaluation", "infusionTarget": "/skill/123", "url": "/book/123/skill/123", "content": "Something..."},
-    {"name": "While Loops", "infusionTarget": "/skill/123", "url": "/book/123/skill/123", "content": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industrys standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum. "},
-    {"name": "Functional Programming", "infusionTarget": "/skill/123", "url": "/book/123/skill/123", "content": "In computer science, functional programming is a programming paradigm—a style of building the structure and elements of computer programs—that treats computation as the evaluation of mathematical functions and avoids changing-state and mutable data."},
-    {"name": "Evaluation", "infusionTarget": "/skill/123", "url": "/book/123/skill/123", "content": "Something..."},
-    {"name": "While Loops", "infusionTarget": "/skill/123", "url": "/book/123/skill/123", "content": "Something..."},
-    {"name": "Variable", "infusionTarget": "/skill/123", "url": "/book/123/skill/123", "content": "Some description..."},
-    {"name": "Evaluation", "infusionTarget": "/skill/123", "url": "/book/123/skill/123", "content": "Something..."},
-    {"name": "While Loops", "infusionTarget": "/skill/123", "url": "/book/123/skill/123", "content": "Something..."},
-    {"name": "Variable", "infusionTarget": "/skill/123", "url": "/book/123/skill/123", "content": "Some description..."},
-    {"name": "Evaluation", "infusionTarget": "/skill/123", "url": "/book/123/skill/123", "content": "Something..."},
-    {"name": "While Loops", "infusionTarget": "/skill/123", "url": "/book/123/skill/123", "content": "Something..."},
-    {"name": "Variable", "infusionTarget": "/skill/123", "url": "/book/123/skill/123", "content": "Some description..."},
-    {"name": "Evaluation", "infusionTarget": "/skill/123", "url": "/book/123/skill/123", "content": "Something..."},
-    {"name": "While Loops", "infusionTarget": "/skill/123", "url": "/book/123/skill/123", "content": "Something..."}
-  ], "resources": [
-    {"name": "Some Book Chapter", "resourceType": "book", "infusionTarget": "/resource/0", "url": "/skill/123", "content": "Something..."},
-    {"name": "Cool Video", "resourceType": "video", "infusionTarget": "/resource/0", "url": "/skill/123", "content": "Something..."},
-    {"name": "May be Legal PDF", "resourceType": "pdf", "infusionTarget": "/resource/0", "url": "/skill/123", "content": "Something..."},
-    {"name": "n-person Games Equilibrium", "resourceType": "paper", "infusionTarget": "/resource/0", "url": "/skill/123", "content": "Something..."},
-    {"name": "Standford R01-1", "resourceType": "lecture", "infusionTarget": "/resource/0", "url": "/skill/123", "content": "Something..."},
-    {"name": "Google Edu", "resourceType": "slides", "infusionTarget": "/resource/0", "url": "/skill/123", "content": "Something..."},
-    {"name": "W3School: HTML", "resourceType": "article", "infusionTarget": "/resource/0", "url": "/skill/123", "content": "Something..."},
-    {"name": "Amazing Infographic", "resourceType": "image", "infusionTarget": "/resource/0", "url": "/skill/123", "content": "Something..."},
-    {"name": "Scala at the Sea", "resourceType": "event", "infusionTarget": "/resource/0", "url": "/skill/123", "content": "Something..."}
-  ]}"""
-  */
 }

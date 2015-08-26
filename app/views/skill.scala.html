@@ -1,0 +1,9 @@
+@(name: String, book: String, url: String, bookUrl: String, description: String, data: String)
+
+@main("Arckane: "+name) {
+
+  <link rel="import" href="@routes.Assets.versioned("components/arckane-skill-page/arckane-skill-page.html")">
+
+  <arckane-skill-page skillname="@name" skillbook="@book" book-url="@bookUrl" url="@url" description="@description" data='@data'></arckane-skill-page>
+
+}
