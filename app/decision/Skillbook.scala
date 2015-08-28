@@ -28,15 +28,16 @@ package object skillbook {
         ))))
     } yield if (result.length > 0)
         Some(Map(
-          "url" -> url,
           "name" -> result(0)("n.name")(0).as[String],
+          "url" -> url,
           "description" -> result(0)("n.description")(0).as[String],
-          "data" -> Json.obj("related" -> Json.toJson(result(1)("s.name").zipWithIndex.map { case (name, index) => Json.obj(
+          "data" -> Json.toJson(result(1)("s.name").zipWithIndex.map { case (name, index) => Json.obj(
             "name" -> name,
             "url" -> (url + result(1)("s.url")(index).as[String]),
+            "resourceType" -> "skill",
             "infusionTarget" -> result(1)("s.url")(index),
-            "content" -> result(1)("s.description")(index))
-        })).toString))
+            "description" -> result(1)("s.description")(index))
+        }).toString))
       else
         None
   }

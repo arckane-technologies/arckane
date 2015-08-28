@@ -9,6 +9,7 @@ GET     /signout                    controllers.Application.signout
 GET     /user/:id                   controllers.Application.user(id: String)
 GET     /skillbook/:id              controllers.Application.skillbook(id: String)
 GET     /skillbook/:bookid/skill/:skillid controllers.Application.skill(bookid: String, skillid: String)
+GET     /search                     controllers.Application.search
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
