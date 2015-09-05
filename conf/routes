@@ -10,6 +10,9 @@ GET     /signout                    controllers.Application.signout
 # Front-end API
 GET     /api/skill/data             controllers.FrontendApi.skillInfo
 GET     /api/search                 controllers.FrontendApi.search
+GET     /api/search/skill           controllers.FrontendApi.searchSkill
+POST    /api/propose/skill          controllers.FrontendApi.proposeSkill
+POST    /api/propose/resource       controllers.FrontendApi.proposeResource
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

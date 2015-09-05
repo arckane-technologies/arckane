@@ -14,8 +14,8 @@
     "tests"
   ],
   "dependencies": {
-    "polymer": "Polymer/polymer#^1.0.0",
-    "arckane-polymer": "git@bitbucket.org:arckane/arckane-polymer.git#~0.0"
+    "arckane-polymer": "git@bitbucket.org:arckane/arckane-polymer.git#~0.0",
+    "polymer": "Polymer/polymer#^1.0.0"
   },
   "resolutions": {
     "polymer": "^1.0.0"

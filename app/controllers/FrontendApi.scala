@@ -12,6 +12,7 @@ import database.persistence._
 import decision.user._
 import decision.skill._
 import decision.skillbook._
+import decision.resource._
 
 class FrontendApi extends Controller {
 
@@ -92,6 +93,82 @@ class FrontendApi extends Controller {
       }
     }.getOrElse {
       Future(BadRequest("Expected search query string."))
+    }
+  }
+
+  def searchSkill = Action.async { request =>
+    request.queryString.get("search").map { search =>
+      for {
+        result <- query(Json.obj(
+          // SEARCH: Skills
+          "statement" -> "MATCH (n:Skill) WHERE n.name =~ { regex } RETURN n.name",
+          "parameters" -> Json.obj(
+            "regex" -> ("(?i).*"+search.head+".*")
+        )))
+      } yield if (result.length > 0) {
+        Ok(Json.toJson(result(0)("n.name")))
+      } else {
+        Ok(Json.arr())
+      }
+    }.getOrElse {
+      Future(BadRequest("Expected search query string."))
+    }
+  }
+
+  def proposeSkill = Action.async { request =>
+    request.body.asFormUrlEncoded.map { form =>
+      SkillTag.create(Json.obj(
+        "name" -> form("name").head,
+        "description" -> form("description").head,
+        "resourceType" -> "skill"
+      )).map { arcklet =>
+        Ok(Json.obj("url" -> arcklet.url))
+      }
+    }.getOrElse {
+      Future(BadRequest("Expected a url encoded form."))
+    }
+  }
+
+  def proposeResource = Action.async { request =>
+    request.body.asFormUrlEncoded.map { form =>
+      val rtype = form("type").head
+      val forSkill = form("forSkill").head.replaceAll("""^[\s\r\n]+""", "").replaceAll("""[\s\r\n]+$""", "")
+      if (rtype == "skill") {
+        val relatedSkill = form("relatedSkill").head.replaceAll("""^[\s\r\n]+""", "").replaceAll("""[\s\r\n]+$""", "")
+        for {
+          result <- query(Json.obj(
+            "statement" -> ("MATCH (a:Skill {name: {source}}),(b:Skill {name: {target}}) MERGE (a)-[:RELATED]->(b) RETURN a.url"),
+            "parameters" -> Json.obj(
+              "source" -> forSkill,
+              "target" -> relatedSkill
+            )))
+        } yield if (result(0)("a.url").length == 1) {
+          Ok(Json.obj("url" -> result(0)("a.url")(0)))
+        } else {
+          InternalServerError("Something went wrong with the query.")
+        }
+      } else {
+        for {
+          arcklet <- ResourceTag.create(Json.obj(
+            "name" -> form("name").head,
+            "resourceType" -> rtype,
+            "resourceUrl" -> form("url").head,
+            "description" -> form("description").head
+          ))
+          result <- query(Json.obj(
+            "statement" -> ("MATCH (a:Skill {name: {source}}),(b:Resource {url: {target}}) MERGE (a)-[:HAS_RESOURCE]->(b) RETURN a.url"),
+            "parameters" -> Json.obj(
+              "source" -> forSkill,
+              "target" -> arcklet.url
+            )))
+        } yield if (result(0)("a.url").length == 1) {
+          Ok(Json.obj("url" -> result(0)("a.url")(0)))
+        } else {
+          InternalServerError("Something went wrong with the query.")
+        }
+      }
+    }.getOrElse {
+      Future(BadRequest("Expected a url encoded form."))
     }
   }
 }
