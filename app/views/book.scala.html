@@ -1,9 +1,0 @@
-@(name: String, url: String, description: String, data: String)
-
-@main("Arckane: "+name) {
-
-  <link rel="import" href="@routes.Assets.versioned("components/arckane-skill-page/arckane-skill-page.html")">
-
-  <arckane-skill-page is-skillbook skillbook="@name" book-url="@url"  url="@url" description="@description" data='@data'></arckane-skill-page>
-
-}

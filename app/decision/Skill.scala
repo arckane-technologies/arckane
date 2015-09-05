@@ -16,17 +16,12 @@ package object skill {
 
   implicit class SkillTagOps (tag: Tag[Skill]) {
 
-    def getPageData (skillUrl: String, skillbookUrl: String): Future[Option[Map[String, String]]] = for {
+    def getPageData (skillUrl: String): Future[Option[JsObject]] = for {
       result <- query(Json.arr(Json.obj(
         // Skill info
         "statement" -> ("MATCH (skill:"+tag.str+" {url: {urlmatcher}}) RETURN skill.name, skill.description"),
         "parameters" -> Json.obj(
           "urlmatcher" -> skillUrl
-        )), Json.obj(
-        // Book Info
-        "statement" -> ("MATCH (book:Skillbook {url: {urlmatcher}}) RETURN book.name"),
-        "parameters" -> Json.obj(
-          "urlmatcher" -> skillbookUrl
         )), Json.obj(
         // Related Skills
         "statement" -> ("MATCH (skill:"+tag.str+" {url: {urlmatcher}})-[:RELATED]->(s:Skill) RETURN s.name, s.url, s.description"),
@@ -38,27 +33,26 @@ package object skill {
         "parameters" -> Json.obj(
           "urlmatcher" -> skillUrl
         ))))
-    } yield if (result.length > 0)
-        Some(Map(
+    } yield if (result.length > 0) {
+        Some(Json.obj(
           "name" -> result(0)("skill.name")(0).as[String],
-          "url" -> skillUrl,
-          "skillbookUrl" -> skillbookUrl,
-          "skillbookName" -> result(1)("book.name")(0).as[String],
           "description" -> result(0)("skill.description")(0).as[String],
-          "data" -> (Json.toJson(result(2)("s.name").zipWithIndex.map { case (name, index) => Json.obj(
+          "related" -> (Json.toJson(result(1)("s.name").zipWithIndex.map { case (name, index) => Json.obj(
             "name" -> name,
-            "url" -> (skillbookUrl + result(2)("s.url")(index).as[String]),
+            "url" -> result(1)("s.url")(index),
             "resourceType" -> "skill",
-            "infusionTarget" -> result(2)("s.url")(index),
-            "description" -> result(2)("s.description")(index))
-        }).as[JsArray] ++ Json.toJson(result(3)("r.name").zipWithIndex.map { case (name, index) => Json.obj(
+            "infusionTarget" -> result(1)("s.url")(index),
+            "description" -> result(1)("s.description")(index))
+          }).as[JsArray] ++ Json.toJson(result(2)("r.name").zipWithIndex.map { case (name, index) => Json.obj(
             "name" -> name,
-            "url" -> result(3)("r.resourceUrl")(index),
-            "resourceType" -> result(3)("r.resourceType")(index),
-            "infusionTarget" -> result(3)("r.url")(index),
-            "description" -> result(3)("r.description")(index))
-        }).as[JsArray]).toString))
-      else
+            "url" -> result(2)("r.resourceUrl")(index),
+            "resourceType" -> result(2)("r.resourceType")(index),
+            "infusionTarget" -> result(2)("r.url")(index),
+            "description" -> result(2)("r.description")(index))
+          }).as[JsArray]))
+        )
+      } else {
         None
+      }
   }
 }
