@@ -115,11 +115,32 @@ class FrontendApi extends Controller {
     }
   }
 
+  def searchAvailability = Action.async { request =>
+    (for {
+      tags <- request.queryString.get("tags")
+      attribute <- request.queryString.get("attribute")
+      value <- request.queryString.get("value")
+    } yield (tags.head, attribute.head, trim(value.head))).map { case (tags, attribute, value) =>
+      for {
+        result <- query(Json.obj(
+          "statement" -> ("MATCH (n) WHERE n"+tags+" AND n."+attribute+" = {value} RETURN count(n)"),
+          "parameters" -> Json.obj(
+            "value" -> value
+        )))
+      } yield if (result(0)("count(n)")(0).as[Int] > 0)
+        Ok(Json.obj("invalid" -> true))
+      else
+        Ok(Json.obj("invalid" -> false))
+    }.getOrElse {
+      Future(BadRequest("Expected a name, attribute and tags query strings."))
+    }
+  }
+
   def proposeSkill = Action.async { request =>
     request.body.asFormUrlEncoded.map { form =>
       SkillTag.create(Json.obj(
-        "name" -> form("name").head,
-        "description" -> form("description").head,
+        "name" -> trim(form("name").head),
+        "description" -> trim(form("description").head),
         "resourceType" -> "skill"
       )).map { arcklet =>
         Ok(Json.obj("url" -> arcklet.url))
@@ -132,9 +153,9 @@ class FrontendApi extends Controller {
   def proposeResource = Action.async { request =>
     request.body.asFormUrlEncoded.map { form =>
       val rtype = form("type").head
-      val forSkill = form("forSkill").head.replaceAll("""^[\s\r\n]+""", "").replaceAll("""[\s\r\n]+$""", "")
+      val forSkill = trim(form("forSkill").head)
       if (rtype == "skill") {
-        val relatedSkill = form("relatedSkill").head.replaceAll("""^[\s\r\n]+""", "").replaceAll("""[\s\r\n]+$""", "")
+        val relatedSkill = trim(form("relatedSkill").head)
         for {
           result <- query(Json.obj(
             "statement" -> ("MATCH (a:Skill {name: {source}}),(b:Skill {name: {target}}) MERGE (a)-[:RELATED]->(b) RETURN a.url"),
@@ -150,10 +171,10 @@ class FrontendApi extends Controller {
       } else {
         for {
           arcklet <- ResourceTag.create(Json.obj(
-            "name" -> form("name").head,
+            "name" -> trim(form("name").head),
             "resourceType" -> rtype,
-            "resourceUrl" -> form("url").head,
-            "description" -> form("description").head
+            "resourceUrl" -> trim(form("url").head),
+            "description" -> trim(form("description").head)
           ))
           result <- query(Json.obj(
             "statement" -> ("MATCH (a:Skill {name: {source}}),(b:Resource {url: {target}}) MERGE (a)-[:HAS_RESOURCE]->(b) RETURN a.url"),
@@ -171,4 +192,7 @@ class FrontendApi extends Controller {
       Future(BadRequest("Expected a url encoded form."))
     }
   }
+
+  private def trim (str: String): String =
+    str.replaceAll("""^[\s\r\n]+""", "").replaceAll("""[\s\r\n]+$""", "")
 }
