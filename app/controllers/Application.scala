@@ -17,10 +17,11 @@ class Application extends Controller {
     (for {
       name <- request.session.get("name")
       home <- request.session.get("home")
+      skillbooks <- request.session.get("skillbooks")
     } yield Ok(views.html.app(Json.obj(
       "name" -> name,
       "home" -> home,
-      "skillbooks" -> Json.arr()
+      "skillbooks" -> Json.parse(skillbooks)
     ).toString))).getOrElse {
       Ok(views.html.index())
     }
@@ -35,7 +36,8 @@ class Application extends Controller {
           .withSession(
             "connected" -> (user \ "email").as[String],
             "name" -> (user \ "name").as[String],
-            "home" -> (user \ "url").as[String])
+            "home" -> (user \ "url").as[String],
+            "skillbooks" -> (user \ "skillbooks").as[JsArray].toString)
         case None => Ok(Json.obj("success" -> false))
       }
     }.getOrElse {

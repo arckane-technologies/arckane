@@ -71,15 +71,28 @@ package object user {
 
     def authenticate (email: String, password: String): Future[Option[JsObject]] = for {
       result <- query(Json.obj(
-        "statement" -> ("MATCH (n:"+userTag.str+" {email: {emailmatch}, password: {passmatch}}) RETURN n.url, n.name"),
+        "statement" -> ("MATCH (n:"+userTag.str+" {email: {emailmatch}, password: {passmatch}}) OPTIONAL MATCH (n)-[r:PIN]-(s:Skillbook) RETURN n.url, n.name, s"),
         "parameters" -> Json.obj(
           "emailmatch" -> email,
           "passmatch" -> password
         )))
     } yield if (result(0)("n.url").length == 0)
         None
-      else
-        Some(Json.obj("url" -> result(0)("n.url")(0), "email" -> email, "name" -> result(0)("n.name")(0)))
+      else if (result(0)("s")(0) == JsNull) {
+        Some(Json.obj(
+          "url" -> result(0)("n.url")(0),
+          "email" -> email,
+          "name" -> result(0)("n.name")(0),
+          "skillbooks" -> Json.arr()
+        ))
+      } else {
+        Some(Json.obj(
+          "url" -> result(0)("n.url")(0),
+          "email" -> email,
+          "name" -> result(0)("n.name")(0),
+          "skillbooks" -> Json.toJson(result(0)("s"))
+        ))
+      }
   }
 
   implicit class UserArckletOps[P] (user: Arcklet[User, P]) {
