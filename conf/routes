@@ -13,6 +13,7 @@ GET     /api/search                 controllers.FrontendApi.search
 GET     /api/search/skill           controllers.FrontendApi.searchSkill
 GET     /api/search/availability    controllers.FrontendApi.searchAvailability
 POST    /api/propose/skill          controllers.FrontendApi.proposeSkill
+POST    /api/propose/skillbook      controllers.FrontendApi.proposeSkillbook
 POST    /api/propose/resource       controllers.FrontendApi.proposeResource
 
 # Map static resources from the /public folder to the /assets URL path

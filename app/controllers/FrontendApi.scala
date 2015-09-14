@@ -207,6 +207,23 @@ class FrontendApi extends Controller {
     }
   }
 
+  def proposeSkillbook = Action.async { request =>
+    request.session.get("home").map { home =>
+      for {
+        tx <- openTransaction
+        skillbook <- SkillbookTag.create(tx, Json.obj("name" -> "New Skillbook"))
+        _ <- tx.lastly(Json.obj(
+          "statement" -> ("MATCH (s:Skillbook {url: {skillbook}}),(u:User {url: {user}}) CREATE (u)-[:PIN]->(s)<-[:PROPOSES]-(u)"),
+          "parameters" -> Json.obj(
+            "skillbook" -> skillbook.url,
+            "user" -> home
+          )))
+      } yield Ok(Json.obj("url" -> skillbook.url))
+    }.getOrElse {
+      Future(BadRequest("Must be signed in."))
+    }
+  }
+
   private def trim (str: String): String =
     str.replaceAll("""^[\s\r\n]+""", "").replaceAll("""[\s\r\n]+$""", "")
 }
