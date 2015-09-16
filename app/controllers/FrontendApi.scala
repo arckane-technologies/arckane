@@ -16,18 +16,18 @@ import decision.resource._
 
 class FrontendApi extends Controller {
 
-  def skillInfo () = Action.async { request =>
+  def skillInfo = Action.async { request =>
     request.queryString.get("id").map { skillId =>
       SkillTag.getPageData("/skill/"+skillId.head).map {
         case Some(pageData) => Ok(pageData)
-        case None => NotFound("ERROR 404: Skill "+skillId+" not found.")
+        case None => NotFound("ERROR 404: Skill "+skillId.head+" not found.")
       }
     }.getOrElse {
-      Future(BadRequest("Expected id query string."))
+      Future(BadRequest("Expected 'id' query string."))
     }
   }
 
-  def userInfo (id: String) = Action.async { request =>
+  def userInfo = Action.async { request =>
     Future(Ok("Hola :P"));
     //UserTag.getWith[UserInfo]("/user/"+id).map {
     //  case Some(arcklet) => Ok(views.html.user("/user/"+id, arcklet.props.name))
@@ -35,12 +35,29 @@ class FrontendApi extends Controller {
     //}
   }
 
-  def skillbookInfo (id: String) = Action.async { request =>
-    Future(Ok("Hola :P"));
-    //SkillbookTag.getPageData("/skillbook/"+id).map {
-    //  case Some(pageData) => Ok(views.html.book(pageData("name"), pageData("url"), pageData("description"), pageData("data")))
-    //  case None => NotFound("ERROR 404: Skillbook "+id+" not found.")
-    //}
+  def skillbookInfo = Action.async { request =>
+    request.queryString.get("id").map { sid =>
+      SkillbookTag.getPageData("/skillbook/"+sid.head).map {
+        case Some(pageData) => Ok(pageData)
+        case None => NotFound("ERROR 404: Skillbook "+sid.head+" not found.")
+      }
+    }.getOrElse {
+      Future(BadRequest("Expected 'id' query string."))
+    }
+  }
+
+  def skillbookSubsection = Action.async { request =>
+    (for {
+      a <- request.queryString.get("source")
+      b <- request.queryString.get("skillbook")
+      c <- request.queryString.get("depth")
+    } yield (a.head, b.head, c.head.toInt)).map { case (source, skillbook, depth) =>
+      SkillbookTag.getSubsection(source, skillbook, depth).map { array =>
+        Ok(array)
+      }
+    }.getOrElse {
+      Future(BadRequest("Expected 'source', 'skillbook' and 'depth' query strings."))
+    }
   }
 
   def search = Action.async { request =>
@@ -92,7 +109,7 @@ class FrontendApi extends Controller {
         Ok(Json.arr())
       }
     }.getOrElse {
-      Future(BadRequest("Expected search query string."))
+      Future(BadRequest("Expected 'search' query string."))
     }
   }
 
@@ -111,7 +128,7 @@ class FrontendApi extends Controller {
         Ok(Json.arr())
       }
     }.getOrElse {
-      Future(BadRequest("Expected search query string."))
+      Future(BadRequest("Expected 'search' query string."))
     }
   }
 
@@ -132,7 +149,7 @@ class FrontendApi extends Controller {
       else
         Ok(Json.obj("invalid" -> false))
     }.getOrElse {
-      Future(BadRequest("Expected a name, attribute and tags query strings."))
+      Future(BadRequest("Expected 'name', 'attribute' and 'tags' query strings."))
     }
   }
 

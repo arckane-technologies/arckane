@@ -9,6 +9,8 @@ GET     /signout                    controllers.Application.signout
 
 # Front-end API
 GET     /api/skill/data             controllers.FrontendApi.skillInfo
+GET     /api/skillbook/data         controllers.FrontendApi.skillbookInfo
+GET     /api/skillbook/subsection/data controllers.FrontendApi.skillbookSubsection
 GET     /api/search                 controllers.FrontendApi.search
 GET     /api/search/skill           controllers.FrontendApi.searchSkill
 GET     /api/search/availability    controllers.FrontendApi.searchAvailability
