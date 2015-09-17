@@ -36,10 +36,13 @@ class FrontendApi extends Controller {
   }
 
   def skillbookInfo = Action.async { request =>
-    request.queryString.get("id").map { sid =>
-      SkillbookTag.getPageData("/skillbook/"+sid.head).map {
+    (for {
+      a <- request.queryString.get("id")
+      b <- request.session.get("home")
+    } yield (a.head, b)).map { case (skillbookId, user) =>
+      SkillbookTag.getPageData("/skillbook/"+skillbookId, user).map {
         case Some(pageData) => Ok(pageData)
-        case None => NotFound("ERROR 404: Skillbook "+sid.head+" not found.")
+        case None => NotFound("ERROR 404: Skillbook "+skillbookId+" not found.")
       }
     }.getOrElse {
       Future(BadRequest("Expected 'id' query string."))
@@ -57,6 +60,20 @@ class FrontendApi extends Controller {
       }
     }.getOrElse {
       Future(BadRequest("Expected 'source', 'skillbook' and 'depth' query strings."))
+    }
+  }
+
+  def changeSkillbookName = Action.async { request =>
+    (for {
+      a <- request.session.get("home")
+      b <- request.queryString.get("id")
+      c <- request.queryString.get("name")
+    } yield (a, b.head, c.head)).map { case (user, skillbookId, name) =>
+      SkillbookTag.changeName("/skillbook/"+skillbookId, name, user).map { Unit =>
+        Ok
+      }
+    }.getOrElse {
+      Future(BadRequest("Expected a url encoded form."))
     }
   }
 
