@@ -64,5 +64,17 @@ package object skillbook {
         ))
       ))
     } yield Unit
+
+    def removeSkill (skill: String, skillbook: String, depth: Int): Future[Unit] = for {
+      _ <- query(Json.arr(Json.obj(
+        "statement" -> ("MATCH (a:Skill {url: {skill}})<-[r:SKILLBOOK_DEPTH {skillbook: {skillbook}, depth: {depth}}]-()"
+          + "DELETE r"),
+        "parameters" -> Json.obj(
+          "skill" -> skill,
+          "skillbook" -> skillbook,
+          "depth" -> depth
+        ))
+      ))
+    } yield Unit
   }
 }

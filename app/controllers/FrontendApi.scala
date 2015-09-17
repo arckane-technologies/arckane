@@ -135,12 +135,15 @@ class FrontendApi extends Controller {
       for {
         result <- query(Json.obj(
           // SEARCH: Skills
-          "statement" -> "MATCH (n:Skill) WHERE n.name =~ { regex } RETURN n.name",
+          "statement" -> "MATCH (n:Skill) WHERE n.name =~ { regex } RETURN n.name, n.url",
           "parameters" -> Json.obj(
             "regex" -> ("(?i).*"+search.head+".*")
         )))
-      } yield if (result.length > 0) {
-        Ok(Json.toJson(result(0)("n.name")))
+      } yield if (result(0)("n.url").length > 0) {
+        val data = (result(0)("n.url") zip result(0)("n.name"))
+        Ok(data.foldLeft(Json.arr()) { (array, data) =>
+          array :+ Json.obj("url" -> data._1, "name" -> data._2)
+        })
       } else {
         Ok(Json.arr())
       }
