@@ -77,6 +77,36 @@ class FrontendApi extends Controller {
     }
   }
 
+  def addSkillToSkillbook = Action.async { request =>
+    (for {
+      a <- request.queryString.get("source")
+      b <- request.queryString.get("target")
+      c <- request.queryString.get("skillbook")
+      d <- request.queryString.get("depth")
+    } yield (a.head, b.head, c.head, d.head)).map { case (source, target, skillbook, depth) =>
+      SkillbookTag.addSkill(source, target, skillbook, depth.toInt).map { Unit =>
+        Ok
+      }
+    }.getOrElse {
+      Future(BadRequest("Expected 'source', 'skillbook', 'depth' and 'target' query strings."))
+    }
+  }
+
+  def changeSkillInSkillbook = Action.async { request =>
+    (for {
+      a <- request.queryString.get("skill")
+      b <- request.queryString.get("oldSkill")
+      c <- request.queryString.get("skillbook")
+      d <- request.queryString.get("depth")
+    } yield (a.head, b.head, c.head, d.head.toInt)).map { case (skill, oldSkill, skillbook, depth) =>
+      SkillbookTag.changeSkill(skill, oldSkill, skillbook, depth).map { Unit =>
+        Ok
+      }
+    }.getOrElse {
+      Future(BadRequest("Expected 'skill', 'skillbook', and 'depth' query strings."))
+    }
+  }
+
   def search = Action.async { request =>
     request.queryString.get("search").map { search => for {
       result <- query(Json.arr(Json.obj(
