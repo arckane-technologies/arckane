@@ -101,14 +101,52 @@ package object skillbook {
       ))
     } yield Unit
 
-    def removeSkill (skill: String, skillbook: String, depth: Int): Future[Unit] = for {
+    def deleteSkill (skill: String, skillbook: String, depth: Int): Future[Unit] =
+      if (depth == 3) for {
+        _ <- query(Json.obj(
+          "statement" -> ("MATCH ()-[r:SKILLBOOK_DEPTH {skillbook: {skillbook}, depth: 3}]->(:Skill {url: {skill}}) "
+            + "DELETE r"),
+          "parameters" -> Json.obj(
+            "skill" -> skill,
+            "skillbook" -> skillbook
+          ))
+        )
+      } yield Unit
+      else if (depth == 2) for {
+        _ <- query(Json.obj(
+          "statement" -> ("MATCH ()-[r:SKILLBOOK_DEPTH {skillbook: {skillbook}, depth: 2}]->(a:Skill {url: {skill}}) "
+            + "OPTIONAL MATCH (a)-[s:SKILLBOOK_DEPTH {skillbook: {skillbook}, depth: 3}]->(:Skill) "
+            + "DELETE r,s"),
+          "parameters" -> Json.obj(
+            "skill" -> skill,
+            "skillbook" -> skillbook
+          ))
+        )
+      } yield Unit
+    else if (depth == 1) for {
+        _ <- query(Json.obj(
+          "statement" -> ("MATCH ()-[r:SKILLBOOK_DEPTH {skillbook: {skillbook}, depth: 1}]->(a:Skill {url: {skill}}) "
+            + "OPTIONAL MATCH (a)-[s:SKILLBOOK_DEPTH {skillbook: {skillbook}, depth: 2}]->(b:Skill), "
+            + "(b)-[t:SKILLBOOK_DEPTH {skillbook: {skillbook}, depth: 3}]->(:Skill) "
+            + "DELETE r,s,t"),
+          "parameters" -> Json.obj(
+            "skill" -> skill,
+            "skillbook" -> skillbook
+          ))
+        )
+      } yield Unit
+      else Future(Unit)
+
+    def deleteSkillbook (skillbook: String): Future[Unit] = for {
       _ <- query(Json.obj(
-        "statement" -> ("MATCH (a:Skill {url: {skill}})<-[r:SKILLBOOK_DEPTH {skillbook: {skillbook}, depth: {depth}}]-()"
-          + "DELETE r"),
+        "statement" -> ("MATCH (book:Skillbook {url: {skillbook}}) "
+          + "OPTIONAL MATCH (book)-[r:SKILLBOOK_DEPTH {skillbook: {skillbook}, depth: 1}]->(a:Skill) "
+          + "OPTIONAL MATCH (a)-[s:SKILLBOOK_DEPTH {skillbook: {skillbook}, depth: 2}]->(b:Skill) "
+          + "OPTIONAL MATCH (b)-[t:SKILLBOOK_DEPTH {skillbook: {skillbook}, depth: 3}]->(:Skill) "
+          + "OPTIONAL MATCH (book)-[others]-() "
+          + "DELETE r,s,t,book,others"),
         "parameters" -> Json.obj(
-          "skill" -> skill,
-          "skillbook" -> skillbook,
-          "depth" -> depth
+          "skillbook" -> skillbook
         ))
       )
     } yield Unit

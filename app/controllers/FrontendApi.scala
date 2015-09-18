@@ -103,7 +103,31 @@ class FrontendApi extends Controller {
         Ok
       }
     }.getOrElse {
+      Future(BadRequest("Expected 'skill', 'oldSkill', 'skillbook', and 'depth' query strings."))
+    }
+  }
+
+  def deleteSkillInSkillbook = Action.async { request =>
+    (for {
+      a <- request.queryString.get("skill")
+      b <- request.queryString.get("skillbook")
+      c <- request.queryString.get("depth")
+    } yield (a.head, b.head, c.head.toInt)).map { case (skill, skillbook, depth) =>
+      SkillbookTag.deleteSkill(skill, skillbook, depth).map { Unit =>
+        Ok
+      }
+    }.getOrElse {
       Future(BadRequest("Expected 'skill', 'skillbook', and 'depth' query strings."))
+    }
+  }
+
+  def deleteSkillbook = Action.async { request =>
+    request.queryString.get("skillbook").map { skillbook =>
+      SkillbookTag.deleteSkillbook(skillbook.head).map { Unit =>
+        Ok
+      }
+    }.getOrElse {
+      Future(BadRequest("Expected 'skillbook' query strings."))
     }
   }
 
