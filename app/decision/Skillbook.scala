@@ -80,23 +80,21 @@ package object skillbook {
 
     def changeSkill (skill: String, oldSkill: String, skillbook: String, depth: Int): Future[Unit] = for {
       _ <- query(Json.arr(Json.obj(
-        "statement" -> ("MATCH (n)-[r:SKILLBOOK_DEPTH {skillbook: {skillbook}, depth: {depth}}]->(a:Skill {url: {oldSkill}}) "
-          + "OPTIONAL MATCH (a)-[s:SKILLBOOK_DEPTH {skillbook: {skillbook}, depth: {nextDepth}}]->(ss) "
-          + "DELETE r,s "
-          + "WITH n,ss "
-          + "MATCH (b:Skill {url: {skill}}) "
-          + "CREATE (n)-[:SKILLBOOK_DEPTH {skillbook: {skillbook}, depth: {depth}}]->(b) "
-          + "WITH b,collect(ss.url) AS subs "
-          + "MATCH (sb:Skill) "
-          + "WHERE sb.url IN subs "
-          + "CREATE (b)-[:SKILLBOOK_DEPTH {skillbook: {skillbook}, depth: {nextDepth}}]->(sb)"
+        "statement" -> ("MATCH (a)-[r:SKILLBOOK_DEPTH {skillbook: {skillbook}, depth: {depth}}]->(n:Skill {url: {oldSkill}}), (m:Skill {url: {skill}})"
+          + "CREATE (a)-[:SKILLBOOK_DEPTH {skillbook: {skillbook}, depth: {depth}}]->(m) "
+          + "DELETE r "
+          + "WITH n "
+          + "OPTIONAL MATCH (n)-[s:SKILLBOOK_DEPTH {skillbook: {skillbook}, depth: {nextDepth}}]->(bs) "
+          + "DELETE s "
+          + "WITH collect(bs) as cbs "
+          + "FOREACH (b IN cbs | MERGE (m:Skill {url: {skill}}) MERGE (m)-[:SKILLBOOK_DEPTH {skillbook: {skillbook}, depth: {nextDepth}}]->(b)) "
         ),
         "parameters" -> Json.obj(
           "skill" -> skill,
           "oldSkill" -> oldSkill,
           "skillbook" -> skillbook,
           "depth" -> depth,
-          "nextDepth" -> (depth + 1).toString
+          "nextDepth" -> (depth + 1)
         ))
       ))
     } yield Unit
