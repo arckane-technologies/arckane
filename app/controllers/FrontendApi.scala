@@ -35,6 +35,16 @@ class FrontendApi extends Controller {
     //}
   }
 
+  def userSkillbooks = Action.async { request =>
+    request.session.get("home").map { user =>
+      SkillbookTag.userSkillbooks(user).map { json =>
+        Ok(json)
+      }
+    }.getOrElse {
+      Future(Redirect("/"))
+    }
+  }
+
   def skillbookInfo = Action.async { request =>
     (for {
       a <- request.queryString.get("id")

@@ -25,13 +25,28 @@ package object skillbook {
         ))
       )
     } yield if (result(0)("a.name").length > 0) {
-        if (result(0)("r").length == 1)
+        if (result(0)("r")(0) != JsNull) 
           Some(Json.obj("name" -> result(0)("a.name")(0), "author" -> true))
         else
           Some(Json.obj("name" -> result(0)("a.name")(0), "author" -> false))
       } else {
         None
       }
+
+    def userSkillbooks (user: String): Future[JsArray] = for {
+      result <- query(Json.obj(
+        "statement" -> ("MATCH (u:User {url: {user}}) "
+          + "OPTIONAL MATCH (u)-[:PIN]->(s:Skillbook) "
+          + "RETURN s ORDER BY s.name"),
+        "parameters" -> Json.obj(
+          "user" -> user
+        ))
+      )
+    } yield if (result(0)("s")(0) != JsNull) {
+      Json.toJson(result(0)("s")).as[JsArray]
+    } else {
+      Json.arr()
+    }
 
     def getSubsection (source: String, skillbook: String, depth: Int): Future[JsArray] = for {
       result <- query(Json.obj(

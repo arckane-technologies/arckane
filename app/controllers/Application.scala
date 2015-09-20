@@ -17,11 +17,9 @@ class Application extends Controller {
     (for {
       name <- request.session.get("name")
       home <- request.session.get("home")
-      skillbooks <- request.session.get("skillbooks")
     } yield Ok(views.html.app(Json.obj(
       "name" -> name,
-      "home" -> home,
-      "skillbooks" -> Json.parse(skillbooks)
+      "home" -> home
     ).toString))).getOrElse {
       Ok(views.html.index())
     }
@@ -34,10 +32,9 @@ class Application extends Controller {
       UserTag.authenticate(email, password).map {
         case Some(user) => Ok(Json.obj("success" -> true, "user" -> user))
           .withSession(
-            "connected" -> (user \ "email").as[String],
+            "email" -> (user \ "email").as[String],
             "name" -> (user \ "name").as[String],
-            "home" -> (user \ "url").as[String],
-            "skillbooks" -> (user \ "skillbooks").as[JsArray].toString)
+            "home" -> (user \ "url").as[String])
         case None => Ok(Json.obj("success" -> false))
       }
     }.getOrElse {
