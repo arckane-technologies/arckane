@@ -25,7 +25,7 @@ package object skillbook {
         ))
       )
     } yield if (result(0)("a.name").length > 0) {
-        if (result(0)("r")(0) != JsNull) 
+        if (result(0)("r")(0) != JsNull)
           Some(Json.obj("name" -> result(0)("a.name")(0), "author" -> true))
         else
           Some(Json.obj("name" -> result(0)("a.name")(0), "author" -> false))
@@ -113,6 +113,35 @@ package object skillbook {
         ))
       ))
     } yield Unit
+
+    def pinToggle (user: String, skillbook: String): Future[JsObject] = for {
+        result <- query(Json.obj(
+          "statement" -> ("OPTIONAL MATCH (:User {url: {user}})-[r:PIN]->(:Skillbook {url: {skillbook}}) "
+            + "RETURN r"),
+          "parameters" -> Json.obj(
+            "user" -> user,
+            "skillbook" -> skillbook
+          )))
+        _ <- if (result(0)("r")(0) == JsNull)
+              query(Json.obj(
+                "statement" -> ("MATCH (u:User {url: {user}}),(s:Skillbook {url: {skillbook}}) "
+                  + "CREATE (u)-[:PIN]->(s)"),
+                "parameters" -> Json.obj(
+                  "user" -> user,
+                  "skillbook" -> skillbook
+                )))
+            else
+              query(Json.obj(
+                "statement" -> ("MATCH (:User {url: {user}})-[r:PIN]->(:Skillbook {url: {skillbook}}) "
+                  + "DELETE r"),
+                "parameters" -> Json.obj(
+                  "user" -> user,
+                  "skillbook" -> skillbook
+                )))
+    } yield if (result(0)("r")(0) == JsNull)
+        Json.obj("pinned" -> true)
+      else
+        Json.obj("pinned" -> false)
 
     def deleteSkill (skill: String, skillbook: String, depth: Int): Future[Unit] =
       if (depth == 3) for {

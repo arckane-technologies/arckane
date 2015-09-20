@@ -117,6 +117,19 @@ class FrontendApi extends Controller {
     }
   }
 
+  def pinSkillbook = Action.async { request =>
+    (for {
+      a <- request.session.get("home")
+      b <- request.queryString.get("id")
+    } yield (a, b.head)).map { case (user, skillbookId) =>
+      SkillbookTag.pinToggle(user, "/skillbook/"+skillbookId).map { pinned =>
+        Ok(pinned)
+      }
+    }.getOrElse {
+      Future(BadRequest("Expected 'id' query string."))
+    }
+  }
+
   def deleteSkillInSkillbook = Action.async { request =>
     (for {
       a <- request.queryString.get("skill")

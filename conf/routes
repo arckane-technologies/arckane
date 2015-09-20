@@ -17,6 +17,7 @@ POST    /api/skillbook/name         controllers.FrontendApi.changeSkillbookName
 POST    /api/skillbook/name         controllers.FrontendApi.changeSkillbookName
 POST    /api/skillbook/skill        controllers.FrontendApi.addSkillToSkillbook
 PUT     /api/skillbook/skill        controllers.FrontendApi.changeSkillInSkillbook
+PUT     /api/skillbook/pin          controllers.FrontendApi.pinSkillbook
 DELETE  /api/skillbook/skill        controllers.FrontendApi.deleteSkillInSkillbook
 DELETE  /api/skillbook              controllers.FrontendApi.deleteSkillbook
 
