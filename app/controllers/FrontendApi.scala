@@ -344,7 +344,7 @@ class FrontendApi extends Controller {
     str.replaceAll("""^[\s\r\n]+""", "").replaceAll("""[\s\r\n]+$""", "")
 
   private def clean (str: String): String =
-    str.replaceAll("[^a-zA-Z0-9()]", "")
+    str.replaceAll("""[^a-zA-Z0-9()\s?!¿¡]""", "")
 
   private def escapeParenthesis (str: String): String =
     str.replaceAll("""\(""", """\\(""")
