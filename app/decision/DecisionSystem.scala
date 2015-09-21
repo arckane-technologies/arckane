@@ -6,7 +6,7 @@ import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits._
 
 import database.persistence._
-import decision.skill._
+import database.skill._
 
 package object system {
 

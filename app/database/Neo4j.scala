@@ -143,6 +143,18 @@ package object neo4j {
     _ <- response statusMustBe 200
   } yield response
 
+  implicit class StringUtils (str: String) {
+    def trim: String =
+      str.replaceAll("""^[\s\r\n]+""", "").replaceAll("""[\s\r\n]+$""", "")
+
+    def clean: String =
+      str.replaceAll("""[^a-zA-Z0-9()\s?!¿¡]""", "")
+
+    def escapeParenthesis: String =
+      str.replaceAll("""\(""", """\\(""")
+         .replaceAll("""\)""", """\\)""")
+  }
+
   /**
     * Response complementary operations
     */

@@ -8,11 +8,19 @@ POST    /signin                     controllers.Application.signin
 GET     /signout                    controllers.Application.signout
 
 # Front-end API
-GET     /api/skill/data             controllers.FrontendApi.skillInfo
+GET     /api/search                 controllers.FrontendApi.search
+GET     /api/availability           controllers.FrontendApi.searchAvailability
 
+# Skill Api
+GET     /api/skill/data             controllers.SkillApi.page
+POST    /api/skill/propose          controllers.SkillApi.propose
+GET     /api/skill/search           controllers.SkillApi.search
+
+# Skillbook Api
 GET     /api/skillbook              controllers.FrontendApi.userSkillbooks
 GET     /api/skillbook/data         controllers.FrontendApi.skillbookInfo
 GET     /api/skillbook/subsection/data controllers.FrontendApi.skillbookSubsection
+POST    /api/propose/skillbook      controllers.FrontendApi.proposeSkillbook
 POST    /api/skillbook/name         controllers.FrontendApi.changeSkillbookName
 POST    /api/skillbook/name         controllers.FrontendApi.changeSkillbookName
 POST    /api/skillbook/skill        controllers.FrontendApi.addSkillToSkillbook
@@ -21,12 +29,7 @@ PUT     /api/skillbook/pin          controllers.FrontendApi.pinSkillbook
 DELETE  /api/skillbook/skill        controllers.FrontendApi.deleteSkillInSkillbook
 DELETE  /api/skillbook              controllers.FrontendApi.deleteSkillbook
 
-GET     /api/search                 controllers.FrontendApi.search
-GET     /api/search/skill           controllers.FrontendApi.searchSkill
-GET     /api/search/availability    controllers.FrontendApi.searchAvailability
-
-POST    /api/propose/skill          controllers.FrontendApi.proposeSkill
-POST    /api/propose/skillbook      controllers.FrontendApi.proposeSkillbook
+# Resource Api
 POST    /api/propose/resource       controllers.FrontendApi.proposeResource
 
 # Map static resources from the /public folder to the /assets URL path
