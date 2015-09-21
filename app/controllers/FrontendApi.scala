@@ -155,53 +155,55 @@ class FrontendApi extends Controller {
   }
 
   def search = Action.async { request =>
-    request.queryString.get("search").map { search => for {
-      result <- query(Json.arr(Json.obj(
-        // SEARCH: Skills
-        "statement" -> "MATCH (n:Skill) WHERE n.name =~ { regex } RETURN n.name, n.url, n.description",
-        "parameters" -> Json.obj(
-          "regex" -> ("(?i).*"+search.head+".*")
-        )), Json.obj(
-        // SEARCH: Skillbooks
-        "statement" -> "MATCH (n:Skillbook) WHERE n.name =~ { regex } RETURN n.name, n.url, n.description",
-        "parameters" -> Json.obj(
-          "regex" -> ("(?i).*"+search.head+".*")
-        )), Json.obj(
-        // SEARCH: Resources
-        "statement" -> "MATCH (n:Resource) WHERE n.name =~ { regex } RETURN n.name, n.url, n.description, n.resourceType, n.resourceUrl",
-        "parameters" -> Json.obj(
-          "regex" -> ("(?i).*"+search.head+".*")
-        ))))
-    } yield if (result.length > 0) {
-        Ok(
-          // RESULT: Skills
-          Json.toJson(result(0)("n.name").zipWithIndex.map { case (name, index) => Json.obj(
-            "name" -> name,
-            "url" -> result(0)("n.url")(index),
-            "resourceType" -> "skill",
-            "infusionTarget" -> result(0)("n.url")(index),
-            "description" -> result(0)("n.description")(index))
-          }).as[JsArray] ++
-          // RESULT: Skillbooks
-          Json.toJson(result(1)("n.name").zipWithIndex.map { case (name, index) => Json.obj(
-            "name" -> name,
-            "url" -> result(1)("n.url")(index),
-            "resourceType" -> "skillbook",
-            "infusionTarget" -> result(1)("n.url")(index),
-            "description" -> result(1)("n.description")(index))
-          }).as[JsArray] ++
-          // RESULT: Resources
-          Json.toJson(result(2)("n.name").zipWithIndex.map { case (name, index) => Json.obj(
-            "name" -> name,
-            "url" -> result(2)("n.resourceUrl")(index),
-            "resourceType" -> result(2)("n.resourceType")(index),
-            "infusionTarget" -> result(2)("n.url")(index),
-            "description" -> result(2)("n.description")(index))
-          }).as[JsArray]
-        )
-      } else {
-        Ok(Json.arr())
-      }
+    request.queryString.get("search").map { search =>
+      val queryString = escapeParenthesis(clean(search.head))
+      for {
+        result <- query(Json.arr(Json.obj(
+          // SEARCH: Skills
+          "statement" -> "MATCH (n:Skill) WHERE n.name =~ { regex } RETURN n.name, n.url, n.description",
+          "parameters" -> Json.obj(
+            "regex" -> ("(?i).*"+queryString+".*")
+          )), Json.obj(
+          // SEARCH: Skillbooks
+          "statement" -> "MATCH (n:Skillbook) WHERE n.name =~ { regex } RETURN n.name, n.url, n.description",
+          "parameters" -> Json.obj(
+            "regex" -> ("(?i).*"+queryString+".*")
+          )), Json.obj(
+          // SEARCH: Resources
+          "statement" -> "MATCH (n:Resource) WHERE n.name =~ { regex } RETURN n.name, n.url, n.description, n.resourceType, n.resourceUrl",
+          "parameters" -> Json.obj(
+            "regex" -> ("(?i).*"+queryString+".*")
+          ))))
+      } yield if (result.length > 0) {
+          Ok(
+            // RESULT: Skills
+            Json.toJson(result(0)("n.name").zipWithIndex.map { case (name, index) => Json.obj(
+              "name" -> name,
+              "url" -> result(0)("n.url")(index),
+              "resourceType" -> "skill",
+              "infusionTarget" -> result(0)("n.url")(index),
+              "description" -> result(0)("n.description")(index))
+            }).as[JsArray] ++
+            // RESULT: Skillbooks
+            Json.toJson(result(1)("n.name").zipWithIndex.map { case (name, index) => Json.obj(
+              "name" -> name,
+              "url" -> result(1)("n.url")(index),
+              "resourceType" -> "skillbook",
+              "infusionTarget" -> result(1)("n.url")(index),
+              "description" -> result(1)("n.description")(index))
+            }).as[JsArray] ++
+            // RESULT: Resources
+            Json.toJson(result(2)("n.name").zipWithIndex.map { case (name, index) => Json.obj(
+              "name" -> name,
+              "url" -> result(2)("n.resourceUrl")(index),
+              "resourceType" -> result(2)("n.resourceType")(index),
+              "infusionTarget" -> result(2)("n.url")(index),
+              "description" -> result(2)("n.description")(index))
+            }).as[JsArray]
+          )
+        } else {
+          Ok(Json.arr())
+        }
     }.getOrElse {
       Future(BadRequest("Expected 'search' query string."))
     }
@@ -214,7 +216,7 @@ class FrontendApi extends Controller {
           // SEARCH: Skills
           "statement" -> "MATCH (n:Skill) WHERE n.name =~ { regex } RETURN n.name, n.url",
           "parameters" -> Json.obj(
-            "regex" -> ("(?i).*"+search.head+".*")
+            "regex" -> ("(?i).*"+(escapeParenthesis(clean(search.head)))+".*")
         )))
       } yield if (result(0)("n.url").length > 0) {
         val data = (result(0)("n.url") zip result(0)("n.name"))
@@ -257,7 +259,7 @@ class FrontendApi extends Controller {
       response <- Some(for {
         tx <- openTransaction
         skill <- SkillTag.create(tx, Json.obj(
-          "name" -> trim(form("name").head),
+          "name" -> trim(trim(clean(form("name").head))),
           "description" -> trim(form("description").head),
           "resourceType" -> "skill"))
         _ <- tx.lastly(Json.obj(
@@ -297,7 +299,7 @@ class FrontendApi extends Controller {
           for {
             tx <- openTransaction
             arcklet <- ResourceTag.create(tx, Json.obj(
-              "name" -> trim(form("name").head),
+              "name" -> trim(trim(clean(form("name").head))),
               "resourceType" -> rtype,
               "resourceUrl" -> trim(form("url").head),
               "description" -> trim(form("description").head)
@@ -340,4 +342,12 @@ class FrontendApi extends Controller {
 
   private def trim (str: String): String =
     str.replaceAll("""^[\s\r\n]+""", "").replaceAll("""[\s\r\n]+$""", "")
+
+  private def clean (str: String): String =
+    str.replaceAll("[^a-zA-Z0-9()]", "")
+
+  private def escapeParenthesis (str: String): String =
+    str.replaceAll("""\(""", """\\(""")
+       .replaceAll("""\)""", """\\)""")
+
 }
