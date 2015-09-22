@@ -19,7 +19,7 @@ import database.skill._
 class SkillApi extends Controller {
 
   /** Retrieves from the database all the data needed to display the skill page.
-    * Route: /api/skill/data
+    * Route: GET /api/skill/data
     * Query string variables: id
     */
   def page = Action.async { request =>
@@ -34,7 +34,7 @@ class SkillApi extends Controller {
   }
 
   /** Creates a new skill proposed by a user.
-    * Route: /api/skill/propose
+    * Route: POST /api/skill/propose
     * Session variables: home
     * Form variables: name, description
     */
@@ -52,7 +52,7 @@ class SkillApi extends Controller {
 
   /** Searches through the database for skill with a similar name to the provided
     * query string, returns an array of possible skills, with its name and url.
-    * Route: /api/skill/search
+    * Route: GET /api/skill/search
     * Query string variables: search
     */
   def search = Action.async { request =>

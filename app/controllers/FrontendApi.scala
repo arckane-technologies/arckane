@@ -1,3 +1,7 @@
+/**
+  * @author Francisco Miguel Aramburo Torres - atfm05@gmail.com
+  */
+
 package controllers
 
 import scala.concurrent._
@@ -9,148 +13,12 @@ import play.api.libs.concurrent.Execution.Implicits._
 
 import database.neo4j._
 import database.persistence._
-import decision.skillbook._
 
+/** Play Framework controller for some Arckane's misc features. */
 class FrontendApi extends Controller {
 
-  def userSkillbooks = Action.async { request =>
-    request.session.get("home").map { user =>
-      SkillbookTag.userSkillbooks(user).map { json =>
-        Ok(json)
-      }
-    }.getOrElse {
-      Future(Redirect("/"))
-    }
-  }
-
-  def skillbookInfo = Action.async { request =>
-    (for {
-      a <- request.queryString.get("id")
-      b <- request.session.get("home")
-    } yield (a.head, b)).map { case (skillbookId, user) =>
-      SkillbookTag.getPageData("/skillbook/"+skillbookId, user).map {
-        case Some(pageData) => Ok(pageData)
-        case None => NotFound("ERROR 404: Skillbook "+skillbookId+" not found.")
-      }
-    }.getOrElse {
-      Future(BadRequest("Expected 'id' query string."))
-    }
-  }
-
-  def skillbookSubsection = Action.async { request =>
-    (for {
-      a <- request.queryString.get("source")
-      b <- request.queryString.get("skillbook")
-      c <- request.queryString.get("depth")
-    } yield (a.head, b.head, c.head.toInt)).map { case (source, skillbook, depth) =>
-      SkillbookTag.getSubsection(source, skillbook, depth).map { array =>
-        Ok(array)
-      }
-    }.getOrElse {
-      Future(BadRequest("Expected 'source', 'skillbook' and 'depth' query strings."))
-    }
-  }
-
-  def changeSkillbookName = Action.async { request =>
-    (for {
-      a <- request.session.get("home")
-      b <- request.queryString.get("id")
-      c <- request.queryString.get("name")
-    } yield (a, b.head, c.head)).map { case (user, skillbookId, name) =>
-      SkillbookTag.changeName("/skillbook/"+skillbookId, name, user).map { Unit =>
-        Ok
-      }
-    }.getOrElse {
-      Future(BadRequest("Expected a url encoded form."))
-    }
-  }
-
-  def addSkillToSkillbook = Action.async { request =>
-    (for {
-      a <- request.queryString.get("source")
-      b <- request.queryString.get("target")
-      c <- request.queryString.get("skillbook")
-      d <- request.queryString.get("depth")
-    } yield (a.head, b.head, c.head, d.head)).map { case (source, target, skillbook, depth) =>
-      SkillbookTag.addSkill(source, target, skillbook, depth.toInt).map { Unit =>
-        Ok
-      }
-    }.getOrElse {
-      Future(BadRequest("Expected 'source', 'skillbook', 'depth' and 'target' query strings."))
-    }
-  }
-
-  def changeSkillInSkillbook = Action.async { request =>
-    (for {
-      a <- request.queryString.get("skill")
-      b <- request.queryString.get("oldSkill")
-      c <- request.queryString.get("skillbook")
-      d <- request.queryString.get("depth")
-    } yield (a.head, b.head, c.head, d.head.toInt)).map { case (skill, oldSkill, skillbook, depth) =>
-      SkillbookTag.changeSkill(skill, oldSkill, skillbook, depth).map { Unit =>
-        Ok
-      }
-    }.getOrElse {
-      Future(BadRequest("Expected 'skill', 'oldSkill', 'skillbook', and 'depth' query strings."))
-    }
-  }
-
-  def pinSkillbook = Action.async { request =>
-    (for {
-      a <- request.session.get("home")
-      b <- request.queryString.get("id")
-    } yield (a, b.head)).map { case (user, skillbookId) =>
-      SkillbookTag.pinToggle(user, "/skillbook/"+skillbookId).map { pinned =>
-        Ok(pinned)
-      }
-    }.getOrElse {
-      Future(BadRequest("Expected 'id' query string."))
-    }
-  }
-
-  def deleteSkillInSkillbook = Action.async { request =>
-    (for {
-      a <- request.queryString.get("skill")
-      b <- request.queryString.get("skillbook")
-      c <- request.queryString.get("depth")
-    } yield (a.head, b.head, c.head.toInt)).map { case (skill, skillbook, depth) =>
-      SkillbookTag.deleteSkill(skill, skillbook, depth).map { Unit =>
-        Ok
-      }
-    }.getOrElse {
-      Future(BadRequest("Expected 'skill', 'skillbook', and 'depth' query strings."))
-    }
-  }
-
-  def deleteSkillbook = Action.async { request =>
-    request.queryString.get("skillbook").map { skillbook =>
-      SkillbookTag.deleteSkillbook(skillbook.head).map { Unit =>
-        Ok
-      }
-    }.getOrElse {
-      Future(BadRequest("Expected 'skillbook' query strings."))
-    }
-  }
-
-  def proposeSkillbook = Action.async { request =>
-    request.session.get("home").map { home =>
-      for {
-        tx <- openTransaction
-        skillbook <- SkillbookTag.create(tx, Json.obj("name" -> "New Skillbook"))
-        _ <- tx.lastly(Json.obj(
-          "statement" -> ("MATCH (s:Skillbook {url: {skillbook}}),(u:User {url: {user}}) CREATE (u)-[:PIN]->(s)<-[:PROPOSES]-(u)"),
-          "parameters" -> Json.obj(
-            "skillbook" -> skillbook.url,
-            "user" -> home
-          )))
-      } yield Ok(Json.obj("url" -> skillbook.url))
-    }.getOrElse {
-      Future(BadRequest("Must be signed in."))
-    }
-  }
-
   /** Checks if a string of an attribute of the nodes with a tag (or tags) is not taken.
-    * Route: /api/availability
+    * Route: GET /api/availability
     * Query string variables: tags, attribute, value
     */
   def searchAvailability = Action.async { request =>
@@ -176,9 +44,14 @@ class FrontendApi extends Controller {
     }
   }
 
+  /** Retrieves all the skills, skillbooks and resources in the database that their
+    * name may be similar to the provided query string.
+    * Route: GET /api/search
+    * Query string variables: search
+    */
   def search = Action.async { request =>
     request.queryString.get("search").map { search =>
-      val queryString = escapeParenthesis(clean(search.head))
+      val queryString = search.head.clean.escapeParenthesis
       for {
         result <- query(Json.arr(Json.obj(
           // SEARCH: Skills
@@ -230,15 +103,4 @@ class FrontendApi extends Controller {
       Future(BadRequest("Expected 'search' query string."))
     }
   }
-
-  private def trim (str: String): String =
-    str.replaceAll("""^[\s\r\n]+""", "").replaceAll("""[\s\r\n]+$""", "")
-
-  private def clean (str: String): String =
-    str.replaceAll("""[^a-zA-Z0-9()\s?!¿¡]""", "")
-
-  private def escapeParenthesis (str: String): String =
-    str.replaceAll("""\(""", """\\(""")
-       .replaceAll("""\)""", """\\)""")
-
 }

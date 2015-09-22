@@ -19,7 +19,7 @@ import decision.user._
 class Application extends Controller {
 
   /** Serves the app if authenticated, otherwise serves the authentication page.
-    * Route: /
+    * Route: GET /
     * Session variables: name, home
     */
   def index = Action { request =>
@@ -35,7 +35,7 @@ class Application extends Controller {
   }
 
   /** Tries to authenticate a user and responds with a json object.
-    * Route: /signin
+    * Route: POST /signin
     * Form variables: email, password
     */
   def signin = Action.async { request =>
@@ -56,7 +56,7 @@ class Application extends Controller {
   }
 
   /** Deletes the current session to sign out a user.
-    * Route: /signout
+    * Route: GET /signout
     */
   def signout = Action {
     Ok(views.html.index()).withNewSession

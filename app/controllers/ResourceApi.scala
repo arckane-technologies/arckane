@@ -18,8 +18,8 @@ import database.resource._
 /** Play Framework controller for everything related to Arckane's "Resources". */
 class ResourceApi extends Controller {
 
-  /** Creates either an extenrnal resource or a relationship between skills.  
-    * Route: /api/resource/propose
+  /** Creates either an extenrnal resource or a relationship between skills.
+    * Route: POST /api/resource/propose
     * Session variables: home
     * Form variables:
     *   1) type, forSkill, relatedSkill

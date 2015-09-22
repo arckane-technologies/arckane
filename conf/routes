@@ -17,17 +17,16 @@ POST    /api/skill/propose          controllers.SkillApi.propose
 GET     /api/skill/search           controllers.SkillApi.search
 
 # Skillbook Api
-GET     /api/skillbook              controllers.FrontendApi.userSkillbooks
-GET     /api/skillbook/data         controllers.FrontendApi.skillbookInfo
-GET     /api/skillbook/subsection/data controllers.FrontendApi.skillbookSubsection
-POST    /api/propose/skillbook      controllers.FrontendApi.proposeSkillbook
-POST    /api/skillbook/name         controllers.FrontendApi.changeSkillbookName
-POST    /api/skillbook/name         controllers.FrontendApi.changeSkillbookName
-POST    /api/skillbook/skill        controllers.FrontendApi.addSkillToSkillbook
-PUT     /api/skillbook/skill        controllers.FrontendApi.changeSkillInSkillbook
-PUT     /api/skillbook/pin          controllers.FrontendApi.pinSkillbook
-DELETE  /api/skillbook/skill        controllers.FrontendApi.deleteSkillInSkillbook
-DELETE  /api/skillbook              controllers.FrontendApi.deleteSkillbook
+GET     /api/skillbook              controllers.SkillbookApi.userSkillbooks
+GET     /api/skillbook/data         controllers.SkillbookApi.page
+GET     /api/skillbook/subsection   controllers.SkillbookApi.subsection
+POST    /api/skillbook/propose      controllers.SkillbookApi.propose
+POST    /api/skillbook/name         controllers.SkillbookApi.changeName
+POST    /api/skillbook/skill        controllers.SkillbookApi.addSkill
+PUT     /api/skillbook/skill        controllers.SkillbookApi.changeSkill
+PUT     /api/skillbook/pin          controllers.SkillbookApi.pin
+DELETE  /api/skillbook/skill        controllers.SkillbookApi.deleteSkill
+DELETE  /api/skillbook              controllers.SkillbookApi.delete
 
 # Resource Api
 POST    /api/resource/propose       controllers.ResourceApi.propose
