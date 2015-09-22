@@ -1,3 +1,7 @@
+/**
+  * @author Francisco Miguel Aramburo Torres - atfm05@gmail.com
+  */
+
 package controllers
 
 import scala.concurrent._
@@ -36,9 +40,9 @@ class SkillApi extends Controller {
     */
   def propose = Action.async { request =>
     (for {
-      home <- request.session.get("home")
+      user <- request.session.get("home")
       form <- request.body.asFormUrlEncoded
-      response <- Some(SkillTag.propose(form("name").head, form("description").head, home))
+      response <- Some(SkillTag.propose(form("name").head, form("description").head, user))
     } yield response.map { json =>
       Ok(json)
     }).getOrElse {

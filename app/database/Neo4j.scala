@@ -1,3 +1,7 @@
+/**
+  * @author Francisco Miguel Aramburo Torres - atfm05@gmail.com
+  */
+
 package database
 
 import scala.concurrent.Future
@@ -220,7 +224,7 @@ package object neo4j {
     /** Removes all characters that are not letters, numbers, spaces, interrogation
       * and exclamation symbols. */
     def clean: String =
-      str.replaceAll("""[^a-zA-Z0-9()\s?!¿¡]""", "")
+      str.replaceAll("""[^a-zA-Z0-9()\s?!¿¡.,]""", "")
 
     /** Adds backslashes to parenthesis to escape them for regexp searches. */
     def escapeParenthesis: String =

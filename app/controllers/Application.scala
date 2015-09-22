@@ -1,3 +1,7 @@
+/**
+  * @author Francisco Miguel Aramburo Torres - atfm05@gmail.com
+  */
+
 package controllers
 
 import scala.concurrent._
@@ -11,8 +15,13 @@ import database.neo4j._
 import database.persistence._
 import decision.user._
 
+/** Play Framework controller for everything related to Arckane's app serving and authentication. */
 class Application extends Controller {
 
+  /** Serves the app if authenticated, otherwise serves the authentication page.
+    * Route: /
+    * Session variables: name, home
+    */
   def index = Action { request =>
     (for {
       name <- request.session.get("name")
@@ -25,6 +34,10 @@ class Application extends Controller {
     }
   }
 
+  /** Tries to authenticate a user and responds with a json object.
+    * Route: /signin
+    * Form variables: email, password
+    */
   def signin = Action.async { request =>
     request.body.asFormUrlEncoded.map { form =>
       val email = form("email").head
@@ -42,6 +55,9 @@ class Application extends Controller {
     }
   }
 
+  /** Deletes the current session to sign out a user.
+    * Route: /signout
+    */
   def signout = Action {
     Ok(views.html.index()).withNewSession
   }

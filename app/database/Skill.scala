@@ -1,3 +1,7 @@
+/**
+  * @author Francisco Miguel Aramburo Torres - atfm05@gmail.com
+  */
+
 package database
 
 import scala.concurrent.Future
@@ -15,10 +19,10 @@ package object skill {
   /** Skill type. */
   trait Skill
 
-  /** Data type for Neo4j :Skill tag. Specializes the more general type Tag. */
+  /** Data type for Neo4j :Skill tag. Specializes the more general type [[database.persistence.Tag]]. */
   object SkillTag extends Tag[Skill]("Skill")
 
-  /** Type class for the SkillTag data type. */
+  /** Type class for the [[SkillTag]] data type. */
   implicit class SkillTagOps (tag: Tag[Skill]) {
 
     /** Creates a new skill proposed by a user.
