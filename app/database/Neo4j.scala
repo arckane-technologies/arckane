@@ -219,7 +219,7 @@ package object neo4j {
 
     /** Removes spaces and new line characters at the beginning and end of the string. */
     def trim: String =
-      str.replaceAll("""^[\s\r\n]+""", "").replaceAll("""[\s\r\n]+$""", "")
+      str.replaceAll("""^[\s\r\n]+""", "").replaceAll("""[\s\r\n]+$""", "").replaceAll("""(\s)+""", " ")
 
     /** Removes all characters that are not letters, numbers, spaces, interrogation
       * and exclamation symbols. */
@@ -230,6 +230,10 @@ package object neo4j {
     def escapeParenthesis: String =
       str.replaceAll("""\(""", """\\(""")
          .replaceAll("""\)""", """\\)""")
+
+    /** Capitalizes each word of the string. */
+    def capitalizeWords: String =
+      str.split(" ").foldLeft("")(_ + " " + _.capitalize).tail
   }
 
   /** Type class that adds methods to Play Framework's WSResponse type. */

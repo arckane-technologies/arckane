@@ -39,7 +39,7 @@ package object resource {
     def propose (rtype: String, forSkill: String, name: String, url: String, description: String, user: String): Future[JsObject] = for {
       tx <- openTransaction
       arcklet <- ResourceTag.create(tx, Json.obj(
-        "name" -> name.trim.clean,
+        "name" -> name.trim.clean.capitalizeWords,
         "resourceType" -> rtype,
         "resourceUrl" -> url.trim,
         "description" -> description.trim,

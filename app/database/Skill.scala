@@ -35,7 +35,7 @@ package object skill {
     def propose (name: String, description: String, user: String): Future[JsObject] = for {
       tx <- openTransaction
       skill <- SkillTag.create(tx, Json.obj(
-        "name" -> name.clean.trim,
+        "name" -> name.clean.trim.capitalizeWords,
         "description" -> description.trim,
         "resourceType" -> "skill"))
       _ <- tx.lastly(Json.obj(
@@ -88,7 +88,8 @@ package object skill {
         "statement" ->
           ( "MATCH (skill:"+tag.str+" {url: {urlmatcher}})-[r:RELATED]->(s:Skill) "
           + "OPTIONAL MATCH (:User {url: {user}})-[vote:INFUSES {source: {urlmatcher}}]->(s)"
-          + "RETURN s.name, s.url, s.description, r.infusionValue, vote.infusionValue"),
+          + "RETURN s.name, s.url, s.description, r.infusionValue, vote.infusionValue "
+          + "ORDER BY r.infusionValue DESC"),
         "parameters" -> Json.obj(
           "urlmatcher" -> skillUrl,
           "user" -> user
@@ -97,7 +98,8 @@ package object skill {
         "statement" ->
           ( "MATCH (skill:"+tag.str+" {url: {urlmatcher}})-[:HAS_RESOURCE]->(r:Resource) "
           + "OPTIONAL MATCH (:User {url: {user}})-[vote:INFUSES]->(r)"
-          + "RETURN r.name, r.url, r.description, r.resourceType, r.resourceUrl, r.infusionValue, vote.infusionValue"),
+          + "RETURN r.name, r.url, r.description, r.resourceType, r.resourceUrl, r.infusionValue, vote.infusionValue "
+          + "ORDER BY r.infusionValue DESC"),
         "parameters" -> Json.obj(
           "urlmatcher" -> skillUrl,
           "user" -> user
