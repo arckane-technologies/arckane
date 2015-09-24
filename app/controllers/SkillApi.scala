@@ -20,15 +20,18 @@ class SkillApi extends Controller {
 
   /** Retrieves from the database all the data needed to display the skill page.
     * Route: GET /api/skill/data
+    * Sessions variables: home
     * Query string variables: id
     */
   def page = Action.async { request =>
-    request.queryString.get("id").map { skillId =>
-      SkillTag.getPageData("/skill/"+skillId.head).map {
-        case Some(pageData) => Ok(pageData)
-        case None => NotFound("ERROR 404: Skill "+skillId.head+" not found.")
-      }
-    }.getOrElse {
+    (for {
+      user <- request.session.get("home")
+      skillId <- request.queryString.get("id")
+      response <- Some(SkillTag.getPageData("/skill/"+skillId.head, user))
+    } yield response.map {
+      case Some(pageData) => Ok(pageData)
+      case None => NotFound("ERROR 404: Skill "+skillId.head+" not found.")
+    }).getOrElse {
       Future(BadRequest("Expected 'id' query string."))
     }
   }

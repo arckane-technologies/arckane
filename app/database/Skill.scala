@@ -72,24 +72,35 @@ package object skill {
       * including an array of related other skills and external resources.
       *
       * @param skillUrl url-id of the skill that will be displayed.
+      * @param user url-id of the user that is accessing the skill.
       * @return a json object with all the data. {name: string, description: string, related: Array<Resource>}
       */
-    def getPageData (skillUrl: String): Future[Option[JsObject]] = { for {
+    def getPageData (skillUrl: String, user: String): Future[Option[JsObject]] = { for {
       result <- query(Json.arr(Json.obj(
         // Skill info
-        "statement" -> ("MATCH (skill:"+tag.str+" {url: {urlmatcher}}) RETURN skill.name, skill.description"),
+        "statement" ->
+          ( "MATCH (skill:"+tag.str+" {url: {urlmatcher}}) "
+          + "RETURN skill.name, skill.description"),
         "parameters" -> Json.obj(
           "urlmatcher" -> skillUrl
         )), Json.obj(
         // Related Skills
-        "statement" -> ("MATCH (skill:"+tag.str+" {url: {urlmatcher}})-[:RELATED]->(s:Skill) RETURN s.name, s.url, s.description"),
+        "statement" ->
+          ( "MATCH (skill:"+tag.str+" {url: {urlmatcher}})-[r:RELATED]->(s:Skill) "
+          + "OPTIONAL MATCH (:User {url: {user}})-[vote:INFUSES {source: {urlmatcher}}]->(s)"
+          + "RETURN s.name, s.url, s.description, r.infusionValue, vote.infusionValue"),
         "parameters" -> Json.obj(
-          "urlmatcher" -> skillUrl
+          "urlmatcher" -> skillUrl,
+          "user" -> user
         )), Json.obj(
         // Related Resources
-        "statement" -> ("MATCH (skill:"+tag.str+" {url: {urlmatcher}})-[:HAS_RESOURCE]->(r:Resource) RETURN r.name, r.url, r.description, r.resourceType, r.resourceUrl"),
+        "statement" ->
+          ( "MATCH (skill:"+tag.str+" {url: {urlmatcher}})-[:HAS_RESOURCE]->(r:Resource) "
+          + "OPTIONAL MATCH (:User {url: {user}})-[vote:INFUSES]->(r)"
+          + "RETURN r.name, r.url, r.description, r.resourceType, r.resourceUrl, r.infusionValue, vote.infusionValue"),
         "parameters" -> Json.obj(
-          "urlmatcher" -> skillUrl
+          "urlmatcher" -> skillUrl,
+          "user" -> user
         ))))
     } yield if (result.length > 0) {
         Some(Json.obj(
@@ -99,13 +110,25 @@ package object skill {
             "name" -> name,
             "url" -> result(1)("s.url")(index),
             "resourceType" -> "skill",
+            "infusionSourceSkill" -> skillUrl,
             "infusionTarget" -> result(1)("s.url")(index),
+            "infusionValue" -> result(1)("r.infusionValue")(index),
+            "infusionUserVote" -> {
+              if (result(1)("vote.infusionValue")(index) == JsNull) JsNumber(0)
+              else result(1)("vote.infusionValue")(index)
+            },
             "description" -> result(1)("s.description")(index))
           }).as[JsArray] ++ Json.toJson(result(2)("r.name").zipWithIndex.map { case (name, index) => Json.obj(
             "name" -> name,
             "url" -> result(2)("r.resourceUrl")(index),
             "resourceType" -> result(2)("r.resourceType")(index),
+            "infusionSourceSkill" -> "is-resource",
             "infusionTarget" -> result(2)("r.url")(index),
+            "infusionValue" -> result(2)("r.infusionValue")(index),
+            "infusionUserVote" -> {
+              if (result(2)("vote.infusionValue")(index) == JsNull) JsNumber(0)
+              else result(2)("vote.infusionValue")(index)
+            },
             "description" -> result(2)("r.description")(index))
           }).as[JsArray]))
         )

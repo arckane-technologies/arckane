@@ -10,6 +10,7 @@ GET     /signout                    controllers.Application.signout
 # Front-end API
 GET     /api/search                 controllers.FrontendApi.search
 GET     /api/availability           controllers.FrontendApi.searchAvailability
+PUT     /api/infuse                 controllers.FrontendApi.infuse
 
 # Skill Api
 GET     /api/skill/data             controllers.SkillApi.page

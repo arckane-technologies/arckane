@@ -42,7 +42,8 @@ package object resource {
         "name" -> name.trim.clean,
         "resourceType" -> rtype,
         "resourceUrl" -> url.trim,
-        "description" -> description.trim
+        "description" -> description.trim,
+        "infusionValue" -> 0
       ))
       result <- tx.lastly(Json.obj(
         "statement" ->
@@ -68,7 +69,7 @@ package object resource {
       result <- query(Json.obj(
         "statement" ->
           ( "MATCH (a:Skill {name: {source}}),(b:Skill {name: {target}}) "
-          + "MERGE (a)-[:RELATED]->(b) "
+          + "MERGE (a)-[:RELATED {infusionValue: 0}]->(b) "
           + "RETURN a.url"),
         "parameters" -> Json.obj(
           "source" -> forSkill.trim,
