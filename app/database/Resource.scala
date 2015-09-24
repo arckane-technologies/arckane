@@ -69,7 +69,8 @@ package object resource {
       result <- query(Json.obj(
         "statement" ->
           ( "MATCH (a:Skill {name: {source}}),(b:Skill {name: {target}}) "
-          + "MERGE (a)-[:RELATED {infusionValue: 0}]->(b) "
+          + "MERGE (a)-[r:RELATED]->(b) "
+          + "ON CREATE SET r.infusionValue = 0 "
           + "RETURN a.url"),
         "parameters" -> Json.obj(
           "source" -> forSkill.trim,
