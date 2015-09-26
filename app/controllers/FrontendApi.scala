@@ -61,14 +61,16 @@ class FrontendApi extends Controller {
             // SEARCH: Skills
             "statement" ->
               ( "MATCH (n:Skill) WHERE n.name =~ { regex } "
-              + "RETURN n.name, n.url, n.description"),
+              + "RETURN n.name, n.url, n.description "
+              + "LIMIT 5"),
             "parameters" -> Json.obj(
               "regex" -> ("(?i).*"+queryString+".*")
             )), Json.obj(
             // SEARCH: Skillbooks
             "statement" ->
               ( "MATCH (n:Skillbook) WHERE n.name =~ { regex } "
-              + "RETURN n.name, n.url, n.description"),
+              + "RETURN n.name, n.url, n.description "
+              + "LIMIT 5"),
             "parameters" -> Json.obj(
               "regex" -> ("(?i).*"+queryString+".*")
             )), Json.obj(
@@ -76,7 +78,8 @@ class FrontendApi extends Controller {
             "statement" ->
               ( "MATCH (n:Resource) WHERE n.name =~ { regex } "
               + "OPTIONAL MATCH (:User {url: {user}})-[r:INFUSES]->(n)"
-              + "RETURN n.name, n.url, n.description, n.resourceType, n.resourceUrl, n.infusionValue, r.infusionValue"),
+              + "RETURN n.name, n.url, n.description, n.resourceType, n.resourceUrl, n.infusionValue, r.infusionValue "
+              + "LIMIT 5"),
             "parameters" -> Json.obj(
               "regex" -> ("(?i).*"+queryString+".*"),
               "user" -> user

@@ -54,7 +54,11 @@ package object skill {
       */
     def search (searchString: String): Future[JsArray] = { for {
       result <- query(Json.obj(
-        "statement" -> "MATCH (n:Skill) WHERE n.name =~ { regex } RETURN n.name, n.url",
+        "statement" ->
+          ( "MATCH (n:Skill) "
+          + "WHERE n.name =~ { regex } "
+          + "RETURN n.name, n.url "
+          + "LIMIT 5"),
         "parameters" -> Json.obj(
           "regex" -> ("(?i).*"+searchString.clean.escapeParenthesis+".*")
         )))
