@@ -22,8 +22,9 @@ GET     /api/skillbook              controllers.SkillbookApi.userSkillbooks
 GET     /api/skillbook/data         controllers.SkillbookApi.page
 GET     /api/skillbook/subsection   controllers.SkillbookApi.subsection
 POST    /api/skillbook/propose      controllers.SkillbookApi.propose
-POST    /api/skillbook/name         controllers.SkillbookApi.changeName
 POST    /api/skillbook/skill        controllers.SkillbookApi.addSkill
+PUT     /api/skillbook/name         controllers.SkillbookApi.changeName
+PUT     /api/skillbook/description  controllers.SkillbookApi.changeDescription
 PUT     /api/skillbook/skill        controllers.SkillbookApi.changeSkill
 PUT     /api/skillbook/pin          controllers.SkillbookApi.pin
 DELETE  /api/skillbook/skill        controllers.SkillbookApi.deleteSkill

@@ -32,7 +32,7 @@ package object skillbook {
       */
     def propose (user: String): Future[JsObject] = for {
       tx <- openTransaction
-      skillbook <- tag.create(tx, Json.obj("name" -> "New Skillbook"))
+      skillbook <- tag.create(tx, Json.obj("name" -> "New Skillbook", "description" -> "Skills for the adept mage!"))
       _ <- tx.lastly(Json.obj(
         "statement" ->
           ( "MATCH (s:Skillbook {url: {skillbook}}),(u:User {url: {user}}) "
@@ -55,7 +55,7 @@ package object skillbook {
         "statement" ->
           ( "MATCH (a:Skillbook {url: {url}}) "
           + "OPTIONAL MATCH (:User {url: {user}})-[r:PROPOSES]->(a) "
-          + "RETURN a.name, r"),
+          + "RETURN a.name, a.description, r"),
         "parameters" -> Json.obj(
           "url" -> url,
           "user" -> user
@@ -63,9 +63,17 @@ package object skillbook {
       )
     } yield if (result(0)("a.name").length > 0) {
         if (result(0)("r")(0) != JsNull)
-          Some(Json.obj("name" -> result(0)("a.name")(0), "author" -> true))
+          Some(Json.obj(
+            "name" -> result(0)("a.name")(0),
+            "description" -> result(0)("a.description")(0),
+            "author" -> true
+          ))
         else
-          Some(Json.obj("name" -> result(0)("a.name")(0), "author" -> false))
+          Some(Json.obj(
+            "name" -> result(0)("a.name")(0),
+            "description" -> result(0)("a.description")(0),
+            "author" -> false
+          ))
       } else {
         None
       }
@@ -129,11 +137,31 @@ package object skillbook {
     def changeName (skillbook: String, name: String, user: String): Future[Unit] = for {
       _ <- query(Json.obj(
         "statement" ->
-          ( "MATCH (a:Skillbook {url: {skillbook}})<-[:PROPOSES]-(:User {url: {user}})"
+          ( "MATCH (a:Skillbook {url: {skillbook}})<-[:PROPOSES]-(:User {url: {user}}) "
           + "SET a.name = {name}"),
         "parameters" -> Json.obj(
           "skillbook" -> skillbook,
           "name" -> name,
+          "user" -> user
+        ))
+      )
+    } yield Unit
+
+    /** Queries the database to change a skillbook description.
+      *
+      * @param skillbook url-id of the skillbook that is going to be edited.
+      * @param description to be set.
+      * @param user url-id that wants to change the description of his skillbook.
+      * @return Unit
+      */
+    def changeDescription (skillbook: String, description: String, user: String): Future[Unit] = for {
+      _ <- query(Json.obj(
+        "statement" ->
+          ( "MATCH (a:Skillbook {url: {skillbook}})<-[:PROPOSES]-(:User {url: {user}}) "
+          + "SET a.description = {description}"),
+        "parameters" -> Json.obj(
+          "skillbook" -> skillbook,
+          "description" -> description,
           "user" -> user
         ))
       )

@@ -82,7 +82,7 @@ class SkillbookApi extends Controller {
   }
 
   /** Queries the database to change a skillbook name.
-    * Route: POST /api/skillbook/name
+    * Route: PUT /api/skillbook/name
     * Session variables: home
     * Query string variables: id, name
     */
@@ -95,7 +95,25 @@ class SkillbookApi extends Controller {
     } yield response.map { Unit =>
       Ok
     }).getOrElse {
-      Future(BadRequest("Expected a url encoded form."))
+      Future(BadRequest("Expected 'id', and 'description' query strings."))
+    }
+  }
+
+  /** Queries the database to change a skillbook description.
+    * Route: PUT /api/skillbook/description
+    * Session variables: home
+    * Query string variables: id, description
+    */
+  def changeDescription = Action.async { request =>
+    (for {
+      user <- request.session.get("home")
+      sid <- request.queryString.get("id")
+      description <- request.queryString.get("description")
+      response <- Some(SkillbookTag.changeDescription("/skillbook/"+sid.head, description.head, user))
+    } yield response.map { Unit =>
+      Ok
+    }).getOrElse {
+      Future(BadRequest("Expected 'id', and 'description' query strings."))
     }
   }
 
