@@ -1,6 +1,20 @@
-@main("Arckane") {
+<!DOCTYPE html>
 
-  <link rel="import" href="@routes.Assets.versioned("components/arckane-polymer/interfaces/unsigned-home.html")">
-  <unsigned-home></unsigned-home>
-
-}
+<html lang="en">
+  <head>
+    <title>Arckane</title>
+    <meta name="theme-color" content="#724987">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+    <link rel="icon" type="image/x-icon" href="@routes.Assets.versioned("/favicon.ico")">
+    <script src="@routes.Assets.versioned("components/webcomponentsjs/webcomponents-lite.min.js")"></script>
+    <style>
+      body {
+        background-color: #724987;
+      }
+    </style>
+  </head>
+    <body class="fullbleed vertical layout">
+      <link rel="import" href="@routes.Assets.versioned("components/arckane-polymer/interfaces/unsigned-home.html")">
+      <unsigned-home></unsigned-home>
+    </body>
+</html>
