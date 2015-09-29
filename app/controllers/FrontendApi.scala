@@ -10,12 +10,17 @@ import play.api._
 import play.api.mvc._
 import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits._
+import play.api.libs.ws._
+import play.api.Play.current
 
 import database.neo4j._
 import database.persistence._
 
 /** Play Framework controller for some Arckane's misc features. */
 class FrontendApi extends Controller {
+
+  /** sparkpost.com api key needed to send emails. */
+  private val sparkpostApikey = Play.current.configuration.getString("sparkpost.apikey").get
 
   /** Checks if a string of an attribute of the nodes with a tag (or tags) is not taken.
     * Route: GET /api/availability
@@ -243,4 +248,158 @@ class FrontendApi extends Controller {
       )))
     }
   } yield Json.obj("value" -> state)
+
+  /** Sends an invitation to signup to Arckane.
+    * Route: POST /api/invite
+    * Sessions variables: home
+    * Query string variables: email
+    */
+  def inviteFriend = Action.async { request =>
+    (for {
+      user <- request.session.get("home")
+      form <- request.body.asFormUrlEncoded
+      response <- Some(invite(user, form("email").head))
+    } yield response.map { info =>
+      Ok(info)
+    }).getOrElse {
+      Future(BadRequest("Expected 'email' query string."))
+    }
+  }
+
+  /** Sends and saves in the database a friend invite.
+    *
+    * @param user url-id of the user that is inviting.
+    * @param email of the invited person.
+    * @return JsObject with information about the success of the invitation.
+    */
+  def invite (user: String, email: String): Future[JsObject] = for {
+    tx <- openTransaction
+    isAlreadyUser <- checkIfUserExists(tx, email)
+    invUUID <- invitationUUID(tx, user, email)
+    result <- if (!isAlreadyUser && invUUID == "") {
+      tx.lastly(Json.obj(
+        "statement" ->
+          ( "MATCH (u:User {url: {user}}) "
+          + "CREATE (u)-[:INVITES]->(i:InvitationPending {uuid: {uuid}, email: {email}}) "
+          + "RETURN i.uuid"),
+        "parameters" -> Json.obj(
+          "user" -> user,
+          "email" -> email,
+          "uuid" -> uuid
+        )
+      ))
+    } else {
+      tx.finish
+      Future(List(): TxResult)
+    }
+    info <- if (isAlreadyUser)
+      Future(Json.obj("success" -> true, "message" -> "Your friend is already a mage adept in Arckane!"))
+    else if (invUUID != "")
+      sendInvitationMail(email, invUUID, "Your invitation has been resent!")
+    else
+      sendInvitationMail(email, result(0)("i.uuid")(0).as[String], "Your invitation has been sent!")
+  } yield info
+
+  /** Check if user with email is already registered in the databse.
+    *
+    * @param tx transaction to be used.
+    * @param email of the invited person.
+    * @return boolean telling if the user exists.
+    */
+  def checkIfUserExists (tx: Transaction, email: String): Future[Boolean] = for {
+    result <- tx.execute(Json.obj(
+      "statement" ->
+        ( "MATCH (u:User {email: {email}}) "
+        + "RETURN count(u)"),
+      "parameters" -> Json.obj(
+        "email" -> email
+      )
+    ))
+  } yield if (result(0)("count(u)")(0) == JsNumber(1)) {
+    true
+  } else {
+    false
+  }
+
+  /** Gets an invitation universal unique identifier if exists.
+    *
+    * @param tx transaction to be used.
+    * @param user url-id of the user that is inviting.
+    * @param email of the invited person.
+    * @return An empty string if didn't found or the uuid string if found.
+    */
+  def invitationUUID (tx: Transaction, user: String, email: String): Future[String] = for {
+    result <- tx.execute(Json.obj(
+      "statement" ->
+        ( "OPTIONAL MATCH (:User {url: {user}})-[:INVITES]->(i:InvitationPending {email: {email}}) "
+        + "RETURN i.uuid"),
+      "parameters" -> Json.obj(
+        "user" -> user,
+        "email" -> email
+      )
+    ))
+  } yield if (result(0)("i.uuid")(0) == JsNull) {
+    ""
+  } else {
+    result(0)("i.uuid")(0).as[String]
+  }
+
+  /** Sends an invitation email using sparkpost.com api.
+    *
+    * @param email of the invited person.
+    * @param invitaion id.
+    * @param message to be sent if the mail is successful.
+    * @return JsObject with information about the success of the invitation.
+    */
+  def sendInvitationMail (email: String, invitation: String, message: String): Future[JsObject] = for {
+    response <- WS.url("https://api.sparkpost.com/api/v1/transmissions").withHeaders(
+      "Content-Type" -> "application/json",
+      "Authorization" -> sparkpostApikey
+    ).post(Json.obj(
+      "options" -> Json.obj(
+        "open_tracking" -> true,
+        "click_tracking" -> true
+      ),
+      "recipients" -> Json.arr(Json.obj(
+        "address" -> Json.obj(
+          "email" -> email
+        ),
+        "tags" -> Json.arr("invitaion")
+      )),
+      "content" -> Json.obj(
+        "from" -> Json.obj(
+          "name" -> "Arckane",
+          "email" -> "noreply@arckane.com"
+        ),
+        "subject" -> "Arckane Invitation!",
+        "html" -> s"""
+          <strong>Hello mage apprentice, you have just been invited to the Arckane beta test!</strong>
+          <p>
+            Arckane is a social and <a href="https://en.wikipedia.org/wiki/Crowdsourcing">crowdsourced</a>
+            network, our objective is to make fun and easy to learn, share and use every possible skill in the world.
+            In Arckane you can propose skills, relationships between them and
+            resources for each skill, also hit like or dislike on skill relationships
+            and resources. If you want to know how to develop any skill check how it is
+            related to others and the best recources out there.
+          </p>
+          <p>
+            Start your <a href="http://www.arckane.com?invitation=$invitation">adventure by clicking here!</a>
+          </p>
+          <p>
+            We hope you can master all the arcane spells of your own specialization,
+            may it be in science, arts, humanities or a cool cocktail of those.
+          </p>
+          <p>
+            <strong>Arckane.com</strong>
+          </p>
+        """
+      )
+    ))
+  } yield if ((response.json \ "results" \ "total_accepted_recipients").as[Int] == 1)
+    Json.obj("success" -> true, "message" -> message)
+  else
+    Json.obj("success" -> false, "message" -> ("Your invitation to "+email+" was not received."))
+
+  /** Creates a unique universal identifier. */
+  def uuid = java.util.UUID.randomUUID.toString
 }
