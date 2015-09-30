@@ -24,28 +24,31 @@ class FrontendApi extends Controller {
 
   /** Checks if a string of an attribute of the nodes with a tag (or tags) is not taken.
     * Route: GET /api/availability
-    * Query string variables: tags, attribute, value
+    * Query string variables: tags, attribute, value, email, cleaning
     */
   def searchAvailability = Action.async { request =>
     (for {
       tags <- request.queryString.get("tags")
       attribute <- request.queryString.get("attribute")
       value <- request.queryString.get("value")
+      email <- request.queryString.get("email")
+      cleaning <- request.queryString.get("cleaning")
+      search <- Some(value.head.trim.clean(cleaning.head))
       response <- Some(for {
         result <- query(Json.obj(
-          "statement" -> ("MATCH (n) WHERE n"+tags.head+" AND n."+attribute.head+" = {value} RETURN count(n)"),
+          "statement" -> ("MATCH (n) WHERE n"+tags.head+" AND n."+attribute.head+" =~ {value} RETURN count(n)"),
           "parameters" -> Json.obj(
-            "value" -> value.head.trim.clean
+            "value" -> ("(?i)"+search)
         )))
       } yield if (result(0)("count(n)")(0).as[Int] > 0) {
-        Json.obj("invalid" -> true)
+        Json.obj("invalid" -> true, "value" -> search)
       } else {
-        Json.obj("invalid" -> false)
+        Json.obj("invalid" -> false, "value" -> search)
       })
     } yield response.map { json =>
       Ok(json)
     }).getOrElse {
-      Future(BadRequest("Expected 'name', 'attribute' and 'tags' query strings."))
+      Future(BadRequest("Expected 'email', 'cleaning', 'name', 'attribute' and 'tags' query strings."))
     }
   }
 
@@ -383,7 +386,7 @@ class FrontendApi extends Controller {
             related to others and the best recources out there.
           </p>
           <p>
-            Start your <a href="http://www.arckane.com?invitation=$invitation">adventure by clicking here!</a>
+            Start your <a href="http://www.arckane.com?e=$email&i=$invitation">adventure by clicking here!</a>
           </p>
           <p>
             We hope you can master all the arcane spells of your own specialization,

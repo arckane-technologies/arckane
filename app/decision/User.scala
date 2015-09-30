@@ -45,6 +45,18 @@ package object user {
     def create: Future[Arcklet[User, JsObject]] =
       create(Json.obj())
 
+    def create (tx: Transaction, props: JsObject): Future[Arcklet[User, JsObject]] = for {
+      url <- userTag createUrl tx
+      _ <- tx execute Json.obj(
+        "statement" -> ("CREATE (n:"+userTag.str+" {props})"),
+        "parameters" -> Json.obj(
+          "props" -> (Json.obj(
+            "url" -> url,
+            "influence" -> phi,
+            "resourceType" -> "user"
+          ) ++ props)))
+    } yield Arcklet(userTag, url, props)
+
     def create (props: JsObject): Future[Arcklet[User, JsObject]] = for {
       tx <- openTransaction
       url <- userTag createUrl tx
@@ -53,7 +65,8 @@ package object user {
         "parameters" -> Json.obj(
           "props" -> (Json.obj(
             "url" -> url,
-            "influence" -> phi
+            "influence" -> phi,
+            "resourceType" -> "user"
           ) ++ props)))
     } yield Arcklet(userTag, url, props)
 

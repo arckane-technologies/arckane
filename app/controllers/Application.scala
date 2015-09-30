@@ -34,6 +34,42 @@ class Application extends Controller {
     }
   }
 
+  /** Tries to signup a user and responds with a json object.
+    * Route: POST /signup
+    * Form variables: invitation, nickname, email, password
+    */
+  def signup = Action.async { request =>
+    request.body.asFormUrlEncoded.map { form =>
+      val invitation = form("invitation").head
+      val nickname = form("nickname").head
+      val email = form("email").head
+      val password = form("password").head
+      for {
+        tx <- openTransaction
+        user <- UserTag.create(tx, Json.obj(
+          "name" -> nickname,
+          "email" -> email,
+          "password" -> password
+        ))
+        _ <- tx.lastly(Json.obj(
+          "statement" ->
+            ( "MATCH (host:User)-[r:INVITES]->(i:InvitationPending {uuid: {invitation}}),(u:User {url: {user}})"
+            + "DELETE r,i CREATE (host)-[:INVITES]->(u)"),
+          "parameters" -> Json.obj(
+            "invitation" -> invitation,
+            "user" -> user.url
+          )
+        ))
+      } yield Ok(Json.obj("success" -> true))
+          .withSession(
+            "email" -> email,
+            "name" -> nickname,
+            "home" -> user.url)
+    }.getOrElse {
+      Future(BadRequest("Expected a url encoded form."))
+    }
+  }
+
   /** Tries to authenticate a user and responds with a json object.
     * Route: POST /signin
     * Form variables: email, password

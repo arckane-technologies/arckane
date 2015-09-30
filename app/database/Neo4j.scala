@@ -226,6 +226,14 @@ package object neo4j {
     def clean: String =
       str.replaceAll("""[^a-zA-Z0-9()\s?!¿¡.,]""", "")
 
+    /** Removes characters */
+    def clean (cleaning: String): String = cleaning match {
+      case "name" => str.clean
+      case "invitation" => str.replaceAll("""[^a-z0-9-]""", "")
+      case "none" => str
+      case _ => str
+    }
+
     /** Adds backslashes to parenthesis to escape them for regexp searches. */
     def escapeParenthesis: String =
       str.replaceAll("""\(""", """\\(""")
