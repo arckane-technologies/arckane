@@ -175,21 +175,21 @@ package object neo4j {
 
   /** Neo4j addess taken from the application.conf file. If no confing is found
     * play framework looks for the NEO4J_ADDRESS environment variable in the system. */
-  private val address = Play.current.configuration.getString("neo4j.address").get
+  private val address = Play.current.configuration.getString("neo.address").get
 
   /** Neo4j user taken from the application.conf file. If no confing is found
     * play framework looks for the NEO4J_USER environment variable in the system. */
-  private val user = Play.current.configuration.getString("neo4j.user").get
+  private val user = Play.current.configuration.getString("neo.user").get
 
   /** Neo4j password taken from the application.conf file. If no confing is found
     * play framework looks for the NEO4J_PASSWORD environment variable in the system. */
-  private val password = Play.current.configuration.getString("neo4j.password").get
+  private val password = Play.current.configuration.getString("neo.password").get
 
   /** RESTful API endpoint of Neo4j. */
-  private val queryPath = "http://" + address + "/db/data/"
+  private val queryPath = address + "/db/data/"
 
   /** RESTful API endpoint for Neo4j's cypher transactional endpoint. */
-  private val transactionalEndpoint = "http://" + address + "/db/data/transaction/"
+  private val transactionalEndpoint = address + "/db/data/transaction/"
 
   /**
     * Util functions
