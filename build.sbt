@@ -2,6 +2,11 @@ name := """arckane"""
 
 version := "0.0.1"
 
+// Do not add doc files to dist
+sources in (Compile, doc) := Seq.empty
+
+publishArtifact in (Compile, packageDoc) := false
+
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
 scalaVersion := "2.11.6"
