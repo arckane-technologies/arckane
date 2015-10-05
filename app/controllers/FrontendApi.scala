@@ -38,7 +38,7 @@ class FrontendApi extends Controller {
         result <- query(Json.obj(
           "statement" -> ("MATCH (n) WHERE n"+tags.head+" AND n."+attribute.head+" =~ {value} RETURN count(n)"),
           "parameters" -> Json.obj(
-            "value" -> ("(?i)"+search)
+            "value" -> ("(?i)"+search.escapeParenthesis)
         )))
       } yield if (result(0)("count(n)")(0).as[Int] > 0) {
         Json.obj("invalid" -> true, "value" -> search)
