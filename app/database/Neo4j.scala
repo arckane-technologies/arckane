@@ -224,7 +224,7 @@ package object neo4j {
     /** Removes all characters that are not letters, numbers, spaces, interrogation
       * and exclamation symbols. */
     def clean: String =
-      str.replaceAll("""[^a-zA-Z0-9()\s?!¿¡.,]""", "")
+      str.replaceAll("""[^a-zA-Z0-9()\s?!¿¡.,:áéíóúÁÉÍÓÚ]""", "")
 
     /** Removes characters */
     def clean (cleaning: String): String = cleaning match {
