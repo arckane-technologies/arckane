@@ -1,6 +1,6 @@
 name := """arckane"""
 
-version := "0.0.1-SNAPSHOT-001"
+version := "0.0.1-SNAPSHOT-002"
 
 // Do not add doc files to dist
 sources in (Compile, doc) := Seq.empty
