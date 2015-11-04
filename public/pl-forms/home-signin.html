@@ -1,0 +1,73 @@
+<!--
+@author Francisco Miguel Aramburo Torres - atfm05@gmail.com
+-->
+
+<link rel="import" href="../components/polymer/polymer.html">
+<link rel="import" href="../components/paper-input/paper-input.html">
+<link rel="import" href="../components/iron-form/iron-form.html">
+
+<link rel="import" href="../components/paper-styles/color.html">
+<link rel="import" href="../pl-utils/arckane-styles.html">
+
+<!--
+`<home-signin>` is a simple form for user authentication.
+-->
+<dom-module id="home-signin">
+  <style>
+    :host {
+      padding: 20px;
+      border-radius: 3px;
+      background-color: white;
+    }
+
+    input {
+      border: 0;
+      margin-top: 10px;
+      padding-top: 10px;
+      padding-bottom: 10px;
+      border-radius: 3px;
+      color: white;
+      width: 100%;
+      font-size: 20px;
+      background-color: var(--google-blue-700);
+    }
+
+    paper-input {
+      --paper-input-container-color: var(--arckane-aqua-100);
+      --paper-input-container-focus-color: var(--arckane-aqua-100);
+    }
+  </style>
+
+  <template>
+    <form is="iron-form" id="signInForm" method="post" action="/signin">
+      <paper-input id="email" name="email" label="Email"></paper-input>
+      <paper-input id="password" name="password" label="Password" type="password"></paper-input>
+      <input type="submit" value="Sign In">
+    </form>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is: "home-signin",
+
+    listeners: {
+      'iron-form-response': '_formResponse',
+      'iron-form-error': '_formError'
+    },
+
+    _formResponse: function (event) {
+      var result = event.detail;
+      if (result.success) {
+        window.location.assign('/');
+      } else {
+        alert('Incorrect email or password.');
+      }
+    },
+
+    _formError: function (event) {
+      alert('Sorry, there was an error with your request.');
+      console.log(event.detail.error);
+    }
+  });
+</script>

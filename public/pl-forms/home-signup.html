@@ -1,0 +1,167 @@
+<!--
+@author Francisco Miguel Aramburo Torres - atfm05@gmail.com
+-->
+
+<link rel="import" href="../components/polymer/polymer.html">
+<link rel="import" href="../components/paper-input/paper-input.html">
+<link rel="import" href="../components/gold-email-input/gold-email-input.html">
+<link rel="import" href="../components/iron-form/iron-form.html">
+
+<link rel="import" href="../components/paper-styles/color.html">
+<link rel="import" href="../pl-utils/arckane-styles.html">
+<link rel="import" href="../pl-utils/search-validator.html">
+
+<!--
+`<home-signup>` is a simple form for user registration to the system.
+-->
+<dom-module id="home-signup">
+  <style>
+    :host {
+      padding: 20px;
+      border-radius: 3px;
+      background-color: white;
+    }
+
+    input {
+      border: 0;
+      margin-top: 10px;
+      padding-top: 10px;
+      padding-bottom: 10px;
+      border-radius: 3px;
+      color: white;
+      width: 100%;
+      font-size: 20px;
+      background-color: var(--google-green-700);
+    }
+
+    h3 {
+      color: gray;
+    }
+
+    paper-input {
+      --paper-input-container-color: var(--arckane-aqua-100);
+      --paper-input-container-focus-color: var(--arckane-aqua-100);
+    }
+
+    gold-email-input {
+      --paper-input-container-color: var(--arckane-aqua-100);
+      --paper-input-container-focus-color: var(--arckane-aqua-100);
+    }
+  </style>
+
+  <template>
+    <form is="iron-form" id="signUpForm" method="post" action="/signup" on-iron-form-response="_formResponse">
+      <!-- Invitation -->
+      <paper-input
+        name="invitation"
+        label="Invitation Pass"
+        value="{{invitation}}"
+        invalid="{{!invalidInvitation}}"
+        error-message="Wrong invitation"
+        required>
+      </paper-input>
+      <search-validator value="{{invitation}}" invalid="{{invalidInvitation}}" attribute="uuid" tags=":InvitationPending" cleaning="invitation"></search-validator>
+
+      <!-- Nickname -->
+      <paper-input
+        name="nickname"
+        value="{{nickname}}"
+        label="Choose a nickname"
+        invalid="{{invalidName}}"
+        error-message="Nickname taken"
+        char-counter
+        minlength="3"
+        maxlength="20"
+        required>
+      </paper-input>
+      <search-validator value="{{nickname}}" invalid="{{invalidName}}" attribute="name" tags=":User"></search-validator>
+
+      <!-- Email -->
+      <paper-input
+        name="email"
+        value="{{email}}"
+        label="Your email"
+        invalid="{{invalidEmail}}"
+        error-message="Email taken or not a valid email"
+        required>
+      </paper-input>
+      <search-validator value="{{email}}" invalid="{{invalidEmail}}" attribute="email" tags=":User" cleaning="none" email></search-validator>
+
+      <!-- Password -->
+      <paper-input
+        name="password"
+        value="{{password}}"
+        label="Choose a password"
+        type="password"
+        char-counter
+        minlength="8"
+        required>
+      </paper-input>
+
+      <!-- Second password -->
+      <paper-input
+        value="{{secondPassword}}"
+        label="Type your password again"
+        type="password"
+        invalid="{{passwordMatches}}"
+        error-message="Passwords must match"
+        char-counter
+        minlength="8"
+        required>
+      </paper-input>
+
+      <!-- Button -->
+      <input type="submit" value="Sign Up">
+    </form>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is: "home-signup",
+
+    properties: {
+      secondPassword: {
+        type: String,
+        observer: '_secondPasswordChanged'
+      }
+    },
+
+    /** Handles the response of the form. */
+    _formResponse: function (event) {
+      var info = event.detail;
+      if (info.success)
+        window.location.assign('/');
+      else
+        this.fire('warning', {message: info.message});
+    },
+
+    /** Listener for when the second password changes, checks if it matches with the first one. */
+    _secondPasswordChanged: function (pass) {
+      if (this.password == pass)
+        this.passwordMatches = false;
+      else
+        this.passwordMatches = true;
+    },
+
+    /**
+     * Extracts the query string variables and returns an object with them.
+     *
+     * @return {Object} object with the GET query string variables.
+     */
+    _queryString: function () {
+      var vars = {};
+      var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+        vars[key] = value;
+      });
+      return vars;
+    },
+
+    /** Sets the query string variables 'e' and 'i' to the email and invitation attributes. */
+    ready: function () {
+      var vars = this._queryString();
+      this.email = vars["e"];
+      this.invitation = vars["i"];
+    }
+  });
+</script>

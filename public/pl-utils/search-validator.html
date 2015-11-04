@@ -1,0 +1,107 @@
+<!--
+@author Francisco Miguel Aramburo Torres - atfm05@gmail.com
+-->
+
+<link rel="import" href="../components/polymer/polymer.html">
+<link rel="import" href="../components/iron-ajax/iron-ajax.html">
+
+<!--
+`<search-validator>` requests the server to check if a string is free on
+the database, checks by Neo4j tag and attribute.
+-->
+<dom-module id="search-validator">
+
+  <template>
+
+    <iron-ajax
+      id="ajax"
+      mathod="get"
+      url="/api/availability"
+      handle-as="json"
+      last-response="{{response}}"
+      debounce-duration="300">
+    </iron-ajax>
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'search-validator',
+
+      properties: {
+
+        /** String to check for availability. */
+        value: {
+          type: String,
+          observer: '_valueChanged'
+        },
+
+        /** True if the value is taken. */
+        invalid: {
+          type: Boolean,
+          value: false,
+          notify: true
+        },
+
+        /** Attribute of the database to be compared to. */
+        attribute: {
+          type: String,
+          value: 'name'
+        },
+
+        /** Tag of the database to be compared to. */
+        tags: {
+          type: String,
+          value: ':Skill'
+        },
+
+        /** Set to true if it is going to be checked the email regex besides normal verification. */
+        email: {
+          type: Boolean,
+          value: false
+        },
+
+        /** Type of string cleaning to be done on server side. */
+        cleaning: {
+          type: String,
+          value: 'name'
+        },
+
+        /** Response of the server.
+         *
+         * @type {{invalid: boolean}}
+         */
+        response: {
+          type: Object,
+          observer: '_handleResponse'
+        }
+      },
+
+      /**
+       * Listener of the attribute value, sends the request using the attributes
+       * tags, attribute and value with a debounce of 500ms.
+       */
+      _valueChanged: function (value) {
+        if (value == "" || typeof value === "undefined") return;
+        this.debounce('value-changing', function() {
+          this.$.ajax.params = {
+            tags: this.tags,
+            attribute: this.attribute,
+            value: this.value,
+            cleaning: this.cleaning,
+            email: this.email.toString()
+          };
+          this.$.ajax.generateRequest();
+        }, 500);
+      },
+
+      /** Handles the response from the server by setting this.invalid to whatever the server responded. */
+      _handleResponse: function (response) {
+        if (this.email)
+          this.invalid = response.invalid || !(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,4}$/.test(response.value))
+        else
+          this.invalid = response.invalid;
+      }
+    });
+  </script>
+</dom-module>
