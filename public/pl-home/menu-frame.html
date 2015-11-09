@@ -1,0 +1,148 @@
+<!--
+@author Francisco Miguel Aramburo Torres - atfm05@gmail.com
+-->
+
+<link rel="import" href="../components/polymer/polymer.html">
+<link rel="import" href="../components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="../components/iron-ajax/iron-ajax.html">
+
+<link rel="import" href="../components/paper-drawer-panel/paper-drawer-panel.html">
+<link rel="import" href="../components/paper-header-panel/paper-header-panel.html">
+<link rel="import" href="../components/paper-toolbar/paper-toolbar.html">
+<link rel="import" href="../components/paper-dialog/paper-dialog.html">
+
+<link rel="import" href="../components/neon-animation/animations/fade-out-animation.html">
+<link rel="import" href="../components/neon-animation/animations/fade-in-animation.html">
+
+<link rel="import" href="../components/more-routing/routing.html">
+
+<link rel="import" href="../pl-home/menu-drawer.html">
+<link rel="import" href="../pl-utils/arckane-styles.html">
+
+<!--
+`<menu-frame>` uses `<paper-drawer-panel>` to create the main interface framework
+for the app
+
+* Adds a drawer side menu with the user's info and options.
+
+* Gives a space for the app interfaces, which `<arckane-app>` fills.
+-->
+<dom-module id="menu-frame">
+
+  <style include="arckane-styles">
+    * {
+      box-sizing: border-box;
+    }
+
+    :host {
+      @apply(--paper-font-common-base);
+      --paper-toolbar: {
+        color: white;
+        background-color: var(--arckane-purple-200);
+      };
+    }
+
+    paper-dialog {
+      --paper-dialog: {
+        border-radius: 3px;
+        z-index: 90;
+      };
+    }
+
+    paper-drawer-panel {
+      --paper-drawer-panel-left-drawer-container: {
+        width: 600px;
+        background-color: var(--google-grey-100);
+      };
+    }
+  </style>
+
+  <template>
+    <iron-media-query query="(min-width: 641px)" query-matches="{{isDesktopSize}}"></iron-media-query>
+
+    <!-- Content -->
+    <paper-drawer-panel id="drawer">
+      <!-- Side drawer -->
+      <menu-drawer drawer user-info="{{userInfo}}"></menu-drawer>
+      <!-- Center content -->
+      <paper-header-panel main mode="waterfall">
+
+        <!-- Header -->
+        <paper-toolbar>
+          <!-- TOP: Left side icons. -->
+          <paper-icon-button icon="menu" paper-drawer-toggle></paper-icon-button>
+          <!-- TOP: Middle. -->
+          <!-- TOP: Right side icons. -->
+        </paper-toolbar>
+
+        <!-- Page content -->
+        <div class="content">
+          <content></content>
+        </div>
+      </paper-header-panel>
+
+    </paper-drawer-panel>
+  </template>
+
+  <script>
+
+    Polymer({
+
+      is: 'menu-frame',
+
+      properties: {
+
+        /**
+         * General info of the user, used to display the correct menu items in
+         * `<menu-frame>`. The home property is the url of the user.
+         *
+         * @type {{
+         *   home: string,
+         *   name: string,
+         *   skillbooks: Array<{
+         *     name: string,
+         *     url: string
+         *   }>}}
+         */
+        userInfo: Object
+      },
+
+      listeners: {
+
+        /**
+         * Fired when any element wants to force the closing of the side drawer.
+         *
+         * @event close-drawer
+         */
+        'close-drawer': '_closeDrawer',
+      },
+
+      /** Closes the drawer side menu. */
+      _closeDrawer: function () {
+        this.$.drawer.closeDrawer();
+      },
+
+      /**
+       * Opens the corresponding proposal dialog depending on the element which
+       * fired the event.
+       *
+       * @param {Event} event
+       * @return {undefined}
+       */
+      _openDialog: function (event) {
+        switch (event.target.id) {
+          case 'proposeSkillDialogButton':
+            //this.$.proposeSkillDialog.open();
+            break;
+          case 'proposeResourceDialogButton':
+            //this.$.proposeResourceDialog.open();
+            break;
+          case 'inviteDialogButton':
+            //this.$.inviteDialog.open();
+            break;
+        }
+      }
+    });
+  </script>
+</dom-module>
