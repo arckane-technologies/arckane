@@ -24,7 +24,6 @@ class Application extends Controller {
     * Session variables: name, home
     */
   def index = Action { request =>
-    wikiSearchPrefix("Albert E")
     (for {
       name <- request.session.get("name")
       home <- request.session.get("home")
