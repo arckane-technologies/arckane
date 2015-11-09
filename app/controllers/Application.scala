@@ -12,6 +12,7 @@ import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits._
 
 import database.neo4j._
+import database.wikimedia._
 import database.persistence._
 import decision.user._
 
@@ -23,6 +24,7 @@ class Application extends Controller {
     * Session variables: name, home
     */
   def index = Action { request =>
+    wikiSearchPrefix("Albert E")
     (for {
       name <- request.session.get("name")
       home <- request.session.get("home")
