@@ -1,0 +1,277 @@
+<!--
+@author Francisco Miguel Aramburo Torres - atfm05@gmail.com
+-->
+
+<link rel="import" href="../components/polymer/polymer.html">
+<link rel="import" href="../components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="../components/iron-ajax/iron-ajax.html">
+
+<link rel="import" href="../components/iron-icons/iron-icons.html">
+<link rel="import" href="../components/paper-button/paper-button.html">
+<link rel="import" href="../components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../components/paper-styles/color.html">
+<link rel="import" href="../components/paper-styles/typography.html">
+
+<link rel="import" href="../components/paper-drawer-panel/paper-drawer-panel.html">
+<link rel="import" href="../components/paper-header-panel/paper-header-panel.html">
+<link rel="import" href="../components/paper-toolbar/paper-toolbar.html">
+<link rel="import" href="../components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../components/gold-email-input/gold-email-input.html">
+
+<link rel="import" href="../components/neon-animation/animations/fade-out-animation.html">
+<link rel="import" href="../components/neon-animation/animations/fade-in-animation.html">
+
+<link rel="import" href="../components/more-routing/routing.html">
+
+<link rel="import" href="../pl-utils/nav-a.html">
+<link rel="import" href="../pl-utils/arckane-styles.html">
+
+<!--
+`<menu-toolbar>` uses `<paper-drawer-panel>` to create the main interface framework
+for the app
+
+* Adds a drawer side menu with the user's info and options.
+
+* `<search-box>` to create the header bar.
+
+* Gives a space for the app interfaces, which `<arckane-app>` fills.
+-->
+<dom-module id="menu-toolbar">
+
+  <style include="arckane-styles">
+    * {
+      box-sizing: border-box;
+    }
+
+    :host {
+      @apply(--paper-font-common-base);
+      --paper-toolbar: {
+        color: white;
+        background-color: var(--arckane-purple-200);
+      };
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+      display: block;
+    }
+
+    #drawer h1 {
+      cursor: pointer;
+    }
+
+    #drawer-content .container {
+      @apply(--layout-horizontal);
+      @apply(--layout-center);
+      padding-left: 10px;
+      padding-top: 20px;
+      color: #1e1e1e;
+      cursor: pointer;
+    }
+
+    #drawer-content .space {
+      height: 20px;
+    }
+
+    #drawer-content .container iron-icon {
+      margin-right: 10px;
+    }
+
+    #drawer-content .option iron-icon {
+      color: var(--google-grey-500);
+    }
+
+    paper-dialog {
+      --paper-dialog: {
+        border-radius: 3px;
+        z-index: 90;
+      };
+    }
+
+    .proposal {
+      width: 460px;
+    }
+
+    paper-dialog paper-button {
+      color: var(--arckane-aqua-200);
+      font-weight: bold;
+    }
+
+    paper-drawer-panel {
+      --paper-drawer-panel-left-drawer-container: {
+        width: 600px;
+        background-color: var(--google-grey-100);
+      };
+    }
+
+    gold-email-input {
+      --paper-input-container-color: var(--arckane-aqua-200);
+      --paper-input-container-focus-color: var(--arckane-aqua-200);
+    }
+  </style>
+
+  <template>
+    <iron-media-query query="(min-width: 641px)" query-matches="{{isDesktopSize}}"></iron-media-query>
+
+    <!-- Content -->
+    <paper-drawer-panel id="drawer">
+
+      <!-- Side drawer menu -->
+      <paper-header-panel drawer mode="waterfall">
+
+        <!-- Drawer header -->
+        <paper-toolbar id="drawer-header">
+          <h1 class="flex"><nav-a route="root" on-tap="_closeDrawer">Arckane</nav-a></h1>
+        </paper-toolbar>
+
+        <!-- Drawer content -->
+        <div id="drawer-content" class="vertical layout">
+          <!-- User -->
+          <div class="container option">
+            <nav-a route="[[userInfo.home]]" on-tap="_closeDrawer">
+              <iron-icon icon="face"></iron-icon>
+              <span>[[userInfo.name]]</span>
+            </nav-a>
+          </div>
+
+          <!-- Sign out-->
+          <div class="container option">
+            <a href="/signout">
+              <iron-icon icon="assignment-turned-in"></iron-icon>
+              Sign Out
+            </a>
+          </div>
+
+          <!-- Invite a friend -->
+          <div class="container option">
+            <a id="inviteDialogButton" on-tap="_openDialog">
+              <iron-icon icon="card-giftcard"></iron-icon>
+              Invite a Friend!
+            </a>
+          </div>
+
+          <div class="space"></div>
+
+        </div>
+      </paper-header-panel>
+
+      <!-- Main content -->
+      <paper-header-panel main mode="waterfall">
+
+        <paper-toolbar>
+          <!-- TOP: Left side icons. -->
+          <paper-icon-button icon="menu" paper-drawer-toggle></paper-icon-button>
+          <!-- TOP: Middle. -->
+          <!-- TOP: Right side icons. -->
+        </paper-toolbar>
+
+        <!-- Interface page content -->
+        <div class="content">
+
+          <!-- Invite a friend dialog -->
+          <paper-dialog id="inviteDialog" modal entry-animation="fade-in-animation" exit-animation="fade-out-animation">
+            <h2>Invite a friend to Arckane!</h2>
+
+            <form id="inviteForm" is="iron-form" method="post" action="/api/invite" on-iron-form-response="_inviteFormResponse">
+              <gold-email-input name="email" auto-validate required></gold-email-input>
+              <div class="buttons">
+                <paper-button dialog-dismiss>Cancel</paper-button>
+                <paper-button on-tap="_inviteFriend">Invite</paper-button>
+              </div>
+            </form>
+          </paper-dialog>
+
+          <content></content>
+        </div>
+      </paper-header-panel>
+
+    </paper-drawer-panel>
+  </template>
+
+  <script>
+
+    Polymer({
+
+      is: 'menu-toolbar',
+
+      properties: {
+
+        /**
+         * General info of the user, used to display the correct menu items in
+         * `<menu-toolbar>`. The home property is the url of the user.
+         *
+         * @type {{
+         *   home: string,
+         *   name: string,
+         *   skillbooks: Array<{
+         *     name: string,
+         *     url: string
+         *   }>}}
+         */
+        userInfo: Object
+      },
+
+      listeners: {
+
+        /**
+         * Fired after a `<form is="iron-form">` is submited, used to close any
+         * open proposal dialog.
+         *
+         * @event iron-form-submit
+         */
+        'iron-form-submit': '_afterProposalSubmit',
+
+        /**
+         * Fired after any member of the drawer side menu is selected, closes
+         * `<search-box>` results.
+         *
+         * @event iron-select
+         * @param {Event}
+         */
+        'iron-select': '_closeSearchResults',
+      },
+
+      /** Closes the drawer side menu. */
+      _closeDrawer: function () {
+        this.$.drawer.closeDrawer();
+      },
+
+      /**
+       * Opens the corresponding proposal dialog depending on the element which
+       * fired the event.
+       *
+       * @param {Event} event
+       * @return {undefined}
+       */
+      _openDialog: function (event) {
+        switch (event.target.id) {
+          case 'proposeSkillDialogButton':
+            //this.$.proposeSkillDialog.open();
+            break;
+          case 'proposeResourceDialogButton':
+            //this.$.proposeResourceDialog.open();
+            break;
+          case 'inviteDialogButton':
+            //this.$.inviteDialog.open();
+            break;
+        }
+      },
+
+      /** Fires invite a friend form submission. */
+      _inviteFriend: function () {
+        this.$.inviteForm.submit();
+      },
+
+      /** Handles the response of the invite a friend form by notiying the user of the result. */
+      _inviteFormResponse: function (event) {
+        var info = event.detail;
+        if (info.success)
+          this.fire('notify-user', {message: info.message});
+        else
+          this.fire('warning', {message: info.message});
+      }
+    });
+  </script>
+</dom-module>

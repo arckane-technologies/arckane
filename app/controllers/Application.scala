@@ -31,7 +31,9 @@ class Application extends Controller {
       "name" -> name,
       "home" -> home
     ).toString))).getOrElse {
-      Ok(views.html.index())
+      Ok(views.html.app(Json.obj(
+        "guest" -> true
+      ).toString))
     }
   }
 

@@ -1,0 +1,41 @@
+<!--
+@author Francisco Miguel Aramburo Torres - atfm05@gmail.com
+-->
+
+<link rel="import" href="../components/polymer/polymer.html">
+<link rel="import" href="../components/more-routing/routing.html">
+
+<!--
+`<nav-a>` eases the task of navigation using `<more-routing>`.
+-->
+<dom-module id="nav-a">
+  <style>
+    :host {
+      display: inline;
+    }
+  </style>
+
+  <template>
+    <content></content>
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'nav-a',
+
+      properties: {
+        route: String
+      },
+
+      listeners: {
+        'tap': '_navigate'
+      },
+
+      _navigate: function (event) {
+        MoreRouting.navigateTo(this.route);
+        event.preventDefault();
+      }
+    });
+  </script>
+</dom-module>

@@ -1,0 +1,172 @@
+<!--
+@author Francisco Miguel Aramburo Torres - atfm05@gmail.com
+-->
+
+<link rel="import" href="../components/polymer/polymer.html">
+<link rel="import" href="../components/more-routing/more-routing.html">
+<link rel="import" href="../components/iron-pages/iron-pages.html">
+
+<link rel="import" href="../components/paper-toast/paper-toast.html">
+<link rel="import" href="../components/paper-styles/typography.html">
+<link rel="import" href="../components/paper-styles/color.html">
+
+<link rel="import" href="menu-toolbar.html">
+
+<link rel="import" href="routes.html">
+
+<!--
+`<arckane-app>` wraps all the Arckane functionalities and works as an easy to use
+element.
+
+* User notification 'toasts' are managed here, 'notify' and 'error' events are
+listened at this top level, such listeners display the notifications. Such events
+can be fired from any element inside the app.
+
+* The app dom tree starts with the usage of `<menu-toolbar>`, inside every page
+interface is loaded and managed by `<more-routing>`
+(https://github.com/PolymerLabs/more-routing).
+-->
+<dom-module id="arckane-app">
+
+  <style>
+    paper-toast {
+      @apply(--paper-font-common-base);
+      z-index: 99;
+    }
+
+    .error {
+      color: var(--google-red-500);
+    }
+
+    .warning {
+      color: var(--paper-yellow-a700);
+    }
+
+    .notification {
+      color: var(--google-green-500);
+    }
+  </style>
+
+  <template>
+    <paper-toast id="errorToast" class="error" duration="5000"></paper-toast>
+    <paper-toast id="warningToast" class="warning" duration="5000"></paper-toast>
+    <paper-toast id="notificationToast" class="notification" duration="5000"></paper-toast>
+
+    <menu-toolbar user-info="{{userInfo}}">
+      <more-route-selector>
+        <iron-pages>
+
+          <section route="root">
+            <page-root></page-root>
+          </section>
+
+          <section route="user">
+          </section>
+
+        </iron-pages>
+      </more-route-selector>
+    </menu-toolbar>
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'arckane-app',
+
+      properties: {
+
+        /**
+         * General info of the user, used to display the correct menu items in
+         * `<menu-toolbar>`. The home property is the url of the user.
+         *
+         * @type {{
+         *   home: string,
+         *   name: string,
+         *   skillbooks: Array<{
+         *     name: string,
+         *     url: string
+         *   }>}}
+         */
+        userInfo: Object
+      },
+
+      listeners: {
+
+        /**
+         * Fired when any element inside the app whats to display a green text
+         * `<paper-toast>` on the interface.
+         *
+         * @event notify-user
+         * @param {{message: string}}
+         */
+        'notify-user': '_displayNotificationToast',
+
+        /**
+         * Fired from any element inside the app, `<iron-ajax>`. Displays a yellow
+         * text `<paper-toast>` on the interface.
+         *
+         * @event warning
+         * @param {{message: string}}
+         */
+        'warning': '_displayWarningToast',
+
+        /**
+         * Fired from any `<form is="iron-form">` inside the app when an error
+         * after submission occurs. Displays a red text `<paper-toast>` on
+         * the interface.
+         *
+         * @event iron-form-error
+         * @param {{error: string}}
+         */
+        'iron-form-error': '_displayErrorToast',
+
+        /**
+         * Fired from any element inside the app, `<iron-ajax>` fire this when
+         * there was an error on the request or response. Displays a red text
+         * `<paper-toast>` on the interface.
+         *
+         * @event error
+         * @param {{error: string}}
+         */
+        'error': '_displayErrorToast'
+      },
+
+      /**
+       * Invoked by the 'notify-user' event. Displays a green text `<paper-toast>`
+       * on the interface.
+       *
+       * @param {Event}
+       * @return {undefined}
+       */
+      _displayNotificationToast: function (event) {
+        this.$.notificationToast.text = event.detail.message;
+        this.$.notificationToast.show();
+      },
+
+      /**
+       * Invoked by the 'warning' event. Displays a yellow text `<paper-toast>`
+       * on the interface.
+       *
+       * @param {Event}
+       * @return {undefined}
+       */
+      _displayWarningToast: function (event) {
+        this.$.warningToast.text = event.detail.message;
+        this.$.warningToast.show();
+      },
+
+      /**
+       * Invoked by the 'error' and 'iron-form-error' events. Displays a red
+       * text `<paper-toast>` on the interface. Redirects to the index route.
+       *
+       * @param {Event}
+       * @return {undefined}
+       */
+      _displayErrorToast: function (event) {
+        this.$.errorToast.text = event.detail.error;
+        this.$.errorToast.show();
+        MoreRouting.navigateTo("/");
+      }
+    });
+  </script>
+</dom-module>
