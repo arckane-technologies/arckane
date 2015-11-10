@@ -29,12 +29,14 @@ drawer. The app frame is found in `<menu-frame>` which uses this element.
     }
 
     :host {
+      color: white;
       @apply(--paper-font-common-base);
       --paper-toolbar: {
         color: var(--arckane-purple-200);
-        border-color: var(--arckane-purple-200);
+        background-color: white;
         border-bottom: 1px solid;
-        background-color: var(--google-grey-100);
+        border-color: var(--arckane-purple-200);
+        /*background-color: var(--google-grey-100);*/
       };
     }
 
@@ -53,7 +55,6 @@ drawer. The app frame is found in `<menu-frame>` which uses this element.
       @apply(--layout-center);
       padding-left: 10px;
       padding-top: 20px;
-      color: #1e1e1e;
       cursor: pointer;
     }
 
@@ -66,7 +67,7 @@ drawer. The app frame is found in `<menu-frame>` which uses this element.
     }
 
     #drawer-content .option iron-icon {
-      color: var(--google-grey-500);
+      color: white;
     }
   </style>
 

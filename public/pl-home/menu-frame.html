@@ -38,8 +38,10 @@ for the app
     :host {
       @apply(--paper-font-common-base);
       --paper-toolbar: {
-        color: white;
-        background-color: var(--arckane-purple-200);
+        color: var(--google-grey-100);
+        background-color: white;
+        border-bottom: 1px solid;
+        border-color: var(--arckane-purple-200);
       };
     }
 
@@ -53,8 +55,22 @@ for the app
     paper-drawer-panel {
       --paper-drawer-panel-left-drawer-container: {
         width: 600px;
-        background-color: var(--google-grey-100);
+
+        background-image: url(/assets/images/sidebar_background.png),#724987;
+        background-image: url(/assets/images/sidebar_background.png),-moz-linear-gradient(45deg,#724987 0,#06D6A0 100%);
+        background-image: url(/assets/images/sidebar_background.png),-webkit-gradient(linear,left bottom,right top,color-stop(0%,#724987),color-stop(100%,#06D6A0));
+        background-image: url(/assets/images/sidebar_background.png),-webkit-linear-gradient(45deg,#724987 0,#06D6A0 100%);
+        background-image: url(/assets/images/sidebar_background.png),-o-linear-gradient(45deg,#724987 0,#06D6A0 100%);
+        background-image: url(/assets/images/sidebar_background.png),-ms-linear-gradient(45deg,#724987 0,#06D6A0 100%);
+        background-image: url(/assets/images/sidebar_background.png),linear-gradient(45deg,#724987 0,#06D6A0 100%);
+        filter: progid:dximagetransform.microsoft.gradient(startColorstr='#724987',endColorstr='#06D6A0',GradientType=1);
+        background-repeat: no-repeat;
+        background-attachment: fixed;
       };
+    }
+
+    #menu-icon {
+      color: var(--arckane-purple-200);
     }
   </style>
 
@@ -71,7 +87,7 @@ for the app
         <!-- Header -->
         <paper-toolbar>
           <!-- TOP: Left side icons. -->
-          <paper-icon-button icon="menu" paper-drawer-toggle></paper-icon-button>
+          <paper-icon-button id="menu-icon" icon="menu" paper-drawer-toggle></paper-icon-button>
           <!-- TOP: Middle. -->
           <!-- TOP: Right side icons. -->
         </paper-toolbar>
