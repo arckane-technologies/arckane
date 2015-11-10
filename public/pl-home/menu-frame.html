@@ -122,6 +122,18 @@ for the app
       properties: {
 
         /**
+         * Same as the iron-pages 'selected', its value is always the index of the
+         * selected toolbar tab.
+         *
+         * @type {number}
+         */
+        selected: {
+          type: Number,
+          value: 0,
+          notify: true
+        },
+
+        /**
          * General info of the user, used to display the correct menu items in
          * `<menu-frame>`. The home property is the url of the user.
          *

@@ -52,15 +52,20 @@ interface is loaded and managed by `<more-routing>`
     <paper-toast id="warningToast" class="warning" duration="5000"></paper-toast>
     <paper-toast id="notificationToast" class="notification" duration="5000"></paper-toast>
 
-    <menu-frame user-info="{{userInfo}}">
+    <menu-frame user-info="{{userInfo}}" selected="{{selected}}">
       <more-route-selector>
-        <iron-pages>
+        <iron-pages selected="{{selected}}">
 
           <section route="root">
-            <page-root></page-root>
           </section>
 
-          <section route="user">
+          <section route="learn">
+          </section>
+
+          <section route="teach">
+          </section>
+
+          <section route="schedule">
           </section>
 
         </iron-pages>
