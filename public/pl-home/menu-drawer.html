@@ -32,18 +32,32 @@ drawer. The app frame is found in `<menu-frame>` which uses this element.
       color: white;
       @apply(--paper-font-common-base);
       --paper-toolbar: {
-        color: var(--arckane-purple-200);
-        background-color: white;
-        border-bottom: 1px solid;
-        border-color: var(--arckane-purple-200);
-        /*background-color: var(--google-grey-100);*/
       };
+    }
+
+    nav-a {
+      cursor: pointer;
     }
 
     a {
       color: inherit;
       text-decoration: none;
       display: block;
+    }
+
+    #drawer-header {
+      color: var(--google-grey-300);
+      height: 256px;
+      /*
+      border-bottom: 1px solid;
+      border-color: var(--arckane-purple-200);
+      */
+      background-color: var(--google-grey-100);
+    }
+
+    #drawer-header iron-icon {
+      width: 200px;
+      height: 200px;
     }
 
     #drawer h1 {
@@ -76,19 +90,15 @@ drawer. The app frame is found in `<menu-frame>` which uses this element.
     <paper-header-panel drawer mode="waterfall">
 
       <!-- Drawer header -->
-      <paper-toolbar id="drawer-header">
-        <h1 class="flex"><nav-a route="root" on-tap="_closeDrawer">Arckane</nav-a></h1>
-      </paper-toolbar>
+      <!-- User -->
+      <nav-a route="[[userInfo.home]]" on-tap="_closeDrawer">
+        <div id="drawer-header" class="horizontal layout center">
+          <iron-icon class="flex self-center" icon="account-circle"></iron-icon>
+        </div>
+      </nav-a>
 
       <!-- Drawer content -->
       <div id="drawer-content" class="vertical layout">
-        <!-- User -->
-        <div class="container option">
-          <nav-a route="[[userInfo.home]]" on-tap="_closeDrawer">
-            <iron-icon icon="face"></iron-icon>
-            <span>[[userInfo.name]]</span>
-          </nav-a>
-        </div>
 
         <!-- Sign out-->
         <div class="container option">
