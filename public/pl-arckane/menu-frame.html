@@ -16,9 +16,7 @@
 <link rel="import" href="../components/neon-animation/animations/fade-out-animation.html">
 <link rel="import" href="../components/neon-animation/animations/fade-in-animation.html">
 
-<link rel="import" href="../components/more-routing/routing.html">
-
-<link rel="import" href="../pl-home/menu-drawer.html">
+<link rel="import" href="../pl-arckane/menu-drawer.html">
 <link rel="import" href="../pl-utils/arckane-styles.html">
 
 <!--
@@ -84,7 +82,7 @@ for the app
     <!-- Content -->
     <paper-drawer-panel id="drawer">
       <!-- Side drawer -->
-      <menu-drawer drawer user-info="{{userInfo}}"></menu-drawer>
+      <menu-drawer drawer user="{{user}}"></menu-drawer>
       <!-- Center content -->
       <paper-header-panel main mode="waterfall">
 
@@ -93,14 +91,6 @@ for the app
           <!-- TOP: Left side icons. -->
           <paper-icon-button icon="menu" paper-drawer-toggle></paper-icon-button>
           <!-- TOP: Middle. -->
-          <div class="flex vertical layout center">
-            <paper-tabs noink selected="{{selected}}">
-              <paper-tab><iron-icon icon="home"></iron-icon></paper-tab>
-              <paper-tab><iron-icon icon="class"></iron-icon></paper-tab>
-              <paper-tab><iron-icon icon="supervisor-account"></iron-icon></paper-tab>
-              <paper-tab><iron-icon icon="today"></iron-icon></paper-tab>
-            </paper-tabs>
-          </div>
           <!-- TOP: Right side icons. -->
         </paper-toolbar>
 
@@ -145,7 +135,7 @@ for the app
          *     url: string
          *   }>}}
          */
-        userInfo: Object
+        user: Object
       },
 
       listeners: {

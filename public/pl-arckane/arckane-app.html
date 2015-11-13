@@ -10,9 +10,9 @@
 <link rel="import" href="../components/paper-styles/typography.html">
 <link rel="import" href="../components/paper-styles/color.html">
 
-<link rel="import" href="menu-frame.html">
-
 <link rel="import" href="routes.html">
+<link rel="import" href="menu-frame.html">
+<link rel="import" href="../pl-forms/sign-in.html">
 
 <!--
 `<arckane-app>` wraps all the Arckane functionalities and works as an easy to use
@@ -52,20 +52,32 @@ interface is loaded and managed by `<more-routing>`
     <paper-toast id="warningToast" class="warning" duration="5000"></paper-toast>
     <paper-toast id="notificationToast" class="notification" duration="5000"></paper-toast>
 
-    <menu-frame user-info="{{userInfo}}" selected="{{selected}}">
+    <menu-frame user="{{user}}">
       <more-route-selector>
-        <iron-pages selected="{{selected}}">
+        <iron-pages>
 
           <section route="root">
+            Home
           </section>
 
           <section route="learn">
+            Learn
           </section>
 
-          <section route="teach">
+          <section route="mentor">
+            Mentor
           </section>
 
           <section route="schedule">
+            Schedule
+          </section>
+
+          <section route="signin">
+            Hola
+          </section>
+
+          <section route="signup">
+            Signup
           </section>
 
         </iron-pages>
@@ -92,7 +104,7 @@ interface is loaded and managed by `<more-routing>`
          *     url: string
          *   }>}}
          */
-        userInfo: Object
+        user: Object
       },
 
       listeners: {

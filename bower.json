@@ -22,7 +22,7 @@
     "iron-jsonp-library": "PolymerElements/iron-jsonp-library#~1.0.3",
     "iron-media-query": "PolymerElements/iron-media-query#^1.0.0",
     "iron-pages": "PolymerElements/iron-pages#~1.0.3",
-    "more-routing": "PolymerLabs/more-routing#~1.0.0",
+    "more-routing": "https://github.com/Compufreak345/more-routing#1.0.1",
     "neon-animation": "PolymerElements/neon-animation#~1.0.6",
     "paper-button": "PolymerElements/paper-button#~1.0.3",
     "paper-dialog": "PolymerElements/paper-dialog#~1.0.1",

@@ -14,6 +14,8 @@
 <link rel="import" href="../components/paper-header-panel/paper-header-panel.html">
 <link rel="import" href="../components/paper-toolbar/paper-toolbar.html">
 
+<link rel="import" href="../components/more-routing/routing.html">
+
 <link rel="import" href="../pl-utils/nav-a.html">
 <link rel="import" href="../pl-utils/arckane-styles.html">
 
@@ -91,24 +93,72 @@ drawer. The app frame is found in `<menu-frame>` which uses this element.
 
       <!-- Drawer header -->
       <!-- User -->
-      <nav-a route="[[userInfo.home]]" on-tap="_closeDrawer">
-        <div id="drawer-header" class="horizontal layout center">
-          <iron-icon class="flex self-center" icon="account-circle"></iron-icon>
-        </div>
-      </nav-a>
+      <template is="dom-if" if="{{!user.guest}}">
+        <nav-a route="[[user.home]]" on-tap="_closeDrawer">
+          <div id="drawer-header" class="horizontal layout center">
+            <iron-icon class="flex self-center" icon="account-circle"></iron-icon>
+          </div>
+        </nav-a>
+      </template>
 
       <!-- Drawer content -->
       <div id="drawer-content" class="vertical layout">
 
-        <!-- Sign out-->
-        <div class="container option">
-          <a href="/signout">
-            <iron-icon icon="assignment-turned-in"></iron-icon>
-            Sign Out
-          </a>
-        </div>
+        <!-- IF guest -->
+        <template is="dom-if" if="{{user.guest}}">
+          <!-- Sign in -->
+          <div class="container option">
+            <nav-a route="signin">
+              <iron-icon icon="assignment-ind"></iron-icon>
+              Sign In
+            </nav-a>
+          </div>
+
+          <!-- Sign up -->
+          <div class="container option">
+            <nav-a route="signup">
+              <iron-icon icon="assignment"></iron-icon>
+              Sign Up
+            </nav-a>
+          </div>
+        </template>
+
+        <!-- IF signed in -->
+        <template is="dom-if" if="{{!user.guest}}">
+          <!-- Sign out -->
+          <div class="container option">
+            <a href="signout">
+              <iron-icon icon="assignment-turned-in"></iron-icon>
+              Sign Out
+            </a>
+          </div>
+        </template>
 
         <div class="space"></div>
+
+        <!-- Learn -->
+        <div class="container option">
+          <nav-a route="learn">
+            <iron-icon icon="class"></iron-icon>
+            Learn
+          </nav-a>
+        </div>
+
+        <!-- Mentor -->
+        <div class="container option">
+          <nav-a route="mentor">
+            <iron-icon icon="supervisor-account"></iron-icon>
+            Mentor
+          </nav-a>
+        </div>
+
+        <!-- Schedule -->
+        <div class="container option">
+          <nav-a route="schedule">
+            <iron-icon icon="today"></iron-icon>
+            Schedule
+          </nav-a>
+        </div>
 
       </div>
     </paper-header-panel>
@@ -134,7 +184,7 @@ drawer. The app frame is found in `<menu-frame>` which uses this element.
          *     url: string
          *   }>}}
          */
-        userInfo: Object
+        user: Object
       }
     });
   </script>
