@@ -18,14 +18,15 @@ import ontology.syntaxling._
 /** Play Framework controller for the ontology service. */
 class OntologyApi extends Controller {
 
-  /** Something...
+  /** Searches for syntaxlings (right now only wikipedia articles) which names
+    * are similar to an input.
     * Route: GET /api/ontology/search
     * Sessions variables: home
     * Query string variables: search
     */
   def search = Action.async { request =>
     (for {
-      //user <- request.session.get("home")
+      user <- request.session.get("home")
       search <- request.queryString.get("search")
       response <- Some(SyntaxlingTag.search(search.head))
     } yield response.map { array =>
