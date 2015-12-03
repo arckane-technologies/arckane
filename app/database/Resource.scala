@@ -13,7 +13,9 @@ import play.api.libs.concurrent.Execution.Implicits._
 import database.neo4j._
 import database.persistence._
 
-/** Data types and type classes of Resource. */
+/** @deprecated(No longer needed for the distributed education system, v0.1.1)
+  * Data types and type classes of Resource.
+  */
 package object resource {
 
   /** Resource type. */
