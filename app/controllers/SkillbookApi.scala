@@ -13,7 +13,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 
 import database.neo4j._
 import database.persistence._
-import database.skillbook._
+import ontology.skillbook._
 
 /** Play Framework controller for everything related to Arckane's "Skillbooks". */
 class SkillbookApi extends Controller {

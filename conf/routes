@@ -2,6 +2,12 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
+# Ontology service routes
+
+GET     /api/ontology/search        ontology.OntologyApi.search
+
+# v0.0 ROUTES
+
 # Home page
 GET     /                           controllers.Application.index
 POST    /signup                     controllers.Application.signup

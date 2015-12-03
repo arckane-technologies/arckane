@@ -25,5 +25,23 @@ package object syntaxling {
   /** Type class for the [[SyntaxlingTag]] data type. */
   implicit class SkillTagOps (tag: Tag[Syntaxling]) {
 
+    def search (queryString: String): Future[JsArray] = for {
+      result <- query(Json.obj(
+        "statement" ->
+          ( "MATCH (n:"+tag.str+") WHERE n.name =~ { regex } "
+          + "RETURN n.name, n.url, n.description "
+          + "LIMIT 5"),
+        "parameters" -> Json.obj(
+          "regex" -> ("(?i).*"+queryString.trim.escapeParenthesis+".*")
+        )))
+    } yield if (result.length > 0) {
+      Json.toJson(result(0)("n.name").zipWithIndex.map { case (name, index) => Json.obj(
+        "name" -> name,
+        "url" -> result(0)("n.url")(index)
+      )}).as[JsArray]
+    } else {
+      Json.arr(42)
+    }
+
   }
 }
