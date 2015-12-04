@@ -51,7 +51,8 @@ class UsersSpecs extends Specification {
     }
 
     "Set and get properties of a user" in new WithApplication with TestEntities {
-      (await(UserTag.getProps(user.url))) must beEqualTo(Json.obj("url" -> user.url, "description" -> "some description"))
+      await(Arcklet(UserTag, user.url, Unit).set("some", "prop"))
+      (await(UserTag.getProps(user.url))) must beEqualTo(Json.obj("url" -> user.url, "description" -> "some description", "some" -> "prop"))
     }
   }
 }

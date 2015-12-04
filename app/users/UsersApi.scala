@@ -27,11 +27,11 @@ class UsersApi extends Controller {
       user <- request.queryString.get("user")
       prop <- request.queryString.get("prop")
       value <- request.queryString.get("value")
-      response <- Some(UserTag.getProps(user.head))
+      response <- Some(Arcklet(UserTag, user.head, Unit).set(prop.head, value.head))
     } yield response.map { props =>
-      Ok(props)
+      Ok
     }).getOrElse {
-      Future(BadRequest("Expected a user in the query string."))
+      Future(BadRequest("Expected user, prop and value in the query string."))
     }
   }
 
