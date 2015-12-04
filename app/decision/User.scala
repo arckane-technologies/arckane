@@ -13,11 +13,11 @@ import database.persistence._
 import decision.decisions._
 import decision.system.{phi, pi, notPi, minInfluence}
 
-package object user {
+package object userDeprecated {
 
-  trait User
+  trait UserDeprecated
 
-  object UserTag extends Tag[User]("User")
+  object UserDeprecatedTag extends Tag[UserDeprecated]("UserDeprecated")
 
   case class UserInfo (
     email: String,
@@ -37,15 +37,15 @@ package object user {
   )(UserInfo.apply _)
 
   /*
-   * User Ops.
+   * UserDeprecated Ops.
    */
 
-  implicit class UserTagOps (userTag: Tag[User]) {
+  implicit class UserTagOps (userTag: Tag[UserDeprecated]) {
 
-    def create: Future[Arcklet[User, JsObject]] =
+    def create: Future[Arcklet[UserDeprecated, JsObject]] =
       create(Json.obj())
 
-    def create (tx: Transaction, props: JsObject): Future[Arcklet[User, JsObject]] = for {
+    def create (tx: Transaction, props: JsObject): Future[Arcklet[UserDeprecated, JsObject]] = for {
       url <- userTag createUrl tx
       _ <- tx execute Json.obj(
         "statement" -> ("CREATE (n:"+userTag.str+" {props})"),
@@ -57,7 +57,7 @@ package object user {
           ) ++ props)))
     } yield Arcklet(userTag, url, props)
 
-    def create (props: JsObject): Future[Arcklet[User, JsObject]] = for {
+    def create (props: JsObject): Future[Arcklet[UserDeprecated, JsObject]] = for {
       tx <- openTransaction
       url <- userTag createUrl tx
       _ <- tx lastly Json.obj(
@@ -70,7 +70,7 @@ package object user {
           ) ++ props)))
     } yield Arcklet(userTag, url, props)
 
-    def createWith[P] (props: P)(implicit pw: Writes[P]): Future[Arcklet[User, P]] = for {
+    def createWith[P] (props: P)(implicit pw: Writes[P]): Future[Arcklet[UserDeprecated, P]] = for {
       tx <- openTransaction
       url <- userTag createUrl tx
       _ <- tx lastly Json.obj(
@@ -100,13 +100,13 @@ package object user {
       }
   }
 
-  implicit class UserArckletOps[P] (user: Arcklet[User, P]) {
+  implicit class UserArckletOps[P] (user: Arcklet[UserDeprecated, P]) {
 
-    def infuseUser[B] (that: Arcklet[User, B]): Future[Unit] = influenciate(that, "INFUSES")
+    def infuseUser[B] (that: Arcklet[UserDeprecated, B]): Future[Unit] = influenciate(that, "INFUSES")
 
     def infuse[A, B] (that: Arcklet[A, B]): Future[Unit] = user relate(that, "INFUSES")
 
-    def drainUser[B] (that: Arcklet[User, B]): Future[Unit] = influenciate(that, "DRAINS")
+    def drainUser[B] (that: Arcklet[UserDeprecated, B]): Future[Unit] = influenciate(that, "DRAINS")
 
     def drain[A, B] (that: Arcklet[A, B]): Future[Unit] = user relate(that, "DRAINS")
 
@@ -120,7 +120,7 @@ package object user {
       _ <- Future(startElection(manifest, args))
     } yield manifest
 
-    private def influenciate[B] (that: Arcklet[User, B], reltype: String): Future[Unit] = for {
+    private def influenciate[B] (that: Arcklet[UserDeprecated, B], reltype: String): Future[Unit] = for {
       tx <- openTransaction
       result <- tx execute Json.obj(
         "statement" -> s"""MATCH (ua:${user.tag.str} {url: {uaUrl}}),(ub:${that.tag.str} {url: {ubUrl}}) RETURN ua.influence, ub.influence""",
@@ -144,7 +144,7 @@ package object user {
       }
     } yield Unit
 
-    private def setInfluences[B] (tx: Transaction, that: Arcklet[User, B], reltype: String, vals: (Int, Int)): Future[Unit] = for {
+    private def setInfluences[B] (tx: Transaction, that: Arcklet[UserDeprecated, B], reltype: String, vals: (Int, Int)): Future[Unit] = for {
       _ <- tx execute Json.obj(
         "statement" -> s"""MATCH (ua:${user.tag.str} {url: {uaUrl}}),(ub:${that.tag.str} {url: {ubUrl}}) SET ua.influence={uaInf}, ub.influence={ubInf} CREATE (ua)-[:$reltype]->(ub)""",
         "parameters" -> Json.obj(
