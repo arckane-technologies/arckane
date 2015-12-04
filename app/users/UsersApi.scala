@@ -18,6 +18,38 @@ import users.user._
 /** Play Framework controller for the users service. */
 class UsersApi extends Controller {
 
+  /** Set a property of a user in the database.
+    * Route: POST /api/users/props
+    * Query string variables: user, prop, value
+    */
+  def setProp = Action.async { request =>
+    (for {
+      user <- request.queryString.get("user")
+      prop <- request.queryString.get("prop")
+      value <- request.queryString.get("value")
+      response <- Some(UserTag.getProps(user.head))
+    } yield response.map { props =>
+      Ok(props)
+    }).getOrElse {
+      Future(BadRequest("Expected a user in the query string."))
+    }
+  }
+
+  /** Get all the properties of a user in the database.
+    * Route: GET /api/users/props
+    * Query string variables: user
+    */
+  def getProps = Action.async { request =>
+    (for {
+      user <- request.queryString.get("user")
+      response <- Some(UserTag.getProps(user.head))
+    } yield response.map { props =>
+      Ok(props)
+    }).getOrElse {
+      Future(BadRequest("Expected a user in the query string."))
+    }
+  }
+
   /** Tries to signup a user and responds with a json object.
     * Route: POST /api/users/signup
     * Form variables: invitation, firstname, lastname, email, password, birthday

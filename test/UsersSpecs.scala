@@ -23,7 +23,7 @@ class UsersSpecs extends Specification {
 
   trait TestEntities extends Around with Scope {
 
-    lazy val user = await(UserTag.create(Json.obj()))
+    lazy val user = await(UserTag.create(Json.obj("description" -> "some description")))
     lazy val deleteUser = await(user.delete)
 
     abstract override def around[T: AsResult](t: => T): Result = {
@@ -48,6 +48,10 @@ class UsersSpecs extends Specification {
     "Return 'no such user' when trying to search location of unexistent user" in new WithApplication with TestEntities {
       await(UserTag.setLocation(user.url, 1.5d, 1.5d))
       await(UserTag.getLocation("oiahsih")) must beEqualTo(Json.obj("error" -> "no such user"))
+    }
+
+    "Set and get properties of a user" in new WithApplication with TestEntities {
+      (await(UserTag.getProps(user.url))) must beEqualTo(Json.obj("url" -> user.url, "description" -> "some description"))
     }
   }
 }

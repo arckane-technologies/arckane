@@ -37,6 +37,17 @@ package object persistence {
       else
         None
 
+    def getProps (url: String): Future[JsObject] = for {
+      result <- query(Json.obj(
+        "statement" -> ("MATCH (n:"+tag.str+" {url: {urlmatcher}}) RETURN n"),
+        "parameters" -> Json.obj(
+          "urlmatcher" -> url
+        )))
+    } yield if (result(0)("n").length > 0)
+        result(0)("n")(0).as[JsObject]
+      else
+        Json.obj("error" -> "not found")
+
     def create (tx: Transaction, props: JsObject): Future[Arcklet[T, JsObject]] = for {
       url <- createUrl(tx)
       _ <- tx execute Json.obj(

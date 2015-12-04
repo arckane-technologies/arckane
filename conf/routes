@@ -6,6 +6,8 @@
 GET     /api/ontology/search        ontology.OntologyApi.search
 
 # Users service routes
+POST    /api/users/props            users.UsersApi.setProp
+GET     /api/users/props            users.UsersApi.getProps
 POST    /api/users/signup           users.UsersApi.signup
 POST    /api/users/signin           users.UsersApi.signin
 GET     /api/users/signout          users.UsersApi.signout
