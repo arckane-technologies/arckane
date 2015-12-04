@@ -1,3 +1,7 @@
+/**
+  * @author Francisco Miguel Aramburo Torres - atfm05@gmail.com
+  */
+
 import scala.concurrent._
 import scala.concurrent.duration._
 

@@ -24,7 +24,7 @@ package object syntaxling {
   object SyntaxlingTag extends Tag[Syntaxling]("Syntaxling")
 
   /** Type class for the [[SyntaxlingTag]] data type. */
-  implicit class SkillTagOps (tag: Tag[Syntaxling]) {
+  implicit class SyntaxlingTagOps (tag: Tag[Syntaxling]) {
 
     /** Searches first in the database for matching syntaxlings, if none matches
       * searches in wikipedia.
