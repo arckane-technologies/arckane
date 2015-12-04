@@ -60,21 +60,20 @@ class UsersApi extends Controller {
     * Form variables: email, password
     */
   def signin = Action.async { request =>
-    //request.body.asFormUrlEncoded.map { form =>
-    //  val email = form("email").head
-    //  val password = form("password").head
-    //  UserTag.authenticate(email, password).map {
-    //    case Some(user) => Ok(Json.obj("success" -> true, "user" -> user))
-    //      .withSession(
-    //        "email" -> (user \ "email").as[String],
-    //        "name" -> (user \ "name").as[String],
-    //        "home" -> (user \ "url").as[String])
-    //    case None => Ok(Json.obj("success" -> false))
-    //  }
-    //}.getOrElse {
-    //  Future(BadRequest("Expected a url encoded form."))
-    //}
-    Future(Ok)
+    request.body.asFormUrlEncoded.map { form =>
+      val email = form("email").head
+      val password = form("password").head
+      UserTag.authenticate(email, password).map {
+        case Some(user) => Ok(Json.obj("success" -> true, "user" -> user))
+          .withSession(
+            "email" -> (user \ "email").as[String],
+            "name" -> (user \ "name").as[String],
+            "home" -> (user \ "url").as[String])
+        case None => Ok(Json.obj("success" -> false))
+      }
+    }.getOrElse {
+      Future(BadRequest("Expected a url encoded form."))
+    }
   }
 
   /** Deletes the current session to sign out a user.

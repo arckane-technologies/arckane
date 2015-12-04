@@ -25,5 +25,21 @@ package object user {
   /** Type class for the [[UserTag]] data type. */
   implicit class UserTagOps (tag: Tag[User]) {
 
+    def authenticate (email: String, password: String): Future[Option[JsObject]] = for {
+      result <- query(Json.obj(
+        "statement" -> ("MATCH (n:"+tag.str+" {email: {emailmatch}, password: {passmatch}}) RETURN n.url, n.name"),
+        "parameters" -> Json.obj(
+          "emailmatch" -> email,
+          "passmatch" -> password
+        )))
+    } yield if (result(0)("n.url").length == 0)
+        None
+      else {
+        Some(Json.obj(
+          "url" -> result(0)("n.url")(0),
+          "email" -> email,
+          "name" -> result(0)("n.name")(0)
+        ))
+      }
   }
 }
