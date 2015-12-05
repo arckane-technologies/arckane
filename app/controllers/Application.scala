@@ -17,41 +17,43 @@ import database.persistence._
 /** Play Framework controller for everything related to Arckane's app serving and authentication. */
 class Application extends Controller {
 
-  /** Serves the app if authenticated, otherwise serves the authentication page.
-    * Route: GET /
-    * Session variables: name, home
-    */
+  def getSession (request: Request[AnyContent]): Option[String] = for {
+    name <- request.session.get("name")
+    home <- request.session.get("home")
+  } yield Json.obj(
+    "name" -> name,
+    "home" -> home
+  ).toString
+
+  def guest: String = Json.obj("guest" -> true).toString
+
+  def isGuest (request: Request[AnyContent]): Boolean = request.session.get("name") match {
+    case Some(name) => false
+    case None => true
+  }
+
   def index = Action { request =>
-    (for {
-      name <- request.session.get("name")
-      home <- request.session.get("home")
-    } yield Ok(views.html.index(Json.obj(
-      "name" -> name,
-      "home" -> home
-    ).toString))).getOrElse {
-      Ok(views.html.index(Json.obj(
-        "guest" -> true
-      ).toString))
+    getSession(request) match {
+      case Some(session) => Ok(views.html.index(session))
+      case None => Ok(views.html.index(guest))
     }
   }
 
   def signin = Action { request =>
-    (for {
-      home <- request.session.get("home")
-    } yield Redirect("/")).getOrElse {
-      Ok(views.html.signin(Json.obj(
-        "guest" -> true
-      ).toString))
-    }
+    if (isGuest(request)) Ok(views.html.signin(guest))
+    else Redirect("/")
   }
 
   def signup = Action { request =>
-    (for {
-      home <- request.session.get("home")
-    } yield Redirect("/")).getOrElse {
-      Ok(views.html.signup(Json.obj(
-        "guest" -> true
-      ).toString))
+    if (isGuest(request)) Ok(views.html.signup(guest))
+    else Redirect("/")
+  }
+
+  def profile (id: String) = Action { request =>
+    getSession(request) match {
+      case Some(session) => Ok(views.html.profile(session, id))
+      case None => Ok(views.html.profile(guest, id))
     }
   }
+
 }

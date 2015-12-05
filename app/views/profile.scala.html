@@ -1,10 +1,11 @@
-@(user: String)
+@(user: String, profile: String)
 
 @template("Arckane") {
 
   <link rel="import" href="@routes.Assets.versioned("pl-arckane/arckane-app.html")">
 
   <arckane-app user='@user'>
+    @profile
   </arckane-app>
 
 }

@@ -5,6 +5,7 @@
 # App routes
 GET     /signin                     controllers.Application.signin
 GET     /signup                     controllers.Application.signup
+GET     /user/:id                   controllers.Application.profile(id: String)
 
 # Ontology service routes
 GET     /api/ontology/search        ontology.OntologyApi.search
