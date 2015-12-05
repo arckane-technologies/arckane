@@ -94,11 +94,11 @@ drawer. The app frame is found in `<menu-frame>` which uses this element.
       <!-- Drawer header -->
       <!-- User -->
       <template is="dom-if" if="{{!user.guest}}">
-        <nav-a route="[[user.home]]" on-tap="_closeDrawer">
+        <a href="[[user.home]]">
           <div id="drawer-header" class="horizontal layout center">
             <iron-icon class="flex self-center" icon="account-circle"></iron-icon>
           </div>
-        </nav-a>
+        </a>
       </template>
 
       <!-- Drawer content -->

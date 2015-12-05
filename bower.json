@@ -41,7 +41,8 @@
     "paper-tabs": "PolymerElements/paper-tabs#~1.0.10",
     "paper-toast": "PolymerElements/paper-toast#~1.0.0",
     "paper-toolbar": "PolymerElements/paper-toolbar#^1.0.0",
-    "polymer": "Polymer/polymer#^1.0.0"
+    "polymer": "Polymer/polymer#^1.0.0",
+    "paper-card": "PolymerElements/paper-card#~1.0.8"
   },
   "resolutions": {
     "polymer": "^1.0.0"

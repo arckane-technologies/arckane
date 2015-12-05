@@ -1,0 +1,61 @@
+<!--
+@author Francisco Miguel Aramburo Torres - atfm05@gmail.com
+-->
+
+<link rel="import" href="../components/polymer/polymer.html">
+<link rel="import" href="../components/paper-card/paper-card.html">
+<link rel="import" href="../components/iron-ajax/iron-ajax.html">
+
+<link rel="import" href="../components/paper-styles/color.html">
+<link rel="import" href="../pl-utils/arckane-styles.html">
+
+<dom-module id="user-profile">
+  <style>
+    :host {
+      @apply(--layout-vertical);
+      @apply(--layout-center);
+    }
+  </style>
+
+  <template>
+    <iron-ajax
+      id="ajax"
+      method="GET"
+      url="/api/users/props"
+      handle-as="json"
+      last-response="{{user}}">
+    </iron-ajax>
+
+    <template is="dom-if" if="{{user.error}}">
+      <paper-card heading="This is not the user you were looking for.">
+      </paper-card>
+    </template>
+
+    <template is="dom-if" if="{{user.firstname}}">
+      <paper-card heading="{{fullName()}}">
+        <div class="card-content">{{user.description}}</div>
+      </paper-card>
+    </template>
+
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+
+    is: "user-profile",
+
+    properties: {
+      userId: String
+    },
+
+    fullName: function () {
+      return this.user.firstname + " " + this.user.lastname;
+    },
+
+    ready: function () {
+      this.$.ajax.params = {user: "/user/"+this.userId};
+      this.$.ajax.generateRequest();
+    }
+  });
+</script>
