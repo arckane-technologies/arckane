@@ -56,7 +56,7 @@ class UsersApi extends Controller {
     */
   def signup = Action.async { request =>
     request.body.asFormUrlEncoded.map { form =>
-      val invitation = form("invitation").head
+      val invitation = ""//form("invitation").head
       val firstname = form("firstname").head
       val lastname = form("lastname").head
       val email = form("email").head
@@ -112,6 +112,6 @@ class UsersApi extends Controller {
     * Route: GET /api/users/signout
     */
   def signout = Action {
-    Ok(views.html.index()).withNewSession
+    Redirect("/").withNewSession
   }
 }

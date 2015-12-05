@@ -25,11 +25,31 @@ class Application extends Controller {
     (for {
       name <- request.session.get("name")
       home <- request.session.get("home")
-    } yield Ok(views.html.app(Json.obj(
+    } yield Ok(views.html.index(Json.obj(
       "name" -> name,
       "home" -> home
     ).toString))).getOrElse {
-      Ok(views.html.app(Json.obj(
+      Ok(views.html.index(Json.obj(
+        "guest" -> true
+      ).toString))
+    }
+  }
+
+  def signin = Action { request =>
+    (for {
+      home <- request.session.get("home")
+    } yield Redirect("/")).getOrElse {
+      Ok(views.html.signin(Json.obj(
+        "guest" -> true
+      ).toString))
+    }
+  }
+
+  def signup = Action { request =>
+    (for {
+      home <- request.session.get("home")
+    } yield Redirect("/")).getOrElse {
+      Ok(views.html.signup(Json.obj(
         "guest" -> true
       ).toString))
     }

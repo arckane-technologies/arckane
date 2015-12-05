@@ -1,5 +1,6 @@
-<!DOCTYPE html>
+@(user: String)
 
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <title>Arckane</title>
@@ -7,14 +8,9 @@
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
     <link rel="icon" type="image/x-icon" href="@routes.Assets.versioned("/favicon.ico")">
     <script src="@routes.Assets.versioned("components/webcomponentsjs/webcomponents-lite.min.js")"></script>
-    <style>
-      body {
-        background-color: #724987;
-      }
-    </style>
+    <link rel="import" href="@routes.Assets.versioned("pl-arckane/arckane-app.html")">
   </head>
-    <body class="fullbleed vertical layout">
-      <link rel="import" href="@routes.Assets.versioned("pl-forms/home-signin.html")">
-      <home-signin></home-signin>
-    </body>
+  <body class="fullbleed vertical layout">
+    <arckane-app user='@user'></arckane-app>
+  </body>
 </html>

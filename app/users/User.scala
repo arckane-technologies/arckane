@@ -28,7 +28,7 @@ package object user {
     /** Authenticates the user, returns a json with basic info. */
     def authenticate (email: String, password: String): Future[Option[JsObject]] = for {
       result <- query(Json.obj(
-        "statement" -> ("MATCH (n:"+tag.str+" {email: {emailmatch}, password: {passmatch}}) RETURN n.url, n.name"),
+        "statement" -> ("MATCH (n:"+tag.str+" {email: {emailmatch}, password: {passmatch}}) RETURN n.url, n.firstname"),
         "parameters" -> Json.obj(
           "emailmatch" -> email,
           "passmatch" -> password
@@ -39,7 +39,7 @@ package object user {
         Some(Json.obj(
           "url" -> result(0)("n.url")(0),
           "email" -> email,
-          "name" -> result(0)("n.name")(0)
+          "name" -> result(0)("n.firstname")(0)
         ))
       }
 

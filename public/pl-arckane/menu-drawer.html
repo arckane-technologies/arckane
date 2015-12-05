@@ -108,18 +108,18 @@ drawer. The app frame is found in `<menu-frame>` which uses this element.
         <template is="dom-if" if="{{user.guest}}">
           <!-- Sign in -->
           <div class="container option">
-            <nav-a route="signin">
+            <a href="/signin">
               <iron-icon icon="assignment-ind"></iron-icon>
               Sign In
-            </nav-a>
+            </a>
           </div>
 
           <!-- Sign up -->
           <div class="container option">
-            <nav-a route="signup">
+            <a href="/signup">
               <iron-icon icon="assignment"></iron-icon>
               Sign Up
-            </nav-a>
+            </a>
           </div>
         </template>
 
@@ -127,7 +127,7 @@ drawer. The app frame is found in `<menu-frame>` which uses this element.
         <template is="dom-if" if="{{!user.guest}}">
           <!-- Sign out -->
           <div class="container option">
-            <a href="signout">
+            <a href="/api/users/signout">
               <iron-icon icon="assignment-turned-in"></iron-icon>
               Sign Out
             </a>

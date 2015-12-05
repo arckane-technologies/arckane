@@ -1,0 +1,12 @@
+@(user: String)
+
+@template("Arckane - Sign In") {
+
+  <link rel="import" href="@routes.Assets.versioned("pl-arckane/arckane-app.html")">
+  <link rel="import" href="@routes.Assets.versioned("pl-users/sign-in.html")">
+
+  <arckane-app user='@user'>
+    <sign-in></sign-in>
+  </arckane-app>
+
+}

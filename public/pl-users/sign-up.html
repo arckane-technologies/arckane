@@ -17,9 +17,6 @@
 <dom-module id="sign-up">
   <style>
     :host {
-      padding: 20px;
-      border-radius: 3px;
-      background-color: white;
     }
 
     input {
@@ -31,7 +28,7 @@
       color: white;
       width: 100%;
       font-size: 20px;
-      background-color: var(--google-green-700);
+      background-color: var(--arckane-aqua-100);
     }
 
     h3 {
@@ -50,8 +47,9 @@
   </style>
 
   <template>
-    <form is="iron-form" id="signUpForm" method="post" action="/signup" on-iron-form-response="_formResponse">
+    <form is="iron-form" id="signUpForm" method="post" action="/api/users/signup" on-iron-form-response="_formResponse">
       <!-- Invitation -->
+      <!--
       <paper-input
         name="invitation"
         label="Invitation Pass"
@@ -61,26 +59,35 @@
         required>
       </paper-input>
       <search-validator value="{{invitation}}" invalid="{{invalidInvitation}}" attribute="uuid" tags=":InvitationPending" cleaning="invitation"></search-validator>
+      -->
 
-      <!-- Nickname -->
+      <!-- First Name -->
       <paper-input
-        name="nickname"
-        value="{{nickname}}"
-        label="Choose a nickname"
-        invalid="{{invalidName}}"
-        error-message="Nickname taken"
+        name="firstname"
+        value="{{firstname}}"
+        label="First name"
         char-counter
         minlength="3"
         maxlength="20"
         required>
       </paper-input>
-      <search-validator value="{{nickname}}" invalid="{{invalidName}}" attribute="name" tags=":User"></search-validator>
+
+      <!-- Second Name -->
+      <paper-input
+        name="lastname"
+        value="{{lastname}}"
+        label="Last name"
+        char-counter
+        minlength="3"
+        maxlength="20"
+        required>
+      </paper-input>
 
       <!-- Email -->
       <paper-input
         name="email"
         value="{{email}}"
-        label="Your email"
+        label="Email"
         invalid="{{invalidEmail}}"
         error-message="Email taken or not a valid email"
         required>
@@ -129,7 +136,7 @@
 
     /** Handles the response of the form. */
     _formResponse: function (event) {
-      var info = event.detail;
+      var info = event.detail.__data__.response;
       if (info.success)
         window.location.assign('/');
       else
