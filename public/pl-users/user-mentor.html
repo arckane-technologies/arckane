@@ -1,0 +1,60 @@
+<!--
+@author Francisco Miguel Aramburo Torres - atfm05@gmail.com
+-->
+
+<link rel="import" href="../components/polymer/polymer.html">
+<link rel="import" href="../components/paper-card/paper-card.html">
+<link rel="import" href="../components/iron-ajax/iron-ajax.html">
+
+<link rel="import" href="../components/paper-styles/color.html">
+<link rel="import" href="../pl-utils/arckane-styles.html">
+
+<dom-module id="user-profile">
+  <style>
+    :host {
+      @apply(--layout-vertical);
+      @apply(--layout-center);
+    }
+  </style>
+
+  <template>
+    <!--
+    <iron-ajax
+      id="ajax"
+      method="GET"
+      url="/api/users/props"
+      handle-as="json"
+      last-response="{{user}}">
+    </iron-ajax>
+    -->
+
+    <paper-card heading="Skills and Knowledge">
+      <div class="card-content">$</div>
+    </paper-card>
+
+    <paper-card heading="Sessions">
+      <div class="card-content">$</div>
+    </paper-card>
+
+    <paper-card heading="Payments">
+      <div class="card-content">$</div>
+    </paper-card>
+
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+
+    is: "user-profile",
+
+    properties: {
+      user: String
+    },
+
+    ready: function () {
+      this.$.ajax.params = {user: "/user/"+this.userId};
+      this.$.ajax.generateRequest();
+    }
+  });
+</script>

@@ -56,4 +56,10 @@ class Application extends Controller {
     }
   }
 
+  def mentor = Action { request =>
+    getSession(request) match {
+      case Some(session) => Ok(views.html.mentor(session))
+      case None => Redirect("/")
+    }
+  }
 }

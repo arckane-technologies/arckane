@@ -14,6 +14,7 @@
     "tests"
   ],
   "dependencies": {
+    "paper-time-picker": "https://github.com/bendavis78/paper-time-picker.git#^1.0.0",
     "arckane-polymer": "git@bitbucket.org:arckane/arckane-polymer.git#~0.0",
     "gold-email-input": "PolymerElements/gold-email-input#^1.0.0",
     "iron-flex-layout": "PolymerElements/iron-flex-layout#^1.0.0",
