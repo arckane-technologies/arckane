@@ -5,7 +5,7 @@
 <link rel="import" href="../components/polymer/polymer.html">
 <link rel="import" href="../components/iron-flex-layout/classes/iron-flex-layout.html">
 <link rel="import" href="../components/paper-card/paper-card.html">
-<link rel="import" href="../components/paper-tab/paper-tab.html">
+<link rel="import" href="../components/paper-tabs/paper-tabs.html">
 <link rel="import" href="../components/iron-ajax/iron-ajax.html">
 <link rel="import" href="../components/iron-icon/iron-icon.html">
 <link rel="import" href="../components/iron-pages/iron-pages.html">
@@ -26,23 +26,29 @@
       --paper-tabs-selection-bar-color: var(--arckane-aqua-100);
     }
 
-    .tutor-picture {
-      width: 100px;
-      height: 100px;
+    .scrollable {
+      overflow-y: scroll;
     }
 
-    .tutor-picture iron-icon {
+    .mentor-picture {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+    }
+
+    .mentor-picture iron-icon {
       width: 100px;
       height: 100px;
       color: var(--google-grey-300);
     }
 
     .title {
+      text-align: center;
       margin-left: 20px;
-      padding-top: 30px;
+      padding-top: 20px;
     }
 
-    .title .tutor-name {
+    .title .mentor-name {
       font-size: 20px;
     }
 
@@ -96,13 +102,19 @@
         <div class="header horizontal layout">
 
           <!-- Picture -->
-          <div class="tutor-picture horizontal layout center">
-            <iron-icon class="flex self-center" icon="account-circle"></iron-icon>
-          </div>
+          <template is="dom-if" if="{{data.mentor.picture}}">
+            <img class="mentor-picture" src="{{data.mentor.picture}}">
+          </template>
+
+          <template is="dom-if" if="{{!data.mentor.picture}}">
+            <div class="mentor-picture horizontal layout center">
+              <iron-icon class="flex self-center" icon="account-circle"></iron-icon>
+            </div>
+          </template>
 
           <!-- Name and rating -->
           <div class="title vertical layout center">
-            <div class="tutor-name">{{data.tutor.name}}</div>
+            <div class="mentor-name">{{data.mentor.name}}</div>
             <div>
               <iron-icon class="rating-star" icon="star"></iron-icon>
               <iron-icon class="rating-star" icon="star"></iron-icon>
@@ -129,7 +141,10 @@
 
       <iron-pages selected="{{selected}}">
         <!-- Skills -->
-        <div class="tab">
+        <div class="tab scrollable">
+          <template is="dom-repeat" items="{{data.skills}}">
+            <skill-syntaxling title="{{item.title}}" web="{{item.web}}" index="{{index}}"></skill-syntaxling>
+          </template>
         </div>
 
         <!-- Location -->
@@ -170,8 +185,9 @@
 
     ready: function () {
       this.data = {
-        tutor: {
+        mentor: {
           name: "Francisco Aramburo",
+          picture: "../assets/images/profile.jpg",
           rating: 4.5
         },
         date: {
@@ -183,7 +199,15 @@
           price: "$24.50",
           current: 4,
           limit: 5
-        }
+        },
+        skills: [
+          { title: "Functional Programming", web: "https://en.wikipedia.org/wiki/Monad_(functional_programming)" },
+          { title: "Scala (programming language)", web: "https://en.wikipedia.org/wiki/Monad_(functional_programming)" },
+          { title: "Monad (functional programming)", web: "https://en.wikipedia.org/wiki/Monad_(functional_programming)" },
+          { title: "Data Types", web: "https://en.wikipedia.org/wiki/Monad_(functional_programming)" },
+          { title: "Abstract Algebra", web: "https://en.wikipedia.org/wiki/Monad_(functional_programming)" },
+          { title: "Functions", web: "https://en.wikipedia.org/wiki/Monad_(functional_programming)" }
+        ]
       }
     }
   });
