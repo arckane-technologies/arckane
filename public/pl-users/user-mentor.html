@@ -6,14 +6,22 @@
 <link rel="import" href="../components/paper-card/paper-card.html">
 <link rel="import" href="../components/iron-ajax/iron-ajax.html">
 
+<link rel="import" href="../pl-ontology/skill-syntaxling.html">
+
 <link rel="import" href="../components/paper-styles/color.html">
 <link rel="import" href="../pl-utils/arckane-styles.html">
 
-<dom-module id="user-profile">
+<dom-module id="user-mentor">
   <style>
     :host {
-      @apply(--layout-vertical);
-      @apply(--layout-center);
+    }
+
+    .card-info {
+      color: var(--google-grey-500);
+    }
+
+    .card-core {
+      margin-top: 20px;
     }
   </style>
 
@@ -29,7 +37,16 @@
     -->
 
     <paper-card heading="Skills and Knowledge">
-      <div class="card-content">$</div>
+      <div class="card-content">
+        <div class="card-info">
+          <span>This is all the knowledge and skills you can mentor in the sessions.</span>
+          <br>
+          <i>Tip: if you can find it in Wikipedia you can find it in Arckane.</i>
+        </div>
+        <div class="card-core">
+          <skill-syntaxling></skill-syntaxling>
+        </div>
+      </div>
     </paper-card>
 
     <paper-card heading="Sessions">
@@ -46,15 +63,15 @@
 <script>
   Polymer({
 
-    is: "user-profile",
+    is: "user-mentor",
 
     properties: {
       user: String
     },
 
     ready: function () {
-      this.$.ajax.params = {user: "/user/"+this.userId};
-      this.$.ajax.generateRequest();
+      //this.$.ajax.params = {user: "/user/"+this.userId};
+      //this.$.ajax.generateRequest();
     }
   });
 </script>

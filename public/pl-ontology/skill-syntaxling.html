@@ -1,0 +1,91 @@
+<!--
+@author Francisco Miguel Aramburo Torres - atfm05@gmail.com
+-->
+
+<link rel="import" href="../components/polymer/polymer.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+
+<link rel="import" href="../components/paper-styles/color.html">
+<link rel="import" href="../pl-utils/arckane-styles.html">
+
+<dom-module id="skill-syntaxling">
+  <style>
+    :host {
+      box-sizing: border-box;
+    }
+
+    #wraper {
+      color: white;
+      border-radius: 2px;
+      background-color: var(--arckane-aqua-100);
+    }
+
+    .card-info {
+      color: var(--google-grey-500);
+    }
+
+    .card-core {
+      margin-top: 20px;
+    }
+
+    paper-button {
+      margin: 0;
+    }
+  </style>
+
+  <template>
+    <!--
+    <iron-ajax
+      id="ajax"
+      method="GET"
+      url="/api/users/props"
+      handle-as="json"
+      last-response="{{user}}">
+    </iron-ajax>
+    -->
+
+    <div id="wraper" class="horizontal layout center">
+      <paper-button>
+        <iron-icon icon="language"></iron-icon>
+        <span>Something</span>
+      </paper-button>
+
+      <!-- IF added -->
+      <template is="dom-if" if="{{added}}">
+        <div class="action">
+          Something
+        </div>
+      </template>
+
+      <!-- IF not added -->
+      <template is="dom-if" if="{{!added}}">
+        <paper-button>
+          <iron-icon icon="done"></iron-icon>
+        </paper-button>
+      </template>
+    </div>
+
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+
+    is: "skill-syntaxling",
+
+    properties: {
+      title: String,
+      web: String,
+      added: {
+        type: Boolean,
+        value: false
+      }
+    },
+
+    ready: function () {
+      //this.$.ajax.params = {user: "/user/"+this.userId};
+      //this.$.ajax.generateRequest();
+    }
+  });
+</script>
