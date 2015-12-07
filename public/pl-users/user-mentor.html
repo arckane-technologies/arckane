@@ -6,7 +6,7 @@
 <link rel="import" href="../components/paper-card/paper-card.html">
 <link rel="import" href="../components/iron-ajax/iron-ajax.html">
 
-<link rel="import" href="../pl-ontology/skill-syntaxling.html">
+<link rel="import" href="../pl-schedules/arckane-session-card.html">
 
 <link rel="import" href="../components/paper-styles/color.html">
 <link rel="import" href="../pl-utils/arckane-styles.html">
@@ -36,26 +36,13 @@
     </iron-ajax>
     -->
 
-    <paper-card heading="Skills and Knowledge">
-      <div class="card-content">
-        <div class="card-info">
-          <span>This is all the knowledge and skills you can mentor in the sessions.</span>
-          <br>
-          <i>Tip: if you can find it in Wikipedia you can find it in Arckane.</i>
-        </div>
-        <div class="card-core">
-          <skill-syntaxling></skill-syntaxling>
-        </div>
-      </div>
-    </paper-card>
-
-    <paper-card heading="Sessions">
-      <div class="card-content">$</div>
-    </paper-card>
-
+    <!--
     <paper-card heading="Payments">
       <div class="card-content">$</div>
     </paper-card>
+    -->
+
+    <arckane-session-card session-id="/session/70"></arckane-session-card>
 
   </template>
 </dom-module>
