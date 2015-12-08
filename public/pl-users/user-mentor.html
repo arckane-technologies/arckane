@@ -3,6 +3,7 @@
 -->
 
 <link rel="import" href="../components/polymer/polymer.html">
+<link rel="import" href="../components/iron-flex-layout/classes/iron-flex-layout.html">
 <link rel="import" href="../components/paper-card/paper-card.html">
 <link rel="import" href="../components/iron-ajax/iron-ajax.html">
 
@@ -16,33 +17,45 @@
     :host {
     }
 
-    .card-info {
+    h1 {
       color: var(--google-grey-500);
     }
 
-    .card-core {
-      margin-top: 20px;
+    .floating-add-button {
+      color: white;
+      background-color: var(--arckane-purple-200);
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      border-radius: 50%;
+      width: 60px;
+      height: 80px;
+      padding: 0px;
+      margin: 0px;
+    }
+
+    .floating-add-button iron-icon {
+      width: 30px;
+      height: 30px;
     }
   </style>
 
   <template>
-    <!--
     <iron-ajax
-      id="ajax"
-      method="GET"
-      url="/api/users/props"
-      handle-as="json"
-      last-response="{{user}}">
+      id="ajaxCreateSession"
+      method="POST"
+      url="/api/schedules/create"
+      on-response="ajaxRedirectEditionPage"
+      handle-as="json">
     </iron-ajax>
-    -->
 
-    <!--
-    <paper-card heading="Payments">
-      <div class="card-content">$</div>
-    </paper-card>
-    -->
+    <h1>Your Mentoring Sessions</h1>
 
     <arckane-session-card session-id="/session/70"></arckane-session-card>
+
+    <paper-button class="floating-add-button horizontal layout center" raised on-tap="createSession">
+      <iron-icon class="flex" icon="add"></iron-icon>
+    </paper-button>
 
   </template>
 </dom-module>
@@ -54,6 +67,14 @@
 
     properties: {
       user: String
+    },
+
+    createSession: function () {
+      this.$.ajaxCreateSession.generateRequest();
+    },
+
+    ajaxRedirectEditionPage: function (event) {
+      window.location.assign("/edit"+event.target.lastResponse.sessionId);
     },
 
     ready: function () {

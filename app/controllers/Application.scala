@@ -62,4 +62,12 @@ class Application extends Controller {
       case None => Redirect("/")
     }
   }
+
+  def edit (id: String) = Action { request =>
+    println(id)
+    getSession(request) match {
+      case Some(session) => Ok(views.html.mentor(session))
+      case None => Redirect("/")
+    }
+  }
 }

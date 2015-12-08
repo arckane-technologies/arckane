@@ -1,0 +1,60 @@
+<!--
+@author Francisco Miguel Aramburo Torres - atfm05@gmail.com
+-->
+
+<link rel="import" href="../components/polymer/polymer.html">
+<link rel="import" href="../components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="../components/paper-card/paper-card.html">
+<link rel="import" href="../components/iron-ajax/iron-ajax.html">
+
+<link rel="import" href="../components/paper-styles/color.html">
+<link rel="import" href="../pl-utils/arckane-styles.html">
+
+<dom-module id="edit-session">
+  <style>
+    :host {
+    }
+
+    h1 {
+      color: var(--google-grey-500);
+    }
+  </style>
+
+  <template>
+    <!--
+    <iron-ajax
+      id="ajax"
+      method="GET"
+      url="/api/users/props"
+      handle-as="json"
+      last-response="{{user}}">
+    </iron-ajax>
+    -->
+
+    <!--
+    <paper-card heading="Payments">
+      <div class="card-content">$</div>
+    </paper-card>
+    -->
+
+    <h1>Session Edition</h1>
+
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+
+    is: "edit-session",
+
+    properties: {
+      user: String,
+      sessionId: String
+    },
+
+    ready: function () {
+      //this.$.ajax.params = {user: "/user/"+this.userId};
+      //this.$.ajax.generateRequest();
+    }
+  });
+</script>

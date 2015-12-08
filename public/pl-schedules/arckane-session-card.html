@@ -158,14 +158,24 @@
 
         <!-- Price -->
         <div class="booking-price self-center flex">
-          <span>{{data.booking.price}}</span>
+          $<span>{{data.booking.price}}</span>
         </div>
 
         <!-- Book button -->
-        <paper-button>
-          <span style="margin-right: 5px;">Book</span>
-          <span>{{data.booking.current}}</span> / <span>{{data.booking.limit}}</span>
-        </paper-button>
+        <template is="dom-if" if="{{!isOwner}}">
+          <paper-button>
+            <span style="margin-right: 5px;">Book</span>
+            <span>{{data.booking.current}}</span> / <span>{{data.booking.limit}}</span>
+          </paper-button>
+        </template>
+
+        <!-- Is owner display -->
+        <template is="dom-if" if="{{isOwner}}">
+          <span class="booking-price">{{data.booking.current}}</span>
+          <span class="booking-price">/</span>
+          <span class="booking-price">{{data.booking.limit}}</span>
+        </template>
+
       </div>
     </paper-card>
   </template>
@@ -177,13 +187,14 @@
 
     properties: {
       sessionId: String,
-      selected: {
-        type: Number,
-        value: 0
+      isOwner: {
+        type: Boolean,
+        value: false
       }
     },
 
     ready: function () {
+      this.selected = 0;
       this.data = {
         mentor: {
           name: "Francisco Aramburo",
@@ -196,7 +207,7 @@
           length: "2 hrs."
         },
         booking: {
-          price: "$24.50",
+          price: "24.50",
           current: 4,
           limit: 5
         },

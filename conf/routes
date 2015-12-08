@@ -7,6 +7,7 @@ GET     /signin                     controllers.Application.signin
 GET     /signup                     controllers.Application.signup
 GET     /user/:id                   controllers.Application.profile(id: String)
 GET     /mentor                     controllers.Application.mentor
+GET     /edit/session/:id           controllers.Application.edit(id: String)
 
 # Ontology service routes
 GET     /api/ontology/search        ontology.OntologyApi.search
@@ -17,6 +18,9 @@ GET     /api/users/props            users.UsersApi.getProps
 POST    /api/users/signup           users.UsersApi.signup
 POST    /api/users/signin           users.UsersApi.signin
 GET     /api/users/signout          users.UsersApi.signout
+
+# Schedules service routes
+POST    /api/schedules/create       schedules.SchedulesApi.create
 
 # v0.0 ROUTES
 
