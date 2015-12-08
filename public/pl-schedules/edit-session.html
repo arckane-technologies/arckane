@@ -7,17 +7,55 @@
 <link rel="import" href="../components/paper-card/paper-card.html">
 <link rel="import" href="../components/iron-ajax/iron-ajax.html">
 
+<link rel="import" href="../components/paper-time-picker/paper-time-picker.html">
+<link rel="import" href="../components/paper-date-picker/paper-date-picker.html">
+<link rel="import" href="../components/google-map/google-map.html">
+<link rel="import" href="../components/paper-dialog/paper-dialog.html">
+
 <link rel="import" href="../components/paper-styles/color.html">
 <link rel="import" href="../pl-utils/arckane-styles.html">
 
 <dom-module id="edit-session">
+  <style include="paper-time-picker-dialog-style"></style>
+  <style include="paper-date-picker-dialog-style"></style>
   <style>
-    :host {
+    * {
+      box-sizing: border-box;
     }
 
-    h1 {
+    :host {
+      --default-primary-color: var(--arckane-aqua-100);
+    }
+
+    paper-card {
+      width: 337px;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+
+    .card-actions paper-button {
+      @apply(--layout-flex);
+      color: var(--arckane-purple-200);
+    }
+
+    .map-container {
+      height: 330px;
+    }
+
+    .date .day {
+      font-size: 34px;
+    }
+
+    .date .time {
+      font-size: 20px;
+    }
+
+    .date .length {
+      margin-top: 10px;
+      font-size: 16px;
       color: var(--google-grey-500);
     }
+
   </style>
 
   <template>
@@ -37,8 +75,54 @@
     </paper-card>
     -->
 
-    <h1>Session Edition</h1>
+    <paper-card>
+      <div class="card-content date">
+        <div class="day">{{dateFormat(date, 'LL')}}</div>
+        <div class="time">{{time}}</div>
+      </div>
 
+      <div class="booking card-actions horizontal layout">
+        <paper-button on-tap="showDateDialog">
+          <iron-icon icon="create"></iron-icon>
+          Date
+        </paper-button>
+        <paper-button on-tap="showTimeDialog">
+          <iron-icon icon="create"></iron-icon>
+          Time
+        </paper-button>
+      </div>
+
+      <!-- Date picker dialog -->
+      <paper-dialog id="dateDialog" class="paper-date-picker-dialog" modal on-iron-overlay-closed="dismissDateDialog">
+        <paper-date-picker id="datePicker" date="[[date]]"></paper-date-picker>
+        <div class="buttons">
+          <paper-button dialog-dismiss>Cancel</paper-button>
+          <paper-button dialog-confirm>OK</paper-button>
+        </div>
+      </paper-dialog>
+
+      <!-- Time picker dialog -->
+      <paper-dialog id="timeDialog" class="paper-time-picker-dialog" modal on-iron-overlay-closed="dismissTimeDialog">
+        <paper-time-picker id="timePicker" time="[[time]]"></paper-time-picker>
+        <div class="buttons">
+          <paper-button dialog-dismiss>Cancel</paper-button>
+          <paper-button dialog-confirm>Ok</paper-button>
+        </div>
+      </paper-dialog>
+
+    </paper-card>
+
+    <paper-card heading="Topics and Skills"></paper-card>
+
+    <paper-card heading="Pricing and Apprentices"></paper-card>
+
+    <paper-card heading="Location">
+      <div class="card-content">
+      </div>
+      <div class="map-container">
+        <google-map latitude="37.77493" longitude="-122.41942"></google-map>
+      </div>
+    </paper-card>
   </template>
 </dom-module>
 
@@ -52,7 +136,33 @@
       sessionId: String
     },
 
+    showTimeDialog: function () {
+      this.$.timeDialog.toggle();
+    },
+
+    dismissTimeDialog: function(event) {
+      if (event.detail.confirmed) {
+        this.time = this.$.timePicker.time;
+      }
+    },
+
+    dateFormat: function(date, format) {
+      return moment(date).format(format);
+    },
+
+    dismissDateDialog: function(event) {
+      if (event.detail.confirmed) {
+        this.date = this.$.datePicker.date;
+      }
+    },
+
+    showDateDialog: function() {
+      this.$.dateDialog.toggle();
+    },
+
     ready: function () {
+      this.time = "00:00";
+      this.date = new Date(2017, 3, 13);
       //this.$.ajax.params = {user: "/user/"+this.userId};
       //this.$.ajax.generateRequest();
     }
