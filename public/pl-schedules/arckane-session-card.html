@@ -31,10 +31,7 @@
     }
 
     .edit-button {
-      margin: 0;
-      width: 100%;
-      background-color: var(--arckane-aqua-100);
-      color: white;
+      color: var(--arckane-aqua-100);
     }
 
     .scrollable {
@@ -115,7 +112,14 @@
 
         <!-- Is owner -->
         <template is="dom-if" if="{{data.is_owner}}">
-          <paper-button class="edit-button" on-tap="edit">Edit</paper-button>
+          <div class="horizontal layout">
+            <paper-button class="edit-button flex" on-tap="edit">
+              <iron-icon icon="create"></iron-icon>
+            </paper-button>
+            <paper-button class="edit-button flex" on-tap="delete">
+              <iron-icon icon="delete"></iron-icon>
+            </paper-button>
+          </div>
         </template>
 
         <!-- Is not owner -->
@@ -215,6 +219,10 @@
 
     edit: function () {
       window.location.assign("/edit"+this.sessionId);
+    },
+
+    delete: function () {
+      window.location.assign("/api/schedules/delete"+this.sessionId);
     },
 
     ready: function () {

@@ -106,24 +106,6 @@ package object session {
       ))
     }
 
-    //  this.data = {
-    //    mentor: {
-    //      name: "Francisco Aramburo",
-    //      picture: "../assets/images/profile.jpg",
-    //      rating: 4.5
-    //    },
-    //    date: {
-    //      day: "Thursday 29",
-    //      time: "5:00 p.m.",
-    //      length: "2 hrs."
-    //    },
-    //    booking: {
-    //      price: "24.50",
-    //      current: 4,
-    //      limit: 5
-    //    },
-    //    skills: [
-
     def retriveMentorSessions (mentor: String): Future[JsArray] = for {
       response <- query(Json.obj(
         "statement" ->
@@ -159,6 +141,18 @@ package object session {
           "userid" -> mentor
         )))
     } yield arcklet
+
+    def deleteSession (sessionId: String, userId: String): Future[Unit] = for {
+      _ <- query(Json.obj(
+        "statement" ->
+          ( "MATCH (s:Session {url: {sessionid}})<-[r:MENTORS]-(u:User {url: {userid}}) "
+          + "DELETE s,r"),
+        "parameters" -> Json.obj(
+          "sessionid" -> sessionId,
+          "userid" -> userId
+        )
+      ))
+    } yield Unit
 
     def isOwner (user: String, session: String): Future[Boolean] = for {
       response <- query(Json.obj(

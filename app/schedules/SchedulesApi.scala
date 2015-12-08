@@ -42,6 +42,17 @@ class SchedulesApi extends Controller {
     }
   }
 
+  def deleteSession (sessionId: String) = Action.async { request =>
+    (for {
+      user <- request.session.get("home")
+      response <- Some(SessionTag.deleteSession("/session/"+sessionId, user))
+    } yield response.map { Unit =>
+      Redirect("/mentor")
+    }).getOrElse {
+      Future(BadRequest("You need an active session."))
+    }
+  }
+
   def createSession = Action.async { request =>
     (for {
       user <- request.session.get("home")
