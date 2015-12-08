@@ -30,6 +30,13 @@
       width: 332px;
     }
 
+    .edit-button {
+      margin: 0;
+      width: 100%;
+      background-color: var(--arckane-aqua-100);
+      color: white;
+    }
+
     .scrollable {
       overflow-y: scroll;
     }
@@ -106,36 +113,45 @@
     <paper-card>
       <div class="card-content">
 
-        <!-- HEADER -->
-        <div class="header horizontal layout">
+        <!-- Is owner -->
+        <template is="dom-if" if="{{data.is_owner}}">
+          <paper-button class="edit-button" on-tap="edit">Edit</paper-button>
+        </template>
 
-          <!-- Picture -->
-          <template is="dom-if" if="{{data.mentor.picture}}">
-            <img class="mentor-picture" src="{{data.mentor.picture}}">
-          </template>
+        <!-- Is not owner -->
+        <template is="dom-if" if="{{!data.is_owner}}">
+          <!-- HEADER -->
+          <div class="header horizontal layout">
 
-          <template is="dom-if" if="{{!data.mentor.picture}}">
-            <div class="mentor-picture horizontal layout center">
-              <iron-icon class="flex self-center" icon="account-circle"></iron-icon>
-            </div>
-          </template>
+            <!-- Picture -->
+            <template is="dom-if" if="{{data.mentor.picture}}">
+              <img class="mentor-picture" src="{{data.mentor.picture}}">
+            </template>
 
-          <!-- Name and rating -->
-          <div class="title vertical layout center">
-            <div class="mentor-name">{{data.mentor.name}}</div>
-            <div>
-              <iron-icon class="rating-star" icon="star"></iron-icon>
-              <iron-icon class="rating-star" icon="star"></iron-icon>
-              <iron-icon class="rating-star" icon="star"></iron-icon>
-              <iron-icon class="rating-star" icon="star"></iron-icon>
-              <iron-icon class="rating-star" icon="star-half"></iron-icon>
+            <template is="dom-if" if="{{!data.mentor.picture}}">
+              <div class="mentor-picture horizontal layout center">
+                <iron-icon class="flex self-center" icon="account-circle"></iron-icon>
+              </div>
+            </template>
+
+            <!-- Name and rating -->
+            <div class="title vertical layout center">
+              <div class="mentor-name">{{data.mentor.name}}</div>
+              <div>
+                <iron-icon class="rating-star" icon="star"></iron-icon>
+                <iron-icon class="rating-star" icon="star"></iron-icon>
+                <iron-icon class="rating-star" icon="star"></iron-icon>
+                <iron-icon class="rating-star" icon="star"></iron-icon>
+                <iron-icon class="rating-star" icon="star-half"></iron-icon>
+              </div>
             </div>
           </div>
-        </div>
+        </template>
 
         <!-- DATE -->
         <div class="date">
           <div class="day">{{data.date.day}}</div>
+          <!--<div class="time">{{data.date.date}}</div>-->
           <div class="time">{{data.date.time}}</div>
           <div class="length">{{data.date.length}}</div>
         </div>
@@ -170,7 +186,7 @@
         </div>
 
         <!-- Book button -->
-        <template is="dom-if" if="{{!isOwner}}">
+        <template is="dom-if" if="{{!data.is_owner}}">
           <paper-button>
             <span style="margin-right: 5px;">Book</span>
             <span>{{data.booking.current}}</span> / <span>{{data.booking.limit}}</span>
@@ -178,7 +194,7 @@
         </template>
 
         <!-- Is owner display -->
-        <template is="dom-if" if="{{isOwner}}">
+        <template is="dom-if" if="{{data.is_owner}}">
           <span class="booking-price">{{data.booking.current}}</span>
           <span class="booking-price">/</span>
           <span class="booking-price">{{data.booking.limit}}</span>
@@ -194,42 +210,17 @@
     is: 'arckane-session-card',
 
     properties: {
-      sessionId: String,
-      isOwner: {
-        type: Boolean,
-        value: false
-      }
+      sessionId: String
+    },
+
+    edit: function () {
+      window.location.assign("/edit"+this.sessionId);
     },
 
     ready: function () {
       this.$.ajax.url = "/api/schedules"+this.sessionId;
       this.$.ajax.generateRequest();
       this.selected = 0;
-      this.data = {
-        mentor: {
-          name: "Francisco Aramburo",
-          picture: "../assets/images/profile.jpg",
-          rating: 4.5
-        },
-        date: {
-          day: "Thursday 29",
-          time: "5:00 p.m.",
-          length: "2 hrs."
-        },
-        booking: {
-          price: "24.50",
-          current: 4,
-          limit: 5
-        },
-        skills: [
-          { title: "Functional Programming", web: "https://en.wikipedia.org/wiki/Monad_(functional_programming)" },
-          { title: "Scala (programming language)", web: "https://en.wikipedia.org/wiki/Monad_(functional_programming)" },
-          { title: "Monad (functional programming)", web: "https://en.wikipedia.org/wiki/Monad_(functional_programming)" },
-          { title: "Data Types", web: "https://en.wikipedia.org/wiki/Monad_(functional_programming)" },
-          { title: "Abstract Algebra", web: "https://en.wikipedia.org/wiki/Monad_(functional_programming)" },
-          { title: "Functions", web: "https://en.wikipedia.org/wiki/Monad_(functional_programming)" }
-        ]
-      }
     }
   });
 </script>

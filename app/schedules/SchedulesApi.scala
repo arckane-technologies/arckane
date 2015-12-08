@@ -19,7 +19,11 @@ import schedules.session._
 class SchedulesApi extends Controller {
 
   def getSessionInfo (sessionId: String) = Action.async { request =>
-    SessionTag.getSessionInfo("/session/"+sessionId).map { session =>
+    val viewer = request.session.get("home") match {
+      case Some(url) => url
+      case None => ""
+    }
+    SessionTag.getSessionInfo("/session/"+sessionId, viewer).map { session =>
       session match {
         case Some(session) => Ok(session)
         case None => NotFound("Not such session id.")

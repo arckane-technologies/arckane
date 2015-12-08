@@ -30,7 +30,7 @@ package object session {
 
     def getDay (instant: Long): String = {
       val date = new DateTime(instant * 1000l)
-      (date.getDayOfWeek() match {
+      date.getDayOfWeek() match {
         case 1 => "Monday"
         case 2 => "Tuesday"
         case 3 => "Wednesday"
@@ -38,7 +38,12 @@ package object session {
         case 5 => "Friday"
         case 6 => "Saturday"
         case 7 => "Sunday"
-      }) + ", " + date.getDayOfMonth() + " " + (date.getMonthOfYear match {
+      }
+    }
+
+    def getDate (instant: Long): String = {
+      val date = new DateTime(instant * 1000l)
+      date.getDayOfMonth() + " " + (date.getMonthOfYear match {
         case 1 => "January"
         case 2 => "February"
         case 3 => "March"
@@ -63,11 +68,11 @@ package object session {
       (if (hour < 12) "a.m." else "p.m.")
     }
 
-    def getSessionInfo (sessionId: String): Future[Option[JsObject]] = for {
+    def getSessionInfo (sessionId: String, viewer: String): Future[Option[JsObject]] = for {
       response <- query(Json.obj(
         "statement" ->
           ( "MATCH (s:"+tag.str+" {url: {sessionid}})<-[:MENTORS]-(u:User) "
-          + "RETURN s.session_date, s.length, s.current, s.limit, s.price, u.firstname, u.lastname, u.rating"),
+          + "RETURN s.session_date, s.length, s.current, s.limit, s.price, u.url, u.firstname, u.lastname, u.rating"),
         "parameters" -> Json.obj(
           "sessionid" -> sessionId
         )))
@@ -77,6 +82,11 @@ package object session {
       val res = response(0)
       val sessionDate = res("s.session_date").head.as[Long]
       Some(Json.obj(
+        "is_owner" -> (if (viewer == res("u.url").head.as[String]) {
+          true
+        } else {
+          false
+        }),
         "mentor" -> Json.obj(
           "name" -> (res("u.firstname").head.as[String] + " " + res("u.lastname").head.as[String]),
           "picture" -> JsNull,
@@ -84,6 +94,7 @@ package object session {
         ),
         "date" -> Json.obj(
           "day" -> getDay(sessionDate),
+          "date" -> getDate(sessionDate),
           "time" -> getTime(sessionDate),
           "length" -> (res("s.length").head.as[String] + " hrs.")
         ),
