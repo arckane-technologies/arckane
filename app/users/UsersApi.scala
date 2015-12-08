@@ -67,7 +67,8 @@ class UsersApi extends Controller {
           "firstname" -> firstname,
           "lastname" -> lastname,
           "email" -> email,
-          "password" -> password
+          "password" -> password,
+          "rating" -> 0
         ))
         _ <- if (invitation != "") tx.lastly(Json.obj(
           "statement" ->

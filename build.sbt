@@ -20,7 +20,8 @@ libraryDependencies ++= Seq(
 
 libraryDependencies ++= Seq(
   ws,
-  "org.scalaz" %% "scalaz-core" % "7.1.3"
+  "org.scalaz" %% "scalaz-core" % "7.1.3",
+  "com.github.nscala-time" %% "nscala-time" % "2.6.0"
 )
 
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"

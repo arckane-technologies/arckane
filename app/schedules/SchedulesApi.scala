@@ -18,6 +18,15 @@ import schedules.session._
 /** Play Framework controller for the schedules service. */
 class SchedulesApi extends Controller {
 
+  def getSessionInfo (sessionId: String) = Action.async { request =>
+    SessionTag.getSessionInfo("/session/"+sessionId).map { session =>
+      session match {
+        case Some(session) => Ok(session)
+        case None => NotFound("Not such session id.")
+      }
+    }
+  }
+
   def getMentorSessions = Action.async { request =>
     (for {
       user <- request.session.get("home")

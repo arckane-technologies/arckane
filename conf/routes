@@ -20,6 +20,7 @@ POST    /api/users/signin           users.UsersApi.signin
 GET     /api/users/signout          users.UsersApi.signout
 
 # Schedules service routes
+GET     /api/schedules/session/:id  schedules.SchedulesApi.getSessionInfo(id: String)
 GET     /api/schedules/allsessions  schedules.SchedulesApi.getMentorSessions
 POST    /api/schedules/session      schedules.SchedulesApi.createSession
 

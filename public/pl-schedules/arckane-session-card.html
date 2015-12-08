@@ -26,6 +26,10 @@
       --paper-tabs-selection-bar-color: var(--arckane-aqua-100);
     }
 
+    paper-card {
+      width: 332px;
+    }
+
     .scrollable {
       overflow-y: scroll;
     }
@@ -92,6 +96,13 @@
   </style>
 
   <template>
+    <iron-ajax
+      id="ajax"
+      method="GET"
+      last-response="{{data}}"
+      handle-as="json">
+    </iron-ajax>
+
     <paper-card>
       <div class="card-content">
 
@@ -191,6 +202,8 @@
     },
 
     ready: function () {
+      this.$.ajax.url = "/api/schedules"+this.sessionId;
+      this.$.ajax.generateRequest();
       this.selected = 0;
       this.data = {
         mentor: {
