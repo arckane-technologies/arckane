@@ -47,5 +47,20 @@ package object session {
         )))
     } yield arcklet
 
+    def isOwner (user: String, session: String): Future[Boolean] = for {
+      response <- query(Json.obj(
+        "statement" ->
+          ( "MATCH (s:"+tag.str+" {url: {sessionid}})<-[:MENTORS]-(u:User {url: {userid}}) "
+          + "RETURN u"),
+        "parameters" -> Json.obj(
+          "sessionid" -> session,
+          "userid" -> user
+        )
+      ))
+    } yield if (response(0)("u").length == 0) {
+      false
+    } else {
+      true
+    }
   }
 }

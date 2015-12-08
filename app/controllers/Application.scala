@@ -13,6 +13,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 
 import database.neo4j._
 import database.persistence._
+import schedules.session._
 
 /** Play Framework controller for everything related to Arckane's app serving and authentication. */
 class Application extends Controller {
@@ -63,11 +64,16 @@ class Application extends Controller {
     }
   }
 
-  def edit (id: String) = Action { request =>
-    println(id)
-    getSession(request) match {
-      case Some(session) => Ok(views.html.mentor(session))
-      case None => Redirect("/")
+  def edit (id: String) = Action.async { request =>
+    (for {
+      user <- request.session.get("home")
+      userSession <- getSession(request)
+      response <- Some(SessionTag.isOwner(user, "/session/"+id))
+    } yield response.map { isOwner =>
+      if (isOwner) Ok(views.html.editSession(userSession, id))
+      else Redirect("/")
+    }).getOrElse {
+      Future(Redirect("/"))
     }
   }
 }
