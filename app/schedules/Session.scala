@@ -26,6 +26,39 @@ package object session {
   /** Type class for the [[SessionTag]] data type. */
   implicit class SessionTagOps (tag: Tag[Session]) {
 
+    def retriveMentorSessions (mentor: String): Future[JsArray] = for {
+      response <- query(Json.obj(
+        "statement" ->
+          ( "MATCH (u:User {url: {userid}})-[:MENTORS]->(s:"+tag.str+") "
+          + "RETURN s.url"),
+        "parameters" -> Json.obj(
+          "userid" -> mentor
+        )
+      ))
+    } yield response(0)("s.url").map { x =>
+      Json.obj("sessionId" -> x)
+    }.foldLeft(JsArray()) { (acc, x) =>
+      acc ++ Json.arr(x)
+    }
+
+    //  this.data = {
+    //    mentor: {
+    //      name: "Francisco Aramburo",
+    //      picture: "../assets/images/profile.jpg",
+    //      rating: 4.5
+    //    },
+    //    date: {
+    //      day: "Thursday 29",
+    //      time: "5:00 p.m.",
+    //      length: "2 hrs."
+    //    },
+    //    booking: {
+    //      price: "24.50",
+    //      current: 4,
+    //      limit: 5
+    //    },
+    //    skills: [
+
     def createSession (mentor: String): Future[Arcklet[Session, JsObject]] = for {
       tx <- openTransaction
       arcklet <- tag.create(tx, Json.obj(

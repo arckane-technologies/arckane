@@ -20,7 +20,8 @@ POST    /api/users/signin           users.UsersApi.signin
 GET     /api/users/signout          users.UsersApi.signout
 
 # Schedules service routes
-POST    /api/schedules/create       schedules.SchedulesApi.create
+GET     /api/schedules/allsessions  schedules.SchedulesApi.getMentorSessions
+POST    /api/schedules/session      schedules.SchedulesApi.createSession
 
 # v0.0 ROUTES
 

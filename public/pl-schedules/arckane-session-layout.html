@@ -1,0 +1,70 @@
+<!--
+@author Francisco Miguel Aramburo Torres - atfm05@gmail.com
+-->
+
+<link rel="import" href="../components/polymer/polymer.html">
+<link rel="import" href="../components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="../components/iron-media-query/iron-media-query.html">
+
+<link rel="import" href="../pl-schedules/arckane-session-card.html">
+
+<dom-module id="arckane-session-layout">
+  <style>
+    :host {
+      display: block;
+      box-sizing: border-box;
+      @apply(--layout-vertical);
+      @apply(--layout-center);
+    }
+
+    .desktop {
+      width: 1030px;
+      background-color: var(--google-grey-300);
+      border-radius: 2px;
+      padding-top: 10px;
+      padding-left: 10px;
+      @apply(--layout-horizontal);
+      @apply(--layout-wrap);
+    }
+
+    .desktop arckane-session-card {
+      margin-right: 10px;
+    }
+
+    arckane-session-card {
+      margin-bottom: 10px;
+    }
+  </style>
+
+  <template>
+    <iron-media-query query="(min-width: 640px)" query-matches="{{isDesktopSize}}"></iron-media-query>
+
+    <template is="dom-if" if="{{isDesktopSize}}">
+      <div class="desktop">
+        <template is="dom-repeat" items="{{sessions}}">
+          <arckane-session-card session-id="{{item.sessionId}}"></arckane-session-card>
+        </template>
+      </div>
+    </template>
+
+    <template is="dom-if" if="{{!isDesktopSize}}">
+      <template is="dom-repeat" items="{{sessions}}">
+        <arckane-session-card session-id="{{item.sessionId}}"></arckane-session-card>
+      </template>
+    </template>
+
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is: 'arckane-session-layout',
+
+    properties: {
+      sessions: {
+        type: Array,
+        value: []
+      }
+    }
+  });
+</script>

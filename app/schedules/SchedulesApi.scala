@@ -18,7 +18,18 @@ import schedules.session._
 /** Play Framework controller for the schedules service. */
 class SchedulesApi extends Controller {
 
-  def create = Action.async { request =>
+  def getMentorSessions = Action.async { request =>
+    (for {
+      user <- request.session.get("home")
+      response <- Some(SessionTag.retriveMentorSessions(user))
+    } yield response.map { sessions =>
+      Ok(sessions)
+    }).getOrElse {
+      Future(Redirect("/"))
+    }
+  }
+
+  def createSession = Action.async { request =>
     (for {
       user <- request.session.get("home")
       response <- Some(SessionTag.createSession(user))

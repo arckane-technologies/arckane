@@ -7,7 +7,7 @@
 <link rel="import" href="../components/paper-card/paper-card.html">
 <link rel="import" href="../components/iron-ajax/iron-ajax.html">
 
-<link rel="import" href="../pl-schedules/arckane-session-card.html">
+<link rel="import" href="../pl-schedules/arckane-session-layout.html">
 
 <link rel="import" href="../components/paper-styles/color.html">
 <link rel="import" href="../pl-utils/arckane-styles.html">
@@ -42,16 +42,22 @@
 
   <template>
     <iron-ajax
+      auto
+      method="GET"
+      url="/api/schedules/allsessions"
+      last-response="{{sessions}}"
+      handle-as="json">
+    </iron-ajax>
+
+    <iron-ajax
       id="ajaxCreateSession"
       method="POST"
-      url="/api/schedules/create"
+      url="/api/schedules/session"
       on-response="ajaxRedirectEditionPage"
       handle-as="json">
     </iron-ajax>
 
-    <h1>Your Mentoring Sessions</h1>
-
-    <arckane-session-card session-id="/session/70"></arckane-session-card>
+    <arckane-session-layout sessions="{{sessions}}"></arckane-session-layout>
 
     <paper-button class="floating-add-button horizontal layout center" raised on-tap="createSession">
       <iron-icon class="flex" icon="add"></iron-icon>
