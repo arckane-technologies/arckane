@@ -4,8 +4,10 @@
 
 <link rel="import" href="../components/polymer/polymer.html">
 <link rel="import" href="../components/iron-flex-layout/classes/iron-flex-layout.html">
-<link rel="import" href="../components/paper-card/paper-card.html">
+<link rel="import" href="../components/iron-media-query/iron-media-query.html">
 <link rel="import" href="../components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../components/paper-card/paper-card.html">
+<link rel="import" href="../components/paper-fab/paper-fab.html">
 
 <link rel="import" href="../pl-schedules/arckane-session-layout.html">
 
@@ -22,25 +24,23 @@
     }
 
     .floating-add-button {
-      color: white;
       background-color: var(--arckane-purple-200);
       position: fixed;
-      bottom: 30px;
-      right: 30px;
-      border-radius: 50%;
-      width: 60px;
-      height: 80px;
-      padding: 0px;
-      margin: 0px;
+      bottom: 20px;
+      right: 20px;
     }
 
-    .floating-add-button iron-icon {
-      width: 30px;
-      height: 30px;
+    .bigger-fab {
+      width: 80px;
+      height: 80px;
+      bottom: 30px;
+      right: 30px;
     }
   </style>
 
   <template>
+    <iron-media-query query="(min-width: 640px)" query-matches="{{isDesktopSize}}"></iron-media-query>
+
     <iron-ajax
       auto
       method="GET"
@@ -59,9 +59,13 @@
 
     <arckane-session-layout sessions="{{sessions}}"></arckane-session-layout>
 
-    <paper-button class="floating-add-button horizontal layout center" raised on-tap="createSession">
-      <iron-icon class="flex" icon="add"></iron-icon>
-    </paper-button>
+    <template is="dom-if" if="{{isDesktopSize}}">
+      <paper-fab class="floating-add-button bigger-fab" icon="add" on-tap="createSession"></paper-fab>
+    </template>
+
+    <template is="dom-if" if="{{!isDesktopSize}}">
+      <paper-fab class="floating-add-button" icon="add" on-tap="createSession"></paper-fab>
+    </template>
 
   </template>
 </dom-module>
