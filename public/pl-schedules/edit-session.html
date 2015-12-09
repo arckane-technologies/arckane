@@ -7,6 +7,8 @@
 <link rel="import" href="../components/paper-card/paper-card.html">
 <link rel="import" href="../components/iron-ajax/iron-ajax.html">
 
+<link rel="import" href="../components/paper-slider/paper-slider.html">
+
 <link rel="import" href="../components/paper-time-picker/paper-time-picker.html">
 <link rel="import" href="../components/paper-date-picker/paper-date-picker.html">
 <link rel="import" href="../components/google-map/google-map.html">
@@ -25,12 +27,20 @@
 
     :host {
       --default-primary-color: var(--arckane-aqua-100);
+      --paper-slider-height: 3px;
+      --paper-slider-knob-color: var(--arckane-purple-200);
+      --paper-slider-active-color: var(--arckane-purple-200);
+      --paper-slider-pin-color: var(--arckane-aqua-100);
     }
 
     paper-card {
       width: 337px;
       margin-right: 10px;
       margin-bottom: 10px;
+    }
+
+    paper-slider {
+      width: 100%;
     }
 
     .card-actions paper-button {
@@ -67,32 +77,36 @@
       handle-as="json">
     </iron-ajax>
 
-    <!-- Date, time and length ajax -->
     <iron-ajax
-      id="updateSessionDateRequest"
+      id="updateSessionRequest"
       method="POST">
     </iron-ajax>
 
-    <!-- DAte, time and length card -->
+    <!-- Date, time and length card -->
     <paper-card>
+
+      <!-- Display -->
       <div class="card-content date">
-        <div class="day">{{dateFormat(date, 'LL')}}</div>
+        <div class="day">{{_dateFormat(date, 'LL')}}</div>
         <div class="time">{{time}}</div>
+        <div class="length"><span>{{length}}</span> hrs.</div>
+        <paper-slider pin snaps max="10" max-markers="10" step="0.5" value="{{length}}"></paper-slider>
       </div>
 
+      <!-- Action buttons -->
       <div class="booking card-actions horizontal layout">
-        <paper-button on-tap="showDateDialog">
+        <paper-button on-tap="_showDateDialog">
           <iron-icon icon="create"></iron-icon>
           Date
         </paper-button>
-        <paper-button on-tap="showTimeDialog">
+        <paper-button on-tap="_showTimeDialog">
           <iron-icon icon="create"></iron-icon>
           Time
         </paper-button>
       </div>
 
       <!-- Date picker dialog -->
-      <paper-dialog id="dateDialog" class="paper-date-picker-dialog" modal on-iron-overlay-closed="dismissDateDialog">
+      <paper-dialog id="dateDialog" class="paper-date-picker-dialog" modal on-iron-overlay-closed="_dismissDateDialog">
         <paper-date-picker id="datePicker" date="[[date]]"></paper-date-picker>
         <div class="buttons">
           <paper-button dialog-dismiss>Cancel</paper-button>
@@ -101,7 +115,7 @@
       </paper-dialog>
 
       <!-- Time picker dialog -->
-      <paper-dialog id="timeDialog" class="paper-time-picker-dialog" modal on-iron-overlay-closed="dismissTimeDialog">
+      <paper-dialog id="timeDialog" class="paper-time-picker-dialog" modal on-iron-overlay-closed="_dismissTimeDialog">
         <paper-time-picker id="timePicker" time="[[time]]"></paper-time-picker>
         <div class="buttons">
           <paper-button dialog-dismiss>Cancel</paper-button>
@@ -136,11 +150,15 @@
       sessionId: String,
       time: {
         type: String,
-        observer: "_timeChanged"
+        observer: "_dateChanged"
       },
       date: {
         type: Object,
         observer: "_dateChanged"
+      },
+      length: {
+        type: String,
+        observer: "_lengthChanged"
       }
     },
 
@@ -163,63 +181,62 @@
       var utcMinutes = responseDate.getUTCMinutes();
       this.date = new Date(responseDate.getTime() - (utcHours * 60 * 60 * 1000) - (utcMinutes * 60 * 1000));
 
+      this.length = this.data["length"];
+
       this.async(function () {
         this.safetyFlag = true;
       }, 500)
     },
 
-    _timeChanged: function (time) {
-      if (this.data && this.safetyFlag) {
-        var hour = this.$.timePicker.hour;
-        var minute = this.$.timePicker.minute;
-        var newDate = new Date(this.date.getFullYear(), this.date.getMonth(), this.date.getDate(), hour, minute, 0);
-        this._updateSessionDate(newDate.getTime());
-      }
+    _updateSession: function (prop, value, numeric) {
+      this.$.updateSessionRequest.url = "/api/schedules/update/session/" + this.sessionId;
+      this.$.updateSessionRequest.params = {
+        prop: prop,
+        value: value,
+        numeric: numeric
+      };
+      this.$.updateSessionRequest.generateRequest();
     },
 
     _dateChanged: function (date) {
       if (this.data && this.safetyFlag) {
-        var year = date.getFullYear();
-        var month = date.getMonth();
-        var day = date.getDate();
+        var year = this.date.getFullYear();
+        var month = this.date.getMonth();
+        var day = this.date.getDate();
         var hour = this.$.timePicker.hour;
         var minute = this.$.timePicker.minute;
         var newDate = new Date(year, month, day, hour, minute, 0);
-        this._updateSessionDate(newDate.getTime());
+        this._updateSession("session_date", newDate.getTime(), true);
       }
     },
 
-    _updateSessionDate: function (date) {
-      this.$.updateSessionDateRequest.url = "/api/schedules/update/session/" + this.sessionId;
-      this.$.updateSessionDateRequest.params = {
-        prop: "session_date",
-        value: date,
-        numeric: true
-      };
-      this.$.updateSessionDateRequest.generateRequest();
+    _lengthChanged: function (length) {
+      if (this.data && this.safetyFlag) {
+        this._updateSession("length", length, true);
+      }
     },
 
-    showTimeDialog: function () {
+    _showTimeDialog: function () {
       this.$.timeDialog.toggle();
     },
 
-    dismissTimeDialog: function(event) {
+    _dismissTimeDialog: function(event) {
       if (event.detail.confirmed) {
         this.time = this.$.timePicker.time;
       }
     },
 
-    dateFormat: function(date, format) {
+    _dateFormat: function(date, format) {
       return moment(date).format(format);
     },
 
-    dismissDateDialog: function(event) {
+    _dismissDateDialog: function(event) {
       if (event.detail.confirmed) {
         this.date = this.$.datePicker.date;
       }
     },
 
-    showDateDialog: function() {
+    _showDateDialog: function() {
       this.$.dateDialog.toggle();
     },
 

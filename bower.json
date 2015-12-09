@@ -45,7 +45,8 @@
     "paper-toolbar": "PolymerElements/paper-toolbar#^1.0.0",
     "polymer": "Polymer/polymer#^1.0.0",
     "paper-card": "PolymerElements/paper-card#~1.0.8",
-    "google-map": "GoogleWebComponents/google-map#~1.1.7"
+    "google-map": "GoogleWebComponents/google-map#~1.1.7",
+    "paper-slider": "PolymerElements/paper-slider#~1.0.8"
   },
   "resolutions": {
     "polymer": "^1.0.0"

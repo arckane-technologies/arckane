@@ -96,10 +96,10 @@ package object session {
           "day" -> getDay(sessionDate),
           "date" -> getDate(sessionDate),
           "time" -> getTime(sessionDate),
-          "length" -> (res("s.length").head.as[Int] + " hrs.")
+          "length" -> (res("s.length").head.as[Float] + " hrs.")
         ),
         "booking" -> Json.obj(
-          "price" -> (res("s.price").head.as[Int]),
+          "price" -> (res("s.price").head.as[Float]),
           "current" -> (res("s.current").head.as[Int]),
           "limit" -> (res("s.limit").head.as[Int])
         )
@@ -120,8 +120,8 @@ package object session {
       val res = response(0)
       Some(Json.obj(
         "session_date" -> res("s.session_date").head.as[Long],
-        "length" -> res("s.length").head.as[Int],
-        "price" -> res("s.price").head.as[Int],
+        "length" -> res("s.length").head.as[Float],
+        "price" -> res("s.price").head.as[Float],
         "current" -> res("s.current").head.as[Int],
         "limit" -> res("s.limit").head.as[Int]
       ))
