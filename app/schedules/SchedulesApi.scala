@@ -64,4 +64,38 @@ class SchedulesApi extends Controller {
     }
   }
 
+  def getSessionEditData (sessionId: String) = Action.async { request =>
+    SessionTag.getSessionEditData("/session/"+sessionId).map { session =>
+      session match {
+        case Some(session) => Ok(session)
+        case None => NotFound("Not such session id.")
+      }
+    }
+  }
+
+  def setProp (sessionId: String) = Action.async { request =>
+    val numeric = request.queryString.get("numeric") match {
+      case Some(_) => true
+      case None => false
+    }
+    (for {
+      user <- request.session.get("home")
+      prop <- request.queryString.get("prop")
+      value <- request.queryString.get("value")
+      isOwner <- Some(SessionTag.isOwner(user, "/session/"+sessionId))
+    } yield isOwner.flatMap { isOwner =>
+      if (isOwner) {
+        if (numeric) {
+          Arcklet(SessionTag, "/session/"+sessionId, Unit).set(prop.head, value.head.toDouble).map { _ => Ok }
+        } else {
+          Arcklet(SessionTag, "/session/"+sessionId, Unit).set(prop.head, value.head).map { _ => Ok }
+        }
+      } else {
+        Future(BadRequest)
+      }
+    }).getOrElse {
+      Future(BadRequest("Expected user, prop and value in the query string."))
+    }
+  }
+
 }

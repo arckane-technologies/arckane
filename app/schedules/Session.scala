@@ -29,7 +29,7 @@ package object session {
   implicit class SessionTagOps (tag: Tag[Session]) {
 
     def getDay (instant: Long): String = {
-      val date = new DateTime(instant * 1000l)
+      val date = new DateTime(instant)
       date.getDayOfWeek() match {
         case 1 => "Monday"
         case 2 => "Tuesday"
@@ -42,7 +42,7 @@ package object session {
     }
 
     def getDate (instant: Long): String = {
-      val date = new DateTime(instant * 1000l)
+      val date = new DateTime(instant)
       date.getDayOfMonth() + " " + (date.getMonthOfYear match {
         case 1 => "January"
         case 2 => "February"
@@ -60,7 +60,7 @@ package object session {
     }
 
     def getTime (instant: Long): String = {
-      val date = new DateTime(instant * 1000l)
+      val date = new DateTime(instant)
       val hour = date.getHourOfDay()
       val minutes = date.getMinuteOfHour()
       (if (hour > 12) hour - 12 else hour) + ":" +
@@ -96,13 +96,34 @@ package object session {
           "day" -> getDay(sessionDate),
           "date" -> getDate(sessionDate),
           "time" -> getTime(sessionDate),
-          "length" -> (res("s.length").head.as[String] + " hrs.")
+          "length" -> (res("s.length").head.as[Int] + " hrs.")
         ),
         "booking" -> Json.obj(
           "price" -> (res("s.price").head.as[Int]),
           "current" -> (res("s.current").head.as[Int]),
           "limit" -> (res("s.limit").head.as[Int])
         )
+      ))
+    }
+
+    def getSessionEditData (sessionId: String): Future[Option[JsObject]] = for {
+      response <- query(Json.obj(
+        "statement" ->
+          ( "MATCH (s:"+tag.str+" {url: {sessionid}}) "
+          + "RETURN s.session_date, s.length, s.current, s.limit, s.price"),
+        "parameters" -> Json.obj(
+          "sessionid" -> sessionId
+        )))
+    } yield if (response(0)("s.session_date").length == 0) {
+      None
+    } else {
+      val res = response(0)
+      Some(Json.obj(
+        "session_date" -> res("s.session_date").head.as[Long],
+        "length" -> res("s.length").head.as[Int],
+        "price" -> res("s.price").head.as[Int],
+        "current" -> res("s.current").head.as[Int],
+        "limit" -> res("s.limit").head.as[Int]
       ))
     }
 
@@ -124,9 +145,9 @@ package object session {
     def createSession (mentor: String): Future[Arcklet[Session, JsObject]] = for {
       tx <- openTransaction
       arcklet <- tag.create(tx, Json.obj(
-        "creation_timestamp" -> ZonedDateTime.now(ZoneOffset.UTC).toEpochSecond(),
+        "creation_timestamp" -> ZonedDateTime.now(ZoneOffset.UTC).toEpochSecond() * 1000,
         "session_date" -> 0,
-        "length" -> "unset",
+        "length" -> 0,
         "price" -> 0,
         "limit" -> 0,
         "current" -> 0,

@@ -20,10 +20,17 @@ POST    /api/users/signin           users.UsersApi.signin
 GET     /api/users/signout          users.UsersApi.signout
 
 # Schedules service routes
-GET     /api/schedules/session/:id  schedules.SchedulesApi.getSessionInfo(id: String)
-GET     /api/schedules/allsessions  schedules.SchedulesApi.getMentorSessions
-GET     /api/schedules/delete/session/:id schedules.SchedulesApi.deleteSession(id: String)
-POST    /api/schedules/session      schedules.SchedulesApi.createSession
+GET     /api/schedules/session/:id              schedules.SchedulesApi.getSessionInfo(id: String)
+GET     /api/schedules/allsessions              schedules.SchedulesApi.getMentorSessions
+GET     /api/schedules/delete/session/:id       schedules.SchedulesApi.deleteSession(id: String)
+GET     /api/schedules/editdata/session/:id     schedules.SchedulesApi.getSessionEditData(id: String)
+POST    /api/schedules/session                  schedules.SchedulesApi.createSession
+POST    /api/schedules/update/session/:id       schedules.SchedulesApi.setProp(id: String)
+
+
+
+
+
 
 # v0.0 ROUTES
 

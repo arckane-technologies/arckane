@@ -59,22 +59,21 @@
   </style>
 
   <template>
-    <!--
     <iron-ajax
       id="ajax"
       method="GET"
-      url="/api/users/props"
-      handle-as="json"
-      last-response="{{user}}">
+      on-response="_dataResponse"
+      last-response="{{data}}"
+      handle-as="json">
     </iron-ajax>
-    -->
 
-    <!--
-    <paper-card heading="Payments">
-      <div class="card-content">$</div>
-    </paper-card>
-    -->
+    <!-- Date, time and length ajax -->
+    <iron-ajax
+      id="updateSessionDateRequest"
+      method="POST">
+    </iron-ajax>
 
+    <!-- DAte, time and length card -->
     <paper-card>
       <div class="card-content date">
         <div class="day">{{dateFormat(date, 'LL')}}</div>
@@ -112,6 +111,7 @@
 
     </paper-card>
 
+    <!-- Topics and skills -->
     <paper-card heading="Topics and Skills"></paper-card>
 
     <paper-card heading="Pricing and Apprentices"></paper-card>
@@ -133,7 +133,70 @@
 
     properties: {
       user: String,
-      sessionId: String
+      sessionId: String,
+      time: {
+        type: String,
+        observer: "_timeChanged"
+      },
+      date: {
+        type: Object,
+        observer: "_dateChanged"
+      }
+    },
+
+    _dataResponse: function () {
+      // Safety flag to update database.
+      this.safetyFlag = false;
+
+      var responseDate = new Date(this.data["session_date"]);
+      var hours = responseDate.getHours();
+      var minutes = responseDate.getMinutes();
+      var part = "";
+
+      if (hours > 12) part = "PM";
+      else part = "AM";
+      if (hours > 12) hours = hours - 12;
+      if (minutes < 10) minutes = "0"+minutes;
+      this.time = hours+":"+minutes+" "+part;
+
+      var utcHours = responseDate.getUTCHours();
+      var utcMinutes = responseDate.getUTCMinutes();
+      this.date = new Date(responseDate.getTime() - (utcHours * 60 * 60 * 1000) - (utcMinutes * 60 * 1000));
+
+      this.async(function () {
+        this.safetyFlag = true;
+      }, 500)
+    },
+
+    _timeChanged: function (time) {
+      if (this.data && this.safetyFlag) {
+        var hour = this.$.timePicker.hour;
+        var minute = this.$.timePicker.minute;
+        var newDate = new Date(this.date.getFullYear(), this.date.getMonth(), this.date.getDate(), hour, minute, 0);
+        this._updateSessionDate(newDate.getTime());
+      }
+    },
+
+    _dateChanged: function (date) {
+      if (this.data && this.safetyFlag) {
+        var year = date.getFullYear();
+        var month = date.getMonth();
+        var day = date.getDate();
+        var hour = this.$.timePicker.hour;
+        var minute = this.$.timePicker.minute;
+        var newDate = new Date(year, month, day, hour, minute, 0);
+        this._updateSessionDate(newDate.getTime());
+      }
+    },
+
+    _updateSessionDate: function (date) {
+      this.$.updateSessionDateRequest.url = "/api/schedules/update/session/" + this.sessionId;
+      this.$.updateSessionDateRequest.params = {
+        prop: "session_date",
+        value: date,
+        numeric: true
+      };
+      this.$.updateSessionDateRequest.generateRequest();
     },
 
     showTimeDialog: function () {
@@ -161,10 +224,8 @@
     },
 
     ready: function () {
-      this.time = "00:00";
-      this.date = new Date(2017, 3, 13);
-      //this.$.ajax.params = {user: "/user/"+this.userId};
-      //this.$.ajax.generateRequest();
+      this.$.ajax.url = "/api/schedules/editdata/session/"+this.sessionId
+      this.$.ajax.generateRequest();
     }
   });
 </script>
