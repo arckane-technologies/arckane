@@ -107,7 +107,7 @@
 
       <!-- Date picker dialog -->
       <paper-dialog id="dateDialog" class="paper-date-picker-dialog" modal on-iron-overlay-closed="_dismissDateDialog">
-        <paper-date-picker id="datePicker" date="[[date]]"></paper-date-picker>
+        <paper-date-picker id="datePicker" min-date="[[minDate]]" date="[[date]]"></paper-date-picker>
         <div class="buttons">
           <paper-button dialog-dismiss>Cancel</paper-button>
           <paper-button dialog-confirm>OK</paper-button>
@@ -181,6 +181,7 @@
       var utcMinutes = responseDate.getUTCMinutes();
       this.date = new Date(responseDate.getTime() - (utcHours * 60 * 60 * 1000) - (utcMinutes * 60 * 1000));
 
+      this.minDate = new Date(this.data["creation_timestamp"]);
       this.length = this.data["length"];
 
       this.async(function () {

@@ -110,7 +110,7 @@ package object session {
       response <- query(Json.obj(
         "statement" ->
           ( "MATCH (s:"+tag.str+" {url: {sessionid}}) "
-          + "RETURN s.session_date, s.length, s.current, s.limit, s.price"),
+          + "RETURN s.session_date, s.creation_timestamp, s.length, s.current, s.limit, s.price"),
         "parameters" -> Json.obj(
           "sessionid" -> sessionId
         )))
@@ -120,6 +120,7 @@ package object session {
       val res = response(0)
       Some(Json.obj(
         "session_date" -> res("s.session_date").head.as[Long],
+        "creation_timestamp" -> res("s.creation_timestamp").head.as[Long],
         "length" -> res("s.length").head.as[Float],
         "price" -> res("s.price").head.as[Float],
         "current" -> res("s.current").head.as[Int],
@@ -146,7 +147,7 @@ package object session {
       tx <- openTransaction
       arcklet <- tag.create(tx, Json.obj(
         "creation_timestamp" -> ZonedDateTime.now(ZoneOffset.UTC).toEpochSecond() * 1000,
-        "session_date" -> 0,
+        "session_date" -> ZonedDateTime.now(ZoneOffset.UTC).toEpochSecond() * 1000,
         "length" -> 0,
         "price" -> 0,
         "limit" -> 0,
