@@ -7,6 +7,7 @@
 <link rel="import" href="../components/paper-card/paper-card.html">
 <link rel="import" href="../components/iron-ajax/iron-ajax.html">
 
+<link rel="import" href="../components/paper-input/paper-input.html">
 <link rel="import" href="../components/paper-slider/paper-slider.html">
 
 <link rel="import" href="../components/paper-time-picker/paper-time-picker.html">
@@ -52,15 +53,15 @@
       height: 330px;
     }
 
-    .date .day {
+    .day {
       font-size: 34px;
     }
 
-    .date .time {
+    .time {
       font-size: 20px;
     }
 
-    .date .length {
+    .length {
       margin-top: 10px;
       font-size: 16px;
       color: var(--google-grey-500);
@@ -128,7 +129,18 @@
     <!-- Topics and skills -->
     <paper-card heading="Topics and Skills"></paper-card>
 
-    <paper-card heading="Pricing and Apprentices"></paper-card>
+    <!-- Pricing and apprentices -->
+    <paper-card heading="Pricing and Apprentices">
+
+      <div class="card-content">
+        <div><span class="time">Max apprentices: </span><span class="day">{{limit}}</span></div>
+        <paper-slider pin snaps max="10" max-markers="10" step="1" value="{{limit}}"></paper-slider>
+        <paper-input label="Price for the session" type="number" maxlength="5" minlength="1" value="{{price}}">
+          <div prefix>$</div>
+        </paper-input>
+      </div>
+
+    </paper-card>
 
     <paper-card heading="Location">
       <div class="card-content">
@@ -157,8 +169,16 @@
         observer: "_dateChanged"
       },
       length: {
-        type: String,
+        type: Number,
         observer: "_lengthChanged"
+      },
+      limit: {
+        type: Number,
+        observer: "_limitChanged"
+      },
+      price: {
+        type: Number,
+        observer: "_priceChanged"
       }
     },
 
@@ -183,6 +203,8 @@
 
       this.minDate = new Date(this.data["creation_timestamp"]);
       this.length = this.data["length"];
+      this.limit = this.data["limit"];
+      this.price = this.data["price"];
 
       this.async(function () {
         this.safetyFlag = true;
@@ -214,6 +236,21 @@
     _lengthChanged: function (length) {
       if (this.data && this.safetyFlag) {
         this._updateSession("length", length, true);
+      }
+    },
+
+    _limitChanged: function (limit) {
+      if (this.data && this.safetyFlag) {
+        this._updateSession("limit", limit, true);
+      }
+    },
+
+    _priceChanged: function (price) {
+      if (this.data && this.safetyFlag) {
+        this.debounce("price-editing", function () {
+          if (price != "")
+            this._updateSession("price", price, true);
+        }, 1000);
       }
     },
 
