@@ -1,0 +1,76 @@
+<!--
+@author Francisco Miguel Aramburo Torres - atfm05@gmail.com
+-->
+
+<link rel="import" href="../../components/polymer/polymer.html">
+<link rel="import" href="../../components/paper-card/paper-card.html">
+
+<link rel="import" href="../../components/paper-input/paper-input.html">
+<link rel="import" href="../../components/paper-slider/paper-slider.html">
+
+<link rel="import" href="../../components/paper-styles/color.html">
+<link rel="import" href="../../pl-utils/arckane-styles.html">
+
+<link rel="import" href="../../pl-utils/editor-behavior.html">
+
+<dom-module id="edit-pricing">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    paper-slider {
+      width: 100%;
+    }
+  </style>
+
+  <template>
+    <!-- Pricing and apprentices -->
+    <paper-card class="flex-if-desktop" heading="Pricing and Apprentices">
+      <div class="card-content">
+        <div><span class="time">Max apprentices: </span><span class="day">{{limit}}</span></div>
+        <paper-slider pin snaps max="10" max-markers="10" step="1" value="{{limit}}"></paper-slider>
+        <paper-input label="Price for the session" type="number" maxlength="5" minlength="1" value="{{price}}">
+          <div prefix>$</div>
+        </paper-input>
+      </div>
+    </paper-card>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+
+    is: "edit-pricing",
+
+    behaviors: [EditorBehavior],
+
+    properties: {
+      sessionId: String,
+      limit: {
+        type: Number,
+        observer: "_limitChanged"
+      },
+      price: {
+        type: Number,
+        observer: "_priceChanged"
+      }
+    },
+
+    setInitialData: function (data) {
+      this.limit = data["limit"];
+      this.price = data["price"];
+    },
+
+    _limitChanged: function (limit) {
+      this.updateData("limit", limit, true, "/api/schedules/update/session/"+this.sessionId);
+    },
+
+    _priceChanged: function (price) {
+      this.debounce("price-editing", function () {
+        if (price != "")
+          this.updateData("price", price, true, "/api/schedules/update/session/"+this.sessionId);
+      }, 1000);
+    }
+  });
+</script>

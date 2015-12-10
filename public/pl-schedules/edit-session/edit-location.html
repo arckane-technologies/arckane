@@ -1,0 +1,95 @@
+<!--
+@author Francisco Miguel Aramburo Torres - atfm05@gmail.com
+-->
+
+<link rel="import" href="../../components/polymer/polymer.html">
+<link rel="import" href="../../components/paper-card/paper-card.html">
+
+<link rel="import" href="../../components/paper-input/paper-input.html">
+
+<link rel="import" href="../../components/google-map/google-map.html">
+<link rel="import" href="../../components/google-map/google-map-search.html">
+
+<link rel="import" href="../../components/paper-styles/color.html">
+<link rel="import" href="../../pl-utils/arckane-styles.html">
+
+<link rel="import" href="../../pl-utils/editor-behavior.html">
+
+<dom-module id="edit-location">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    .map-card {
+      width: 100%;
+    }
+
+    .map-container {
+      height: 350px;
+    }
+  </style>
+
+  <template>
+    <!-- Location -->
+    <paper-card class="map-card" heading="{{formattedAddress}}">
+      <div class="card-content">
+        <paper-input value="{{locationSearch}}"></paper-input>
+      </div>
+      <div class="map-container">
+        <google-map-search id="mapSearch" map="[[map]]" query="{{locationSearch}}" results="{{locationResults}}"></google-map-search>
+        <google-map map="{{map}}" latitude="{{latitude}}" longitude="{{longitude}}">
+          <template is="dom-repeat" items="{{locationResults}}" as="marker">
+            <google-map-marker latitude="{{marker.latitude}}"
+                               longitude="{{marker.longitude}}" click-events>
+              <h2>{{marker.name}}</h2>
+              <span>{{marker.formatted_address}}</span>
+            </google-map-marker>
+          </template>
+        </google-map>
+      </div>
+    </paper-card>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+
+    is: "edit-location",
+
+    behaviors: [EditorBehavior],
+
+    properties: {
+      sessionId: String,
+      locationResults: {
+        type: Object,
+        observer: "_locationResultsChanged"
+      }
+    },
+
+    listeners: {
+      "google-map-marker-click": "_markerTap"
+    },
+
+    setInitialData: function (data) {
+      this.limit = data["limit"];
+      this.price = data["price"];
+    },
+
+    _locationResultsChanged: function (results) {
+      this.debounce("location-input", function (argument) {
+        if (results.length == 0) {
+          this.formattedAddress = "No location found";
+        } else {
+          this.formattedaddress = results[0]["formatted_address"];
+          this.latitude = results[0]["latitude"];
+          this.longitude = results[0]["longitude"];
+        }
+      }, 1000);
+    },
+
+    _markerTap: function (event) {
+      console.log(event.target.marker);
+    }
+  });
+</script>
