@@ -75,7 +75,7 @@ class SchedulesApi extends Controller {
 
   def setProp (sessionId: String) = Action.async { request =>
     val numeric = request.queryString.get("numeric") match {
-      case Some(_) => true
+      case Some(value) => if (value.head == "true") true else false
       case None => false
     }
     (for {

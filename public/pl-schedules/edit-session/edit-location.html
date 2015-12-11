@@ -38,7 +38,7 @@
     <!-- Location -->
     <paper-card heading="{{formattedAddress}}">
       <div class="card-content">
-        <paper-input label="Session address" value="{{locationSearch}}"></paper-input>
+        <paper-input label="Session address" value="{{locationSearchInput}}"></paper-input>
       </div>
       <div class="map-container">
         <google-map-search id="mapSearch" map="[[map]]" query="{{locationSearch}}" results="{{locationResults}}"></google-map-search>
@@ -65,6 +65,10 @@
 
     properties: {
       sessionId: String,
+      locationSearchInput: {
+        type: String,
+        observer: "_locationSearchInputChanged"
+      },
       locationResults: {
         type: Object,
         observer: "_locationResultsChanged"
@@ -76,20 +80,29 @@
     },
 
     setInitialData: function (data) {
-      this.limit = data["limit"];
-      this.price = data["price"];
+      this.formattedAddress = data["formatted_address"];
+      this.latitude = data["latitude"];
+      this.longitude = data["longitude"];
+    },
+
+    _locationSearchInputChanged: function (input) {
+      this.debounce("typing-search-input", function () {
+        this.locationSearch = input;
+      }, 1000);
     },
 
     _locationResultsChanged: function (results) {
-      this.debounce("location-input", function (argument) {
-        if (results.length == 0) {
-          this.formattedAddress = "No location found";
-        } else {
-          this.formattedAddress = results[0]["formatted_address"];
-          this.latitude = results[0]["latitude"];
-          this.longitude = results[0]["longitude"];
-        }
-      }, 2000);
+      if (!this.safetyFlag) return;
+      if (results.length == 0) {
+        this.formattedAddress = "No location found";
+      } else {
+        this.formattedAddress = results[0]["formatted_address"];
+        this.latitude = results[0]["latitude"];
+        this.longitude = results[0]["longitude"];
+        this.updateData("formatted_address", this.formattedAddress, false, "/api/schedules/update/session/"+this.sessionId);
+        this.updateData("latitude", this.latitude, true, "/api/schedules/update/session/"+this.sessionId);
+        this.updateData("longitude", this.longitude, true, "/api/schedules/update/session/"+this.sessionId);
+      }
     },
 
     _markerTap: function (event) {
