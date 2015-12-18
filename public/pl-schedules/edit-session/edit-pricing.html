@@ -14,6 +14,7 @@
 <link rel="import" href="../../pl-utils/editor-behavior.html">
 
 <dom-module id="edit-pricing">
+  <style include="arckane-styles"></style>
   <style>
     * {
       box-sizing: border-box;
@@ -30,18 +31,82 @@
     paper-slider {
       width: 100%;
     }
+
+    .card-actions paper-button {
+      @apply(--layout-flex);
+      color: var(--arckane-purple-200);
+    }
+
+    #priceDialog {
+      width: 200px;
+      height: 200px;
+      background-color: var(--arckane-aqua-100);
+      color: white;
+      --default-primary-color: white;
+    }
+
+    #priceDialog paper-input {
+      margin: 0px;
+      width: 200px;
+      --paper-input-container-color: white;
+      --paper-input-container-focus-color: var(--arckane-purple-200);
+      --paper-input-container-input-color: white;
+      --paper-input-prefix: {
+        font-size: 24px;
+        color: white;
+        margin-bottom: 6px;
+      }
+      --paper-input-container-input: {
+        font-size: 34px;
+        text-align: center;
+      };
+    }
   </style>
 
   <template>
     <!-- Pricing and apprentices -->
-    <paper-card class="flex-if-desktop" heading="Pricing and Apprentices">
-      <div class="card-content">
-        <div><span class="time">Max apprentices: </span><span class="day">{{limit}}</span></div>
-        <paper-slider pin snaps max="10" max-markers="10" step="1" value="{{limit}}"></paper-slider>
-        <paper-input label="Price for the session" type="number" maxlength="5" minlength="1" value="{{price}}">
+    <paper-card class="vertical layout">
+      <div class="card-content vertical layout flex">
+
+        <!-- Display price and apprentices. -->
+        <div class="horizontal layout center flex">
+          <div class="text-center flex">
+            <div class="font-XXL">
+              $<span>{{price}}</span>
+            </div>
+          </div>
+          <div class="text-center flex">
+            <div class="font-XXL">{{limit}}</div>
+            <div class="font-S font-grey">Max Apprentices</div>
+          </div>
+        </div>
+
+        <!-- Slider -->
+        <div class="">
+          <paper-slider pin snaps max="10" max-markers="10" step="1" value="{{limit}}"></paper-slider>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="card-actions horizontal layout">
+        <paper-button on-tap="_showPriceDialog">
+          <iron-icon icon="create"></iron-icon>
+          Price
+        </paper-button>
+      </div>
+
+      <!-- Dialog -->
+      <paper-dialog id="priceDialog" modal class="vertical layout">
+        <h2 class="text-center">Price</h2>
+        <paper-input type="number" maxlength="5" minlength="1" value="{{price}}">
           <div prefix>$</div>
         </paper-input>
-      </div>
+        <div class="flex"></div>
+        <div class="buttons">
+          <paper-button dialog-confirm>Ok</paper-button>
+        </div>
+      </paper-dialog>
+
     </paper-card>
   </template>
 </dom-module>
@@ -72,6 +137,10 @@
 
     _limitChanged: function (limit) {
       this.updateData("limit", limit, true, "/api/schedules/update/session/"+this.sessionId);
+    },
+
+    _showPriceDialog: function () {
+      this.$.priceDialog.toggle();
     },
 
     _priceChanged: function (price) {

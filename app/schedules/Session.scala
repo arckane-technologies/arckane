@@ -110,7 +110,17 @@ package object session {
       response <- query(Json.obj(
         "statement" ->
           ( "MATCH (s:"+tag.str+" {url: {sessionid}}) "
-          + "RETURN s.session_date, s.creation_timestamp, s.latitude, s.longitude, s.formatted_address, s.length, s.current, s.limit, s.price"),
+          + "RETURN "
+          + "s.session_date, "
+          + "s.creation_timestamp, "
+          + "s.latitude, "
+          + "s.longitude, "
+          + "s.formatted_address, "
+          + "s.location_name, "
+          + "s.length, "
+          + "s.current, "
+          + "s.limit, "
+          + "s.price"),
         "parameters" -> Json.obj(
           "sessionid" -> sessionId
         )))
@@ -122,6 +132,7 @@ package object session {
         "session_date" -> res("s.session_date").head.as[Long],
         "creation_timestamp" -> res("s.creation_timestamp").head.as[Long],
         "formatted_address" -> res("s.formatted_address").head.as[String],
+        "location_name" -> res("s.location_name").head.as[String],
         "latitude" -> res("s.latitude").head.as[Float],
         "longitude" -> res("s.longitude").head.as[Float],
         "length" -> res("s.length").head.as[Float],
@@ -152,6 +163,7 @@ package object session {
         "creation_timestamp" -> ZonedDateTime.now(ZoneOffset.UTC).toEpochSecond() * 1000,
         "session_date" -> ZonedDateTime.now(ZoneOffset.UTC).toEpochSecond() * 1000,
         "formatted_address" -> "San Francisco",
+        "location_name" -> "San Francisco",
         "latitude" -> 37.77493,
         "longitude" -> -122.41942,
         "length" -> 0,

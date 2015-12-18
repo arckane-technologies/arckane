@@ -38,6 +38,9 @@ for the app
     :host {
       @apply(--paper-font-common-base);
       --paper-tabs-selection-bar-color: var(--arckane-purple-200);
+      --paper-drawer-panel-main-container: {
+        background-color: var(--google-grey-100);
+      };
       --paper-tabs: {
         height: 60px;
       };
@@ -100,7 +103,7 @@ for the app
         </paper-toolbar>
 
         <!-- Page content -->
-        <div class="content">
+        <div class="content fit layout vertical">
           <content></content>
         </div>
       </paper-header-panel>
