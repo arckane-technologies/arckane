@@ -163,7 +163,7 @@ package object session {
         "creation_timestamp" -> ZonedDateTime.now(ZoneOffset.UTC).toEpochSecond() * 1000,
         "session_date" -> ZonedDateTime.now(ZoneOffset.UTC).toEpochSecond() * 1000,
         "formatted_address" -> "San Francisco",
-        "location_name" -> "San Francisco",
+        "location_name" -> "Unset",
         "latitude" -> 37.77493,
         "longitude" -> -122.41942,
         "length" -> 0,

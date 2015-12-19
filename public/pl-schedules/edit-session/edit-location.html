@@ -7,6 +7,7 @@
 
 <link rel="import" href="../../components/paper-input/paper-input.html">
 
+<link rel="import" href="../../components/geo-location/geo-location.html">
 <link rel="import" href="../../components/google-map/google-map.html">
 <link rel="import" href="../../components/google-map/google-map-search.html">
 
@@ -34,7 +35,7 @@
 
     .map-container {
       width: 100%;
-      height: 450px;
+      height: 500px;
     }
 
     .card-content paper-input {
@@ -47,21 +48,44 @@
   <template>
     <!-- Location -->
     <paper-card class="vertical layout flex">
+
+      <!-- Info display -->
       <div class="card-content">
         <div class="font-XXL">{{locationName}}</div>
         <div class="font-M font-grey">{{formattedAddress}}</div>
         <paper-input label="Search address or places (try coffee!)" value="{{locationSearchInput}}"></paper-input>
       </div>
+
       <div class="map-container flex">
-        <google-map-search id="mapSearch" map="[[map]]" query="{{locationSearch}}" results="{{locationResults}}"></google-map-search>
-        <google-map map="{{map}}" latitude="{{latitude}}" longitude="{{longitude}}">
+
+        <!-- Map search and map -->
+        <geo-location latitude="{{userLatitude}}" longitude="{{userLongitude}}" high-accuracy></geo-location>
+        <google-map-search
+          id="mapSearch"
+          map="[[map]]"
+          radius="10000"
+          query="{{locationSearch}}"
+          results="{{locationResults}}">
+        </google-map-search>
+        <google-map
+          id="googleMap"
+          map="{{map}}"
+          latitude="{{latitude}}"
+          longitude="{{longitude}}"
+          fit-to-markers>
+
+          <!-- Markers -->
           <template is="dom-repeat" items="{{locationResults}}" as="marker">
             <google-map-marker latitude="{{marker.latitude}}"
-                               longitude="{{marker.longitude}}" click-events>
+                               longitude="{{marker.longitude}}"
+                               z-index="{{index}}"
+                               single-info-window
+                               click-events>
               <h2>{{marker.name}}</h2>
               <span>{{marker.formatted_address}}</span>
             </google-map-marker>
           </template>
+
         </google-map>
       </div>
     </paper-card>
@@ -88,7 +112,8 @@
     },
 
     listeners: {
-      "google-map-marker-click": "_markerTap"
+      "google-map-marker-click": "_markerTap",
+      "geo-response": "_userLocationResponse"
     },
 
     setInitialData: function (data) {
@@ -96,6 +121,18 @@
       this.locationName = data["location_name"];
       this.latitude = data["latitude"];
       this.longitude = data["longitude"];
+      this.locationResults = [{
+        latitude: this.latitude,
+        longitude: this.longitude
+      }];
+      this.$.googleMap.zoom = 17;
+    },
+
+    _userLocationResponse: function (e) {
+      if (this.locationName == "Unset") {
+        this.$.googleMap.longitude = this.userLongitude;
+        this.$.googleMap.latitude = this.userLatitude;
+      }
     },
 
     _locationSearchInputChanged: function (input) {
@@ -109,23 +146,25 @@
       if (results.length == 0) {
         this.formattedAddress = "No location found";
       } else {
-        this.locationName = results[0]["name"];
-        this.formattedAddress = results[0]["formatted_address"];
-        this.latitude = results[0]["latitude"];
-        this.longitude = results[0]["longitude"];
-        this.updateData("formatted_address", this.formattedAddress, false, "/api/schedules/update/session/"+this.sessionId);
-        this.updateData("location_name", this.locationName, false, "/api/schedules/update/session/"+this.sessionId);
-        this.updateData("latitude", this.latitude, true, "/api/schedules/update/session/"+this.sessionId);
-        this.updateData("longitude", this.longitude, true, "/api/schedules/update/session/"+this.sessionId);
+        if (results[0]["formatted_address"] == this.formattedAddress) return;
+        this._setLocation(0);
       }
     },
 
-    _setLocation: function () {
-      // body...
+    _setLocation: function (index) {
+      var results = this.locationResults;
+      this.locationName = results[index]["name"];
+      this.formattedAddress = results[index]["formatted_address"];
+      this.latitude = results[index]["latitude"];
+      this.longitude = results[index]["longitude"];
+      this.updateData("formatted_address", this.formattedAddress, false, "/api/schedules/update/session/"+this.sessionId);
+      this.updateData("location_name", this.locationName, false, "/api/schedules/update/session/"+this.sessionId);
+      this.updateData("latitude", this.latitude, true, "/api/schedules/update/session/"+this.sessionId);
+      this.updateData("longitude", this.longitude, true, "/api/schedules/update/session/"+this.sessionId);
     },
 
     _markerTap: function (event) {
-      console.log(event.target.marker);
+      this._setLocation(event.target.zIndex);
     }
   });
 </script>

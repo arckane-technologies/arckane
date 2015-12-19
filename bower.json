@@ -14,6 +14,7 @@
     "tests"
   ],
   "dependencies": {
+    "geo-location": "https://github.com/ebidel/geo-location.git#^1.0.0",
     "paper-time-picker": "https://github.com/bendavis78/paper-time-picker.git#^1.0.0",
     "paper-date-picker": "https://github.com/bendavis78/paper-date-picker.git#^1.0.0",
     "arckane-polymer": "git@bitbucket.org:arckane/arckane-polymer.git#~0.0",
