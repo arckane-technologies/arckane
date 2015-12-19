@@ -16,8 +16,8 @@ import play.api.libs.json._
 
 import play.api.libs.ws._
 
-import database.persistence._
-import ontology.syntaxling._
+import arckane.db.persistence._
+import arckane.ontology.syntaxling._
 
 class OntologySpecs extends Specification {
 

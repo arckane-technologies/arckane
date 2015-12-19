@@ -3,6 +3,7 @@
 # ~~~~
 
 # App routes
+GET     /                           controllers.Application.index
 GET     /signin                     controllers.Application.signin
 GET     /signup                     controllers.Application.signup
 GET     /user/:id                   controllers.Application.profile(id: String)
@@ -10,59 +11,22 @@ GET     /mentor                     controllers.Application.mentor
 GET     /edit/session/:id           controllers.Application.edit(id: String)
 
 # Ontology service routes
-GET     /api/ontology/search        ontology.OntologyApi.search
+GET     /api/ontology/search        arckane.ontology.OntologyApi.search
 
 # Users service routes
-POST    /api/users/props            users.UsersApi.setProp
-GET     /api/users/props            users.UsersApi.getProps
-POST    /api/users/signup           users.UsersApi.signup
-POST    /api/users/signin           users.UsersApi.signin
-GET     /api/users/signout          users.UsersApi.signout
+POST    /api/users/props            arckane.users.UsersApi.setProp
+GET     /api/users/props            arckane.users.UsersApi.getProps
+POST    /api/users/signup           arckane.users.UsersApi.signup
+POST    /api/users/signin           arckane.users.UsersApi.signin
+GET     /api/users/signout          arckane.users.UsersApi.signout
 
 # Schedules service routes
-GET     /api/schedules/session/:id              schedules.SchedulesApi.getSessionInfo(id: String)
-GET     /api/schedules/allsessions              schedules.SchedulesApi.getMentorSessions
-GET     /api/schedules/delete/session/:id       schedules.SchedulesApi.deleteSession(id: String)
-GET     /api/schedules/editdata/session/:id     schedules.SchedulesApi.getSessionEditData(id: String)
-POST    /api/schedules/session                  schedules.SchedulesApi.createSession
-POST    /api/schedules/update/session/:id       schedules.SchedulesApi.setProp(id: String)
-
-
-
-
-
-
-# v0.0 ROUTES
-
-# Home page
-GET     /                           controllers.Application.index
-
-# Front-end API
-GET     /api/search                 controllers.FrontendApi.search
-GET     /api/availability           controllers.FrontendApi.searchAvailability
-PUT     /api/infuse                 controllers.FrontendApi.infuse
-POST    /api/invite                 controllers.FrontendApi.inviteFriend
-
-# Skill Api
-GET     /api/skill/data             controllers.SkillApi.page
-POST    /api/skill/propose          controllers.SkillApi.propose
-GET     /api/skill/search           controllers.SkillApi.search
-
-# Skillbook Api
-GET     /api/skillbook              controllers.SkillbookApi.userSkillbooks
-GET     /api/skillbook/data         controllers.SkillbookApi.page
-GET     /api/skillbook/subsection   controllers.SkillbookApi.subsection
-POST    /api/skillbook/propose      controllers.SkillbookApi.propose
-POST    /api/skillbook/skill        controllers.SkillbookApi.addSkill
-PUT     /api/skillbook/name         controllers.SkillbookApi.changeName
-PUT     /api/skillbook/description  controllers.SkillbookApi.changeDescription
-PUT     /api/skillbook/skill        controllers.SkillbookApi.changeSkill
-PUT     /api/skillbook/pin          controllers.SkillbookApi.pin
-DELETE  /api/skillbook/skill        controllers.SkillbookApi.deleteSkill
-DELETE  /api/skillbook              controllers.SkillbookApi.delete
-
-# Resource Api
-POST    /api/resource/propose       controllers.ResourceApi.propose
+GET     /api/schedules/session/:id              arckane.schedules.SchedulesApi.getSessionInfo(id: String)
+GET     /api/schedules/allsessions              arckane.schedules.SchedulesApi.getMentorSessions
+GET     /api/schedules/delete/session/:id       arckane.schedules.SchedulesApi.deleteSession(id: String)
+GET     /api/schedules/editdata/session/:id     arckane.schedules.SchedulesApi.getSessionEditData(id: String)
+POST    /api/schedules/session                  arckane.schedules.SchedulesApi.createSession
+POST    /api/schedules/update/session/:id       arckane.schedules.SchedulesApi.setProp(id: String)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

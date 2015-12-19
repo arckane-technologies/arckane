@@ -16,7 +16,7 @@ import play.api.libs.json._
 
 import play.api.libs.ws._
 
-import database.persistence._
+import arckane.db.persistence._
 import users.user._
 
 class UsersSpecs extends Specification {

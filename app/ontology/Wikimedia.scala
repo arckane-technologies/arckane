@@ -2,7 +2,7 @@
   * @author Francisco Miguel Aramburo Torres - atfm05@gmail.com
   */
 
-package ontology
+package arckane.ontology
 
 import scala.concurrent.Future
 

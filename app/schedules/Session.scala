@@ -2,7 +2,7 @@
   * @author Francisco Miguel Aramburo Torres - atfm05@gmail.com
   */
 
-package schedules
+package arckane.schedules
 
 import java.time._
 import scala.concurrent.Future
@@ -13,8 +13,8 @@ import play.api.libs.concurrent.Execution.Implicits._
 
 import com.github.nscala_time.time.Imports._
 
-import database.neo4j._
-import database.persistence._
+import arckane.db.transaction._
+import arckane.db.persistence._
 
 /** Data types and type classes of Session. */
 package object session {

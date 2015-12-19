@@ -1,11 +1,15 @@
-package database
+/**
+  * @author Francisco Miguel Aramburo Torres - atfm05@gmail.com
+  */
+
+package arckane.db
 
 import scala.concurrent._
 
 import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits._
 
-import database.neo4j._
+import arckane.db.transaction._
 
 package object persistence {
 

@@ -2,7 +2,7 @@
   * @author Francisco Miguel Aramburo Torres - atfm05@gmail.com
   */
 
-package ontology
+package arckane.ontology
 
 import scala.concurrent.Future
 
@@ -10,9 +10,10 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.libs.concurrent.Execution.Implicits._
 
-import database.neo4j._
-import database.persistence._
-import ontology.wikimedia._
+import arckane.db.transaction._
+import arckane.db.persistence._
+import arckane.db.utils._
+import arckane.ontology.wikimedia._
 
 /** Data types and type classes of Syntaxling. */
 package object syntaxling {
