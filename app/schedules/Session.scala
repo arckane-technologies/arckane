@@ -117,6 +117,7 @@ package object session {
           + "s.longitude, "
           + "s.formatted_address, "
           + "s.location_name, "
+          + "s.location_web, "
           + "s.length, "
           + "s.current, "
           + "s.limit, "
@@ -133,6 +134,7 @@ package object session {
         "creation_timestamp" -> res("s.creation_timestamp").head.as[Long],
         "formatted_address" -> res("s.formatted_address").head.as[String],
         "location_name" -> res("s.location_name").head.as[String],
+        "location_web" -> res("s.location_web").head.as[String],
         "latitude" -> res("s.latitude").head.as[Float],
         "longitude" -> res("s.longitude").head.as[Float],
         "length" -> res("s.length").head.as[Float],
@@ -164,6 +166,7 @@ package object session {
         "session_date" -> ZonedDateTime.now(ZoneOffset.UTC).toEpochSecond() * 1000,
         "formatted_address" -> "San Francisco",
         "location_name" -> "Unset",
+        "location_web" -> "",
         "latitude" -> 37.77493,
         "longitude" -> -122.41942,
         "length" -> 0,

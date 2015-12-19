@@ -6,6 +6,9 @@
 <link rel="import" href="../../components/paper-card/paper-card.html">
 
 <link rel="import" href="../../components/paper-input/paper-input.html">
+<link rel="import" href="../../components/paper-button/paper-button.html">
+<link rel="import" href="../../components/iron-icon/iron-icon.html">
+<link rel="import" href="../../components/iron-icons/maps-icons.html">
 
 <link rel="import" href="../../components/geo-location/geo-location.html">
 <link rel="import" href="../../components/google-map/google-map.html">
@@ -43,6 +46,15 @@
       --paper-input-container-focus-color: var(--arckane-purple-200);
       --paper-input-container-input-color: var(--arckane-purple-200);
     }
+
+    paper-button a {
+      color: var(--google-grey-500);
+    }
+
+    paper-button a :visited {
+      color: var(--google-grey-500);
+      text-decoration: none;
+    }
   </style>
 
   <template>
@@ -51,7 +63,16 @@
 
       <!-- Info display -->
       <div class="card-content">
-        <div class="font-XXL">{{locationName}}</div>
+        <div class="horizontal layout">
+          <div class="font-XXL flex">{{locationName}}</div>
+          <div>
+            <paper-button>
+              <a href$="{{locationWeb}}" target="_blank">
+                <iron-icon icon="maps:map"></iron-icon>
+              </a>
+            </paper-button>
+          </div>
+        </div>
         <div class="font-M font-grey">{{formattedAddress}}</div>
         <paper-input label="Search address or places (try coffee!)" value="{{locationSearchInput}}"></paper-input>
       </div>
@@ -119,6 +140,7 @@
     setInitialData: function (data) {
       this.formattedAddress = data["formatted_address"];
       this.locationName = data["location_name"];
+      this.locationWeb = data["location_web"];
       this.latitude = data["latitude"];
       this.longitude = data["longitude"];
       this.locationResults = [{
@@ -148,6 +170,8 @@
       } else {
         if (results[0]["formatted_address"] == this.formattedAddress) return;
         this._setLocation(0);
+        if (results.length == 1)
+          this.$.googleMap.zoom = 17;
       }
     },
 
@@ -157,8 +181,11 @@
       this.formattedAddress = results[index]["formatted_address"];
       this.latitude = results[index]["latitude"];
       this.longitude = results[index]["longitude"];
+      this.locationWeb = "https://www.google.com/maps/place/"+(this.locationName.replace(" ", "+"))+"/@"+this.latitude+","+this.longitude+",17z";
+
       this.updateData("formatted_address", this.formattedAddress, false, "/api/schedules/update/session/"+this.sessionId);
       this.updateData("location_name", this.locationName, false, "/api/schedules/update/session/"+this.sessionId);
+      this.updateData("location_web", this.locationWeb, false, "/api/schedules/update/session/"+this.sessionId);
       this.updateData("latitude", this.latitude, true, "/api/schedules/update/session/"+this.sessionId);
       this.updateData("longitude", this.longitude, true, "/api/schedules/update/session/"+this.sessionId);
     },
