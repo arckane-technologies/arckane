@@ -6,11 +6,11 @@
 <link rel="import" href="../components/iron-flex-layout/classes/iron-flex-layout.html">
 <link rel="import" href="../components/paper-card/paper-card.html">
 <link rel="import" href="../components/paper-tabs/paper-tabs.html">
-<link rel="import" href="../components/iron-ajax/iron-ajax.html">
 <link rel="import" href="../components/iron-icon/iron-icon.html">
 <link rel="import" href="../components/iron-pages/iron-pages.html">
 <link rel="import" href="../components/google-map/google-map.html">
 
+<link rel="import" href="arckane-schedules-api.html">
 <link rel="import" href="../ontology/arckane-skill-syntaxling.html">
 
 <link rel="import" href="../components/paper-styles/color.html">
@@ -100,35 +100,28 @@
   </style>
 
   <template>
-    <iron-ajax
-      id="ajax"
-      method="GET"
-      last-response="{{data}}"
-      handle-as="json">
-    </iron-ajax>
+    <arckane-schedules-api id="api"></arckane-schedules-api>
 
     <paper-card>
       <div class="card-content">
 
         <!-- Is owner -->
-        <template is="dom-if" if="{{data.is_owner}}">
-          <div class="horizontal layout">
-            <paper-button class="edit-button flex" on-tap="edit">
-              <iron-icon icon="create"></iron-icon>
-            </paper-button>
-            <paper-button class="edit-button flex" on-tap="delete">
-              <iron-icon icon="delete"></iron-icon>
-            </paper-button>
-          </div>
-        </template>
+        <div class="horizontal layout">
+          <paper-button class="edit-button flex" on-tap="edit">
+            <iron-icon icon="create"></iron-icon>
+          </paper-button>
+          <paper-button class="edit-button flex" on-tap="delete">
+            <iron-icon icon="delete"></iron-icon>
+          </paper-button>
+        </div>
 
         <!-- Is not owner -->
-        <template is="dom-if" if="{{!data.is_owner}}">
+        <!--<template is="dom-if" if="{{!data.is_owner}}">-->
           <!-- HEADER -->
-          <div class="header horizontal layout">
+          <!--<div class="header horizontal layout">
 
             <!-- Picture -->
-            <template is="dom-if" if="{{data.mentor.picture}}">
+            <!--<template is="dom-if" if="{{data.mentor.picture}}">
               <img class="mentor-picture" src="{{data.mentor.picture}}">
             </template>
 
@@ -139,7 +132,7 @@
             </template>
 
             <!-- Name and rating -->
-            <div class="title vertical layout center">
+            <!--<div class="title vertical layout center">
               <div class="mentor-name">{{data.mentor.name}}</div>
               <div>
                 <iron-icon class="rating-star" icon="star"></iron-icon>
@@ -153,44 +146,44 @@
         </template>
 
         <!-- DATE -->
-        <div class="date">
+        <!--<div class="date">
           <div class="day">{{data.date.day}}</div>
           <!--<div class="time">{{data.date.date}}</div>-->
-          <div class="time">{{data.date.time}}</div>
+          <!--<div class="time">{{data.date.time}}</div>
           <div class="length">{{data.date.length}}</div>
         </div>
       </div>
 
       <!-- Skills and location -->
-      <paper-tabs selected="{{selected}}">
+      <!--<paper-tabs selected="{{selected}}">
         <paper-tab>Skills</paper-tab>
         <paper-tab>Location</paper-tab>
       </paper-tabs>
 
       <iron-pages selected="{{selected}}">
         <!-- Skills -->
-        <div class="tab scrollable">
+        <!--<div class="tab scrollable">
           <template is="dom-repeat" items="{{data.skills}}">
             <arckane-skill-syntaxling title="{{item.title}}" web="{{item.web}}" index="{{index}}"></arckane-skill-syntaxling>
           </template>
         </div>
 
         <!-- Location -->
-        <div class="tab">
+        <!--<div class="tab">
           <google-map latitude="37.77493" longitude="-122.41942"></google-map>
         </div>
       </iron-pages>
 
       <!-- Booking -->
-      <div class="booking card-actions horizontal layout">
+      <!--<div class="booking card-actions horizontal layout">
 
         <!-- Price -->
-        <div class="booking-price self-center flex">
+        <!--<div class="booking-price self-center flex">
           $<span>{{data.booking.price}}</span>
         </div>
 
         <!-- Book button -->
-        <template is="dom-if" if="{{!data.is_owner}}">
+        <!--<template is="dom-if" if="{{!data.is_owner}}">
           <paper-button>
             <span style="margin-right: 5px;">Book</span>
             <span>{{data.booking.current}}</span> / <span>{{data.booking.limit}}</span>
@@ -198,11 +191,11 @@
         </template>
 
         <!-- Is owner display -->
-        <template is="dom-if" if="{{data.is_owner}}">
+        <!--<template is="dom-if" if="{{data.is_owner}}">
           <span class="booking-price">{{data.booking.current}}</span>
           <span class="booking-price">/</span>
           <span class="booking-price">{{data.booking.limit}}</span>
-        </template>
+        </template>-->
 
       </div>
     </paper-card>
@@ -214,21 +207,18 @@
     is: 'arckane-session-card',
 
     properties: {
-      sessionId: String
+      session: Object
     },
 
     edit: function () {
-      window.location.assign("/edit"+this.sessionId);
+      window.location.assign("/edit/session/"+this.session.uri);
     },
 
     delete: function () {
-      window.location.assign("/api/schedules/delete"+this.sessionId);
-    },
-
-    ready: function () {
-      this.$.ajax.url = "/api/schedules"+this.sessionId;
-      this.$.ajax.generateRequest();
-      this.selected = 0;
+      var self = this;
+      this.$.api.deleteSession(this.session.uri, function (data) {
+        self.toggleAttribute("hidden", true);
+      });
     }
   });
 </script>

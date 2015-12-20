@@ -2,7 +2,10 @@
 
 @template("Arckane") {
 
+  <link rel="import" href="@routes.Assets.versioned("schedules/arckane-schedules-api.html")">
+
   <arckane-app user='@user'>
+    <arckane-schedules-api></arckane-schedules-api>
   </arckane-app>
 
 }

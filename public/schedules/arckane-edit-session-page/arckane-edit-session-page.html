@@ -12,9 +12,12 @@
 <link rel="import" href="../../components/paper-styles/color.html">
 <link rel="import" href="../../utils/arckane-styles.html">
 
-<link rel="import" href="./arckane-edit-date.html">
-<link rel="import" href="./arckane-edit-pricing.html">
-<link rel="import" href="./arckane-edit-location.html">
+<link rel="import" href="arckane-edit-date.html">
+<link rel="import" href="arckane-edit-pricing.html">
+<link rel="import" href="arckane-edit-location.html">
+<link rel="import" href="../arckane-schedules-api.html">
+
+<link rel="import" href="../arckane-schedules-api.html">
 
 <dom-module id="arckane-edit-session-page">
   <style>
@@ -42,38 +45,30 @@
   <template>
     <iron-media-query query="(min-width: 900px)" query-matches="{{isDesktopSize}}"></iron-media-query>
 
-    <iron-ajax
-      id="ajax"
-      method="GET"
-      on-response="_dataResponse"
-      last-response="{{data}}"
-      handle-as="json">
-    </iron-ajax>
-
-    <iron-ajax id="updateSessionRequest"></iron-ajax>
+    <arckane-schedules-api id="api"></arckane-schedules-api>
 
     <template is="dom-if" if="{{isDesktopSize}}">
       <div class="desktop-container layout vertical flex">
         <div class="horizontal layout" style="width:100%;">
           <!-- Date, time and length card -->
-          <arckane-edit-date style="margin-bottom:10px; margin-right:10px;" class="flex" id="editDate" session-id="[[sessionId]]"></arckane-edit-date>
+          <arckane-edit-date style="margin-bottom:10px; margin-right:10px;" class="flex" id="editDate" session-uri="[[sessionUri]]"></arckane-edit-date>
           <!-- Topics and skills -->
           <!-- Pricing and maximum apprentices -->
-          <arckane-edit-pricing style="margin-bottom:10px;" class="flex" id="editPricing" session-id="[[sessionId]]"></arckane-edit-pricing>
+          <arckane-edit-pricing style="margin-bottom:10px;" class="flex" id="editPricing" session-uri="[[sessionUri]]"></arckane-edit-pricing>
         </div>
         <!-- Location -->
-        <arckane-edit-location style="width:100%; margin-bottom:10px;" class="flex" id="editLocation" session-id="[[sessionId]]"></arckane-edit-location>
+        <arckane-edit-location style="width:100%; margin-bottom:10px;" class="flex" id="editLocation" session-uri="[[sessionUri]]"></arckane-edit-location>
       </div>
     </template>
 
     <template is="dom-if" if="{{!isDesktopSize}}">
       <!-- Date, time and length card -->
-      <arckane-edit-date style="width:100%; margin-bottom:10px;" id="editDate" session-id="[[sessionId]]"></arckane-edit-date>
+      <arckane-edit-date style="width:100%; margin-bottom:10px;" id="editDate" session-uri="[[sessionUri]]"></arckane-edit-date>
       <!-- Topics and skills -->
       <!-- Pricing and maximum apprentices -->
-      <arckane-edit-pricing style="width:100%; margin-bottom:10px;" id="editPricing" session-id="[[sessionId]]"></arckane-edit-pricing>
+      <arckane-edit-pricing style="width:100%; margin-bottom:10px;" id="editPricing" session-uri="[[sessionUri]]"></arckane-edit-pricing>
       <!-- Location -->
-      <arckane-edit-location style="width:100%; margin-bottom:10px;" id="editLocation" session-id="[[sessionId]]"></arckane-edit-location>
+      <arckane-edit-location style="width:100%; margin-bottom:10px;" id="editLocation" session-uri="[[sessionUri]]"></arckane-edit-location>
     </template>
   </template>
 </dom-module>
@@ -84,32 +79,26 @@
     is: "arckane-edit-session-page",
 
     properties: {
-      sessionId: String
-    },
-
-    _dataResponse: function () {
-      this.$$("#editDate").ajaxRequester = this.$.updateSessionRequest;
-      this.$$("#editPricing").ajaxRequester = this.$.updateSessionRequest;
-      this.$$("#editLocation").ajaxRequester = this.$.updateSessionRequest;
-
-      this.$$("#editDate").safetyFlag = false;
-      this.$$("#editPricing").safetyFlag = false;
-      this.$$("#editLocation").safetyFlag = false;
-
-      this.$$("#editDate").setInitialData(this.data);
-      this.$$("#editPricing").setInitialData(this.data);
-      this.$$("#editLocation").setInitialData(this.data);
-
-      this.async(function () {
-        this.$$("#editDate").safetyFlag = true;
-        this.$$("#editPricing").safetyFlag = true;
-        this.$$("#editLocation").safetyFlag = true;
-      }, 500)
+      sessionUri: String
     },
 
     ready: function () {
-      this.$.ajax.url = "/api/schedules/editdata/session/"+this.sessionId
-      this.$.ajax.generateRequest();
+      var self = this;
+      this.$.api.getSession(this.sessionUri, function (data) {
+        self.$$("#editDate").safetyFlag = false;
+        self.$$("#editPricing").safetyFlag = false;
+        self.$$("#editLocation").safetyFlag = false;
+
+        self.$$("#editDate").setInitialData(data);
+        self.$$("#editPricing").setInitialData(data);
+        self.$$("#editLocation").setInitialData(data);
+
+        self.async(function () {
+          self.$$("#editDate").safetyFlag = true;
+          self.$$("#editPricing").safetyFlag = true;
+          self.$$("#editLocation").safetyFlag = true;
+        }, 500);
+      });
     }
   });
 </script>

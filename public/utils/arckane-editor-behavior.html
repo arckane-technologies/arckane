@@ -9,22 +9,6 @@
         safetyFlag: {
           type: Boolean,
           value: false
-        },
-        ajaxRequester: {
-          type: Object
-        }
-      },
-
-      updateData: function (prop, value, numeric, apiEnd) {
-        if (this.safetyFlag) {
-          this.ajaxRequester.method = "POST"
-          this.ajaxRequester.url = apiEnd;
-          this.ajaxRequester.params = {
-            prop: prop,
-            value: value,
-            numeric: numeric
-          };
-          this.ajaxRequester.generateRequest();
         }
       }
     };

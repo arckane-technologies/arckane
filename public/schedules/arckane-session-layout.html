@@ -6,7 +6,7 @@
 <link rel="import" href="../components/iron-flex-layout/classes/iron-flex-layout.html">
 <link rel="import" href="../components/iron-media-query/iron-media-query.html">
 
-<link rel="import" href="../schedules/arckane-session-card.html">
+<link rel="import" href="arckane-session-card.html">
 
 <dom-module id="arckane-session-layout">
   <style>
@@ -42,14 +42,14 @@
     <template is="dom-if" if="{{isDesktopSize}}">
       <div class="desktop">
         <template is="dom-repeat" items="{{sessions}}">
-          <arckane-session-card session-id="{{item.sessionId}}"></arckane-session-card>
+          <arckane-session-card session="{{item}}"></arckane-session-card>
         </template>
       </div>
     </template>
 
     <template is="dom-if" if="{{!isDesktopSize}}">
       <template is="dom-repeat" items="{{sessions}}">
-        <arckane-session-card session-id="{{item.sessionId}}"></arckane-session-card>
+        <arckane-session-card session="{{item}}"></arckane-session-card>
       </template>
     </template>
 

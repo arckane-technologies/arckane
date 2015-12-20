@@ -15,6 +15,8 @@
 
 <link rel="import" href="../../utils/arckane-editor-behavior.html">
 
+<link rel="import" href="../arckane-schedules-api.html">
+
 <dom-module id="arckane-edit-date">
   <style include="paper-time-picker-dialog-style"></style>
   <style include="paper-date-picker-dialog-style"></style>
@@ -47,6 +49,7 @@
   </style>
 
   <template>
+    <arckane-schedules-api id="api"></arckane-schedules-api>
     <!-- Date, time and length card -->
     <paper-card class="flex-if-desktop">
 
@@ -99,7 +102,7 @@
     behaviors: [ArckaneEditorBehavior],
 
     properties: {
-      sessionId: String,
+      sessionUri: String,
       time: {
         type: String,
         observer: "_dateChanged"
@@ -135,19 +138,25 @@
     },
 
     _dateChanged: function (date) {
-      if (this.safetyFlag) {
-        var year = this.date.getFullYear();
-        var month = this.date.getMonth();
-        var day = this.date.getDate();
-        var hour = this.$.timePicker.hour;
-        var minute = this.$.timePicker.minute;
-        var newDate = new Date(year, month, day, hour, minute, 0);
-        this.updateData("session_date", newDate.getTime(), true, "/api/schedules/update/session/"+this.sessionId);
-      }
+      if (!this.safetyFlag) return;
+      var year = this.date.getFullYear();
+      var month = this.date.getMonth();
+      var day = this.date.getDate();
+      var hour = this.$.timePicker.hour;
+      var minute = this.$.timePicker.minute;
+      var newDate = new Date(year, month, day, hour, minute, 0);
+      var self = this;
+      this.$.api.putSession(this.sessionUri, {session_date: newDate.getTime()}, function (data) {
+        self.fire("notify-user", {message: "Date of session edited."});
+      });
     },
 
     _lengthChanged: function (length) {
-      this.updateData("length", length, true, "/api/schedules/update/session/"+this.sessionId);
+      if (!this.safetyFlag) return;
+      var self = this;
+      this.$.api.putSession(this.sessionUri, {length: length}, function (data) {
+        self.fire("notify-user", {message: "Session length edited."});
+      });
     },
 
     _showTimeDialog: function () {

@@ -6,9 +6,9 @@
 GET     /                           controllers.Application.index
 GET     /signin                     controllers.Application.signin
 GET     /signup                     controllers.Application.signup
-GET     /user/:id                   controllers.Application.profile(id: String)
+GET     /user/:uri                   controllers.Application.profile(uri: String)
 GET     /mentor                     controllers.Application.mentor
-GET     /edit/session/:id           controllers.Application.edit(id: String)
+GET     /edit/session/:uri           controllers.Application.edit(uri: String)
 
 # Ontology service routes
 GET     /api/ontology/search        arckane.ontology.OntologyApi.search
@@ -21,12 +21,11 @@ POST    /api/users/signin           arckane.users.UsersApi.signin
 GET     /api/users/signout          arckane.users.UsersApi.signout
 
 # Schedules service routes
-GET     /api/schedules/session/:id              arckane.schedules.SchedulesApi.getSessionInfo(id: String)
-GET     /api/schedules/allsessions              arckane.schedules.SchedulesApi.getMentorSessions
-GET     /api/schedules/delete/session/:id       arckane.schedules.SchedulesApi.deleteSession(id: String)
-GET     /api/schedules/editdata/session/:id     arckane.schedules.SchedulesApi.getSessionEditData(id: String)
-POST    /api/schedules/session                  arckane.schedules.SchedulesApi.createSession
-POST    /api/schedules/update/session/:id       arckane.schedules.SchedulesApi.setProp(id: String)
+POST    /api/schedules/session             arckane.schedules.SchedulesApi.postSession
+GET     /api/schedules/session/mentors     arckane.schedules.SchedulesApi.getSessionMentors
+GET     /api/schedules/session/:uri         arckane.schedules.SchedulesApi.getSession(uri: String)
+PUT     /api/schedules/session/:uri         arckane.schedules.SchedulesApi.putSession(uri: String)
+DELETE  /api/schedules/session/:uri         arckane.schedules.SchedulesApi.deleteSession(uri: String)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

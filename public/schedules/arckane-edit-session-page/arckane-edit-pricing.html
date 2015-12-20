@@ -13,6 +13,8 @@
 
 <link rel="import" href="../../utils/arckane-editor-behavior.html">
 
+<link rel="import" href="../arckane-schedules-api.html">
+
 <dom-module id="arckane-edit-pricing">
   <style include="arckane-styles"></style>
   <style>
@@ -64,6 +66,7 @@
   </style>
 
   <template>
+    <arckane-schedules-api id="api"></arckane-schedules-api>
     <!-- Pricing and apprentices -->
     <paper-card class="vertical layout">
       <div class="card-content vertical layout flex">
@@ -119,7 +122,7 @@
     behaviors: [ArckaneEditorBehavior],
 
     properties: {
-      sessionId: String,
+      sessionUri: String,
       limit: {
         type: Number,
         observer: "_limitChanged"
@@ -136,7 +139,11 @@
     },
 
     _limitChanged: function (limit) {
-      this.updateData("limit", limit, true, "/api/schedules/update/session/"+this.sessionId);
+      if (!this.safetyFlag) return;
+      var self = this;
+      this.$.api.putSession(this.sessionUri, {limit: limit}, function (data) {
+        self.fire("notify-user", {message: "Maximum aprrentices edited."});
+      });
     },
 
     _showPriceDialog: function () {
@@ -144,9 +151,14 @@
     },
 
     _priceChanged: function (price) {
+      if (!this.safetyFlag) return;
+      var self = this;
       this.debounce("price-editing", function () {
-        if (price != "")
-          this.updateData("price", price, true, "/api/schedules/update/session/"+this.sessionId);
+        if (price != "") {
+          this.$.api.putSession(this.sessionUri, {price: price}, function (data) {
+            self.fire("notify-user", {message: "Price of session edited."});
+          });
+        }
       }, 1000);
     }
   });

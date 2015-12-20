@@ -19,6 +19,8 @@
 
 <link rel="import" href="../../utils/arckane-editor-behavior.html">
 
+<link rel="import" href="../arckane-schedules-api.html">
+
 <dom-module id="arckane-edit-location">
   <style include="arckane-styles"></style>
   <style>
@@ -58,6 +60,7 @@
   </style>
 
   <template>
+    <arckane-schedules-api id="api"></arckane-schedules-api>
     <!-- Location -->
     <paper-card class="vertical layout flex">
 
@@ -121,7 +124,7 @@
     behaviors: [ArckaneEditorBehavior],
 
     properties: {
-      sessionId: String,
+      sessionUri: String,
       locationSearchInput: {
         type: String,
         observer: "_locationSearchInputChanged"
@@ -176,18 +179,23 @@
     },
 
     _setLocation: function (index) {
+      if (!this.safetyFlag) return;
+      var self = this;
       var results = this.locationResults;
       this.locationName = results[index]["name"];
       this.formattedAddress = results[index]["formatted_address"];
       this.latitude = results[index]["latitude"];
       this.longitude = results[index]["longitude"];
       this.locationWeb = "https://www.google.com/maps/place/"+(this.locationName.replace(" ", "+"))+"/@"+this.latitude+","+this.longitude+",17z";
-
-      this.updateData("formatted_address", this.formattedAddress, false, "/api/schedules/update/session/"+this.sessionId);
-      this.updateData("location_name", this.locationName, false, "/api/schedules/update/session/"+this.sessionId);
-      this.updateData("location_web", this.locationWeb, false, "/api/schedules/update/session/"+this.sessionId);
-      this.updateData("latitude", this.latitude, true, "/api/schedules/update/session/"+this.sessionId);
-      this.updateData("longitude", this.longitude, true, "/api/schedules/update/session/"+this.sessionId);
+      this.$.api.putSession(this.sessionUri, {
+        formatted_address: this.formattedAddress,
+        location_name: this.locationName,
+        location_web: this.locationWeb,
+        latitude: this.latitude,
+        longitude: this.longitude
+      }, function (data) {
+        self.fire("notify-user", {message: "Location of the session edited."});
+      });
     },
 
     _markerTap: function (event) {

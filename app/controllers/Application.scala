@@ -49,10 +49,10 @@ class Application extends Controller {
     else Redirect("/")
   }
 
-  def profile (id: String) = Action { request =>
+  def profile (uri: String) = Action { request =>
     getSession(request) match {
-      case Some(session) => Ok(views.html.profile(session, id))
-      case None => Ok(views.html.profile(guest, id))
+      case Some(session) => Ok(views.html.profile(session, uri))
+      case None => Ok(views.html.profile(guest, uri))
     }
   }
 
@@ -63,13 +63,13 @@ class Application extends Controller {
     }
   }
 
-  def edit (id: String) = Action.async { request =>
+  def edit (uri: String) = Action.async { request =>
     (for {
       user <- request.session.get("home")
       userSession <- getSession(request)
-      response <- Some(isOwner(user, "/session/"+id))
+      response <- Some(sessionIsOwner(user, uri))
     } yield response.map { isOwner =>
-      if (isOwner) Ok(views.html.editSession(userSession, id))
+      if (isOwner) Ok(views.html.editSession(userSession, uri))
       else Redirect("/")
     }).getOrElse {
       Future(Redirect("/"))

@@ -11,95 +11,62 @@ import play.api.mvc._
 import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits._
 
-import arckane.db.Tag
-import arckane.db.transaction._
+import arckane.db.Node
 import arckane.schedules.session._
 
 /** Play Framework controller for the schedules service. */
 class SchedulesApi extends Controller {
 
-  def getSessionInfo (sessionId: String) = Action.async { request =>
-    val viewer = request.session.get("home") match {
-      case Some(uri) => uri
-      case None => ""
-    }
-    sessionInfo("/session/"+sessionId, viewer).map { session =>
-      session match {
-        case Some(session) => Ok(session)
-        case None => NotFound("Not such session id.")
-      }
-    }
-  }
-
-  def getMentorSessions = Action.async { request =>
-    (for {
-      user <- request.session.get("home")
-      response <- Some(retriveMentorSessions(user))
-    } yield response.map { sessions =>
-      Ok(sessions)
-    }).getOrElse {
-      Future(Redirect("/"))
-    }
-  }
-
-  def deleteSession (sessionId: String) = Action.async { request =>
-    (for {
-      user <- request.session.get("home")
-      response <- Some(sessionDelete("/session/"+sessionId, user))
-    } yield response.map { Unit =>
-      Redirect("/mentor")
-    }).getOrElse {
-      Future(BadRequest("You need an active session."))
-    }
-  }
-
-  def createSession = Action.async { request =>
+  def postSession = Action.async { request =>
     (for {
       user <- request.session.get("home")
       response <- Some(sessionCreate(user))
     } yield response.map { uri =>
-      Ok(Json.obj("sessionId" -> uri))
+      Ok(Json.obj("uri" -> uri))
     }).getOrElse {
       Future(BadRequest("You need an active session."))
     }
   }
 
-  def getSessionEditData (sessionId: String) = Action.async { request =>
-    sessionEditData("/session/"+sessionId).map { session =>
-      session match {
-        case Some(session) => Ok(session)
-        case None => NotFound("Not such session id.")
-      }
-    }
-  }
-
-  def setProp (sessionId: String) = Action.async { request =>
-    val numeric = request.queryString.get("numeric") match {
-      case Some(value) => if (value.head == "true") true else false
-      case None => false
-    }
+  def getSessionMentors = Action.async { request =>
     (for {
       user <- request.session.get("home")
-      prop <- request.queryString.get("prop")
-      value <- request.queryString.get("value")
-      isOwner <- Some(isOwner(user, "/session/"+sessionId))
-    } yield isOwner.flatMap { isOwner =>
-      if (isOwner) {
-        if (numeric) {
-          Tag.set("/session/"+sessionId, Json.obj(
-            prop.head -> value.head.toDouble
-          )).map { _ => Ok }
-        } else {
-          Tag.set("/session/"+sessionId, Json.obj(
-            prop.head -> value.head
-          )).map { _ => Ok }
-        }
-      } else {
-        Future(BadRequest)
-      }
-    }).getOrElse {
-      Future(BadRequest("Expected user, prop and value in the query string."))
+      response <- Some(sessionMentors(user))
+    } yield response.map(Ok(_))).getOrElse {
+      Future(BadRequest("You need an active session."))
     }
   }
 
+  def getSession (uri: String) = Action.async { request =>
+    Node.get(uri) map { optional =>
+      optional match {
+        case Some(session) => Ok(session)
+        case None => NotFound("Session with uri "+uri+" not found.")
+      }
+    }
+  }
+
+  def putSession (uri: String) = Action.async(parse.json) { request =>
+    (for {
+      user <- request.session.get("home")
+      isOwner <- Some(sessionIsOwner(user, uri))
+    } yield isOwner.flatMap(_ match {
+      case true => Node.set(uri, request.body.as[JsObject]).map{_=> Ok}
+      case false => Future(BadRequest("You don't own that resource."))
+    })).getOrElse {
+      Future(BadRequest("You need an active session."))
+    }
+  }
+
+  def deleteSession (uri: String) = Action.async { request =>
+    (for {
+      user <- request.session.get("home")
+      isOwner <- Some(sessionIsOwner(user, uri))
+    } yield isOwner.flatMap(_ match {
+      case true => Node.delete(uri).map{_=> Ok}
+      case false => Future(BadRequest("You don't own that resource."))
+    })).getOrElse {
+      Future(BadRequest("You need an active session."))
+    }
+  }
 }

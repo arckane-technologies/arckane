@@ -11,7 +11,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 
 import arckane.db.transaction._
 
-object Tag {
+object Node {
 
   def get (uri: String): Future[Option[JsObject]] = for {
     result <- query(Json.obj(
@@ -19,13 +19,9 @@ object Tag {
       "parameters" -> Json.obj(
         "urimatcher" -> uri
       )))
-  } yield {
-    if (result("n").length == 0) {
-      None
-    }
-    else {
-      Some(result("n").head.as[JsObject])
-    }
+  } yield result("n").length match {
+    case 0 => None
+    case _ => Some(result("n").head.as[JsObject])
   }
 
   def create (props: JsObject)(tag: String): Future[String] = for {
@@ -48,7 +44,7 @@ object Tag {
                             ON CREATE SET id.count = 1
                             ON MATCH SET id.count = id.count + 1
                             RETURN id.count"""
-  } yield "/" + tag.toLowerCase + "/" + result("id.count").head.as[Int].toString
+  } yield result("id.count").head.as[Int].toString
 
   def count (tag: String): Future[Int] = for {
     result <- query("MATCH (n:"+tag+") RETURN count(n)")

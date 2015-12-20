@@ -1,0 +1,61 @@
+<!--
+@author Francisco Miguel Aramburo Torres - atfm05@gmail.com
+-->
+
+<link rel="import" href="../components/polymer/polymer.html">
+<link rel="import" href="../components/iron-ajax/iron-ajax.html">
+
+<dom-module id="arckane-schedules-api">
+  <template>
+    <iron-ajax id="ajax" on-response="_onResponse"></iron-ajax>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is: "arckane-schedules-api",
+
+    _onResponse: function (event) {
+      var request = event.detail;
+      if (typeof request.callback !== "undefined")
+        request.callback(request.response);
+    },
+
+    /* POST /api/schedules/session arckane.schedules.SchedulesApi.postSession */
+    postSession: function (callback) {
+      this.$.ajax.method = "POST";
+      this.$.ajax.url = "/api/schedules/session";
+      this.$.ajax.generateRequest().callback = callback;
+    },
+
+    /* GET /api/schedules/session/mentors arckane.schedules.SchedulesApi.getSessionMentors */
+    getSessionMentors: function (callback) {
+      this.$.ajax.method = "GET";
+      this.$.ajax.url = "/api/schedules/session/mentors";
+      this.$.ajax.generateRequest().callback = callback;
+    },
+
+    /* GET /api/schedules/session/:id arckane.schedules.SchedulesApi.getSession(id: String) */
+    getSession: function (id, callback) {
+      this.$.ajax.method = "GET";
+      this.$.ajax.url = "/api/schedules/session/"+id;
+      this.$.ajax.generateRequest().callback = callback;
+    },
+
+    /* PUT /api/schedules/session/:id arckane.schedules.SchedulesApi.putSession(id: String) */
+    putSession: function (id, attributes, callback) {
+      this.$.ajax.method = "PUT";
+      this.$.ajax.url = "/api/schedules/session/"+id;
+      this.$.ajax.contentType = "application/json";
+      this.$.ajax.body = attributes;
+      this.$.ajax.generateRequest().callback = callback;
+    },
+
+    /* DELETE /api/schedules/session/:id arckane.schedules.SchedulesApi.deleteSession(id: String) */
+    deleteSession: function (id, callback) {
+      this.$.ajax.method = "DELETE";
+      this.$.ajax.url = "/api/schedules/session/"+id;
+      this.$.ajax.generateRequest().callback = callback;
+    }
+  });
+</script>

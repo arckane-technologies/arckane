@@ -9,7 +9,8 @@
 <link rel="import" href="../components/paper-card/paper-card.html">
 <link rel="import" href="../components/paper-fab/paper-fab.html">
 
-<link rel="import" href="../schedules/arckane-session-layout.html">
+<link rel="import" href="arckane-session-layout.html">
+<link rel="import" href="arckane-schedules-api.html">
 
 <link rel="import" href="../components/paper-styles/color.html">
 <link rel="import" href="../utils/arckane-styles.html">
@@ -41,21 +42,7 @@
   <template>
     <iron-media-query query="(min-width: 640px)" query-matches="{{isDesktopSize}}"></iron-media-query>
 
-    <iron-ajax
-      auto
-      method="GET"
-      url="/api/schedules/allsessions"
-      last-response="{{sessions}}"
-      handle-as="json">
-    </iron-ajax>
-
-    <iron-ajax
-      id="ajaxCreateSession"
-      method="POST"
-      url="/api/schedules/session"
-      on-response="ajaxRedirectEditionPage"
-      handle-as="json">
-    </iron-ajax>
+    <arckane-schedules-api id="api"></arckane-schedules-api>
 
     <arckane-session-layout sessions="{{sessions}}"></arckane-session-layout>
 
@@ -80,16 +67,16 @@
     },
 
     createSession: function () {
-      this.$.ajaxCreateSession.generateRequest();
-    },
-
-    ajaxRedirectEditionPage: function (event) {
-      window.location.assign("/edit"+event.target.lastResponse.sessionId);
+      this.$.api.postSession(function (data) {
+        window.location.assign("/edit/session/"+data.uri);
+      });
     },
 
     ready: function () {
-      //this.$.ajax.params = {user: "/user/"+this.userId};
-      //this.$.ajax.generateRequest();
+      var self = this;
+      this.$.api.getSessionMentors(function (data) {
+        self.sessions = data;
+      });
     }
   });
 </script>
