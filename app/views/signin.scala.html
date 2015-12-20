@@ -2,11 +2,10 @@
 
 @template("Arckane - Sign In") {
 
-  <link rel="import" href="@routes.Assets.versioned("pl-arckane/arckane-app.html")">
-  <link rel="import" href="@routes.Assets.versioned("pl-users/sign-in.html")">
+  <link rel="import" href="@routes.Assets.versioned("users/arckane-signin-page.html")">
 
   <arckane-app user='@user'>
-    <sign-in></sign-in>
+    <arckane-signin-page></arckane-signin-page>
   </arckane-app>
 
 }

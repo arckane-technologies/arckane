@@ -2,11 +2,10 @@
 
 @template("Arckane - Edit session") {
 
-  <link rel="import" href="@routes.Assets.versioned("pl-arckane/arckane-app.html")">
-  <link rel="import" href="@routes.Assets.versioned("pl-schedules/edit-session/edit-session.html")">
+  <link rel="import" href="@routes.Assets.versioned("schedules/arckane-edit-session-page/arckane-edit-session-page.html")">
 
   <arckane-app user='@user'>
-    <edit-session session-id="@session"></edit-session>
+    <arckane-edit-session-page session-id="@session"></arckane-edit-session-page>
   </arckane-app>
 
 }

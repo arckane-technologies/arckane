@@ -11,11 +11,11 @@
 <link rel="import" href="../../components/paper-dialog/paper-dialog.html">
 
 <link rel="import" href="../../components/paper-styles/color.html">
-<link rel="import" href="../../pl-utils/arckane-styles.html">
+<link rel="import" href="../../utils/arckane-styles.html">
 
-<link rel="import" href="../../pl-utils/editor-behavior.html">
+<link rel="import" href="../../utils/arckane-editor-behavior.html">
 
-<dom-module id="edit-date">
+<dom-module id="arckane-edit-date">
   <style include="paper-time-picker-dialog-style"></style>
   <style include="paper-date-picker-dialog-style"></style>
   <style include="arckane-styles"></style>
@@ -94,9 +94,9 @@
 <script>
   Polymer({
 
-    is: "edit-date",
+    is: "arckane-edit-date",
 
-    behaviors: [EditorBehavior],
+    behaviors: [ArckaneEditorBehavior],
 
     properties: {
       sessionId: String,

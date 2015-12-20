@@ -16,19 +16,19 @@
 <link rel="import" href="../components/neon-animation/animations/fade-out-animation.html">
 <link rel="import" href="../components/neon-animation/animations/fade-in-animation.html">
 
-<link rel="import" href="../pl-arckane/menu-drawer.html">
-<link rel="import" href="../pl-utils/arckane-styles.html">
+<link rel="import" href="arckane-menu-drawer.html">
+<link rel="import" href="../utils/arckane-styles.html">
 <link rel="import" href="../components/paper-styles/color.html">
 
 <!--
-`<menu-frame>` uses `<paper-drawer-panel>` to create the main interface framework
+`<arckane-menu-frame>` uses `<paper-drawer-panel>` to create the main interface framework
 for the app
 
 * Adds a drawer side menu with the user's info and options.
 
 * Gives a space for the app interfaces, which `<arckane-app>` fills.
 -->
-<dom-module id="menu-frame">
+<dom-module id="arckane-menu-frame">
 
   <style>
     * {
@@ -47,10 +47,6 @@ for the app
       --paper-toolbar: {
         color: var(--arckane-purple-200);
         background-color: var(--arckane-aqua-100);
-        /*
-        border-bottom: 1px solid;
-        border-color: var(--arckane-purple-200);
-        */
       };
     }
 
@@ -63,9 +59,6 @@ for the app
         border-radius: 3px;
         z-index: 90;
       };
-    }
-
-    paper-tabs iron-icon {
     }
 
     paper-drawer-panel {
@@ -90,7 +83,7 @@ for the app
     <!-- Content -->
     <paper-drawer-panel id="drawer">
       <!-- Side drawer -->
-      <menu-drawer drawer user="{{user}}"></menu-drawer>
+      <arckane-menu-drawer drawer user="{{user}}"></arckane-menu-drawer>
       <!-- Center content -->
       <paper-header-panel main mode="waterfall">
 
@@ -115,7 +108,7 @@ for the app
 
     Polymer({
 
-      is: 'menu-frame',
+      is: 'arckane-menu-frame',
 
       properties: {
 
@@ -133,7 +126,7 @@ for the app
 
         /**
          * General info of the user, used to display the correct menu items in
-         * `<menu-frame>`. The home property is the url of the user.
+         * `<arckane-menu-frame>`. The home property is the url of the user.
          *
          * @type {{
          *   home: string,
@@ -159,27 +152,6 @@ for the app
       /** Closes the drawer side menu. */
       _closeDrawer: function () {
         this.$.drawer.closeDrawer();
-      },
-
-      /**
-       * Opens the corresponding proposal dialog depending on the element which
-       * fired the event.
-       *
-       * @param {Event} event
-       * @return {undefined}
-       */
-      _openDialog: function (event) {
-        switch (event.target.id) {
-          case 'proposeSkillDialogButton':
-            //this.$.proposeSkillDialog.open();
-            break;
-          case 'proposeResourceDialogButton':
-            //this.$.proposeResourceDialog.open();
-            break;
-          case 'inviteDialogButton':
-            //this.$.inviteDialog.open();
-            break;
-        }
       }
     });
   </script>

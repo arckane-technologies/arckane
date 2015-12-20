@@ -7,12 +7,12 @@
 <link rel="import" href="../components/iron-form/iron-form.html">
 
 <link rel="import" href="../components/paper-styles/color.html">
-<link rel="import" href="../pl-utils/arckane-styles.html">
+<link rel="import" href="../utils/arckane-styles.html">
 
 <!--
-`<sign-in>` is a simple form for user authentication.
+`<arckane-signin-page>` is a simple form for user authentication.
 -->
-<dom-module id="sign-in">
+<dom-module id="arckane-signin-page">
   <style>
     :host {
     }
@@ -46,7 +46,7 @@
 
 <script>
   Polymer({
-    is: "sign-in",
+    is: "arckane-signin-page",
 
     listeners: {
       'iron-form-response': '_formResponse',

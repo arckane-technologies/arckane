@@ -2,11 +2,10 @@
 
 @template("Arckane") {
 
-  <link rel="import" href="@routes.Assets.versioned("pl-arckane/arckane-app.html")">
-  <link rel="import" href="@routes.Assets.versioned("pl-users/user-profile.html")">
+  <link rel="import" href="@routes.Assets.versioned("users/arckane-profile-page.html")">
 
   <arckane-app user='@user'>
-    <user-profile user-id="@profile"></user-profile>
+    <arckane-profile-page user-id="@profile"></arckane-profile-page>
   </arckane-app>
 
 }

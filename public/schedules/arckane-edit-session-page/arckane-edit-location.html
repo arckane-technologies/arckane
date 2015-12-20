@@ -15,11 +15,11 @@
 <link rel="import" href="../../components/google-map/google-map-search.html">
 
 <link rel="import" href="../../components/paper-styles/color.html">
-<link rel="import" href="../../pl-utils/arckane-styles.html">
+<link rel="import" href="../../utils/arckane-styles.html">
 
-<link rel="import" href="../../pl-utils/editor-behavior.html">
+<link rel="import" href="../../utils/arckane-editor-behavior.html">
 
-<dom-module id="edit-location">
+<dom-module id="arckane-edit-location">
   <style include="arckane-styles"></style>
   <style>
     * {
@@ -116,9 +116,9 @@
 <script>
   Polymer({
 
-    is: "edit-location",
+    is: "arckane-edit-location",
 
-    behaviors: [EditorBehavior],
+    behaviors: [ArckaneEditorBehavior],
 
     properties: {
       sessionId: String,
@@ -160,7 +160,7 @@
     _locationSearchInputChanged: function (input) {
       this.debounce("typing-search-input", function () {
         this.locationSearch = input;
-      }, 1000);
+      }, 500);
     },
 
     _locationResultsChanged: function (results) {

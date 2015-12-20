@@ -10,13 +10,13 @@
 <link rel="import" href="../../components/paper-card/paper-card.html">
 
 <link rel="import" href="../../components/paper-styles/color.html">
-<link rel="import" href="../../pl-utils/arckane-styles.html">
+<link rel="import" href="../../utils/arckane-styles.html">
 
-<link rel="import" href="./edit-date.html">
-<link rel="import" href="./edit-pricing.html">
-<link rel="import" href="./edit-location.html">
+<link rel="import" href="./arckane-edit-date.html">
+<link rel="import" href="./arckane-edit-pricing.html">
+<link rel="import" href="./arckane-edit-location.html">
 
-<dom-module id="edit-session">
+<dom-module id="arckane-edit-session-page">
   <style>
     * {
       box-sizing: border-box;
@@ -56,24 +56,24 @@
       <div class="desktop-container layout vertical flex">
         <div class="horizontal layout" style="width:100%;">
           <!-- Date, time and length card -->
-          <edit-date style="margin-bottom:10px; margin-right:10px;" class="flex" id="editDate" session-id="[[sessionId]]"></edit-date>
+          <arckane-edit-date style="margin-bottom:10px; margin-right:10px;" class="flex" id="editDate" session-id="[[sessionId]]"></arckane-edit-date>
           <!-- Topics and skills -->
           <!-- Pricing and maximum apprentices -->
-          <edit-pricing style="margin-bottom:10px;" class="flex" id="editPricing" session-id="[[sessionId]]"></edit-pricing>
+          <arckane-edit-pricing style="margin-bottom:10px;" class="flex" id="editPricing" session-id="[[sessionId]]"></arckane-edit-pricing>
         </div>
         <!-- Location -->
-        <edit-location style="width:100%; margin-bottom:10px;" class="flex" id="editLocation" session-id="[[sessionId]]"></edit-location>
+        <arckane-edit-location style="width:100%; margin-bottom:10px;" class="flex" id="editLocation" session-id="[[sessionId]]"></arckane-edit-location>
       </div>
     </template>
 
     <template is="dom-if" if="{{!isDesktopSize}}">
       <!-- Date, time and length card -->
-      <edit-date style="width:100%; margin-bottom:10px;" id="editDate" session-id="[[sessionId]]"></edit-date>
+      <arckane-edit-date style="width:100%; margin-bottom:10px;" id="editDate" session-id="[[sessionId]]"></arckane-edit-date>
       <!-- Topics and skills -->
       <!-- Pricing and maximum apprentices -->
-      <edit-pricing style="width:100%; margin-bottom:10px;" id="editPricing" session-id="[[sessionId]]"></edit-pricing>
+      <arckane-edit-pricing style="width:100%; margin-bottom:10px;" id="editPricing" session-id="[[sessionId]]"></arckane-edit-pricing>
       <!-- Location -->
-      <edit-location style="width:100%; margin-bottom:10px;" id="editLocation" session-id="[[sessionId]]"></edit-location>
+      <arckane-edit-location style="width:100%; margin-bottom:10px;" id="editLocation" session-id="[[sessionId]]"></arckane-edit-location>
     </template>
   </template>
 </dom-module>
@@ -81,7 +81,7 @@
 <script>
   Polymer({
 
-    is: "edit-session",
+    is: "arckane-edit-session-page",
 
     properties: {
       sessionId: String

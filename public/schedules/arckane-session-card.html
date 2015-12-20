@@ -11,10 +11,10 @@
 <link rel="import" href="../components/iron-pages/iron-pages.html">
 <link rel="import" href="../components/google-map/google-map.html">
 
-<link rel="import" href="../pl-ontology/skill-syntaxling.html">
+<link rel="import" href="../ontology/arckane-skill-syntaxling.html">
 
 <link rel="import" href="../components/paper-styles/color.html">
-<link rel="import" href="../pl-utils/arckane-styles.html">
+<link rel="import" href="../utils/arckane-styles.html">
 
 
 <dom-module id="arckane-session-card">
@@ -171,7 +171,7 @@
         <!-- Skills -->
         <div class="tab scrollable">
           <template is="dom-repeat" items="{{data.skills}}">
-            <skill-syntaxling title="{{item.title}}" web="{{item.web}}" index="{{index}}"></skill-syntaxling>
+            <arckane-skill-syntaxling title="{{item.title}}" web="{{item.web}}" index="{{index}}"></arckane-skill-syntaxling>
           </template>
         </div>
 

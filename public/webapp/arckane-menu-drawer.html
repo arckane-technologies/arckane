@@ -8,22 +8,21 @@
 <link rel="import" href="../components/iron-icons/iron-icons.html">
 <link rel="import" href="../components/paper-button/paper-button.html">
 <link rel="import" href="../components/paper-icon-button/paper-icon-button.html">
-<link rel="import" href="../components/paper-styles/color.html">
-<link rel="import" href="../components/paper-styles/typography.html">
 
 <link rel="import" href="../components/paper-header-panel/paper-header-panel.html">
 <link rel="import" href="../components/paper-toolbar/paper-toolbar.html">
 
 <link rel="import" href="../components/more-routing/routing.html">
 
-<link rel="import" href="../pl-utils/nav-a.html">
-<link rel="import" href="../pl-utils/arckane-styles.html">
+<link rel="import" href="../utils/arckane-styles.html">
+<link rel="import" href="../components/paper-styles/color.html">
+<link rel="import" href="../components/paper-styles/typography.html">
 
 <!--
-`<menu-drawer>` encapsulates all the elements and functionalities of the side app
-drawer. The app frame is found in `<menu-frame>` which uses this element.
+`<arckane-menu-drawer>` encapsulates all the elements and functionalities of the side app
+drawer. The app frame is found in `<arckane-menu-frame>` which uses this element.
 -->
-<dom-module id="menu-drawer">
+<dom-module id="arckane-menu-drawer">
 
   <style>
     * {
@@ -35,10 +34,6 @@ drawer. The app frame is found in `<menu-frame>` which uses this element.
       @apply(--paper-font-common-base);
       --paper-toolbar: {
       };
-    }
-
-    nav-a {
-      cursor: pointer;
     }
 
     a {
@@ -138,10 +133,10 @@ drawer. The app frame is found in `<menu-frame>` which uses this element.
 
         <!-- Learn -->
         <div class="container option">
-          <nav-a route="learn">
+          <a href="/learn">
             <iron-icon icon="class"></iron-icon>
             Learn
-          </nav-a>
+          </a>
         </div>
 
         <!-- Mentor -->
@@ -154,10 +149,10 @@ drawer. The app frame is found in `<menu-frame>` which uses this element.
 
         <!-- Schedule -->
         <div class="container option">
-          <nav-a route="schedule">
+          <a href="/schedule">
             <iron-icon icon="today"></iron-icon>
             Schedule
-          </nav-a>
+          </a>
         </div>
 
       </div>
@@ -168,13 +163,13 @@ drawer. The app frame is found in `<menu-frame>` which uses this element.
 
     Polymer({
 
-      is: 'menu-drawer',
+      is: 'arckane-menu-drawer',
 
       properties: {
 
         /**
          * General info of the user, used to display the correct menu items in
-         * `<menu-drawer>`. The home property is the url of the user.
+         * `<arckane-menu-drawer>`. The home property is the url of the user.
          *
          * @type {{
          *   home: string,

@@ -8,13 +8,13 @@
 <link rel="import" href="../components/iron-form/iron-form.html">
 
 <link rel="import" href="../components/paper-styles/color.html">
-<link rel="import" href="../pl-utils/arckane-styles.html">
-<link rel="import" href="../pl-utils/search-validator.html">
+<link rel="import" href="../utils/arckane-styles.html">
+<link rel="import" href="../utils/arckane-search-validator.html">
 
 <!--
-`<sign-up>` is a simple form for user registration to the system.
+`<arckane-signup-page>` is a simple form for user registration to the system.
 -->
-<dom-module id="sign-up">
+<dom-module id="arckane-signup-page">
   <style>
     :host {
     }
@@ -58,7 +58,7 @@
         error-message="Wrong invitation"
         required>
       </paper-input>
-      <search-validator value="{{invitation}}" invalid="{{invalidInvitation}}" attribute="uuid" tags=":InvitationPending" cleaning="invitation"></search-validator>
+      <arckane-search-validator value="{{invitation}}" invalid="{{invalidInvitation}}" attribute="uuid" tags=":InvitationPending" cleaning="invitation"></arckane-search-validator>
       -->
 
       <!-- First Name -->
@@ -92,7 +92,7 @@
         error-message="Email taken or not a valid email"
         required>
       </paper-input>
-      <search-validator value="{{email}}" invalid="{{invalidEmail}}" attribute="email" tags=":User" cleaning="none" email></search-validator>
+      <arckane-search-validator value="{{email}}" invalid="{{invalidEmail}}" attribute="email" tags=":User" cleaning="none" email></arckane-search-validator>
 
       <!-- Password -->
       <paper-input
@@ -125,7 +125,7 @@
 
 <script>
   Polymer({
-    is: "sign-up",
+    is: "arckane-signup-page",
 
     properties: {
       secondPassword: {

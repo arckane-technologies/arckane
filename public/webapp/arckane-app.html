@@ -10,8 +10,7 @@
 <link rel="import" href="../components/paper-styles/typography.html">
 <link rel="import" href="../components/paper-styles/color.html">
 
-<link rel="import" href="routes.html">
-<link rel="import" href="menu-frame.html">
+<link rel="import" href="arckane-menu-frame.html">
 
 <!--
 `<arckane-app>` wraps all the Arckane functionalities and works as an easy to use
@@ -21,7 +20,7 @@ element.
 listened at this top level, such listeners display the notifications. Such events
 can be fired from any element inside the app.
 
-* The app dom tree starts with the usage of `<menu-frame>`, inside every page
+* The app dom tree starts with the usage of `<arckane-menu-frame>`, inside every page
 interface is loaded and managed by `<more-routing>`
 (https://github.com/PolymerLabs/more-routing).
 -->
@@ -51,40 +50,9 @@ interface is loaded and managed by `<more-routing>`
     <paper-toast id="warningToast" class="warning" duration="5000"></paper-toast>
     <paper-toast id="notificationToast" class="notification" duration="5000"></paper-toast>
 
-    <menu-frame user="{{user}}">
+    <arckane-menu-frame user="{{user}}">
       <content></content>
-      <!--
-      <more-route-selector>
-        <iron-pages>
-
-          <section route="root">
-            Home
-          </section>
-
-          <section route="learn">
-            Learn
-          </section>
-
-          <section route="mentor">
-            Mentor
-          </section>
-
-          <section route="schedule">
-            Schedule
-          </section>
-
-          <section route="signin">
-            Hola
-          </section>
-
-          <section route="signup">
-            Signup
-          </section>
-
-        </iron-pages>
-      </more-route-selector>
-      -->
-    </menu-frame>
+    </arckane-menu-frame>
   </template>
 
   <script>
@@ -96,7 +64,7 @@ interface is loaded and managed by `<more-routing>`
 
         /**
          * General info of the user, used to display the correct menu items in
-         * `<menu-frame>`. The home property is the url of the user.
+         * `<arckane-menu-frame>`. The home property is the url of the user.
          *
          * @type {{
          *   home: string,
