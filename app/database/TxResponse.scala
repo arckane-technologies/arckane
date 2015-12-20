@@ -60,26 +60,41 @@ package object txresponse {
       case tx => Transaction(tx.commit.reverse.drop(7).reverse, tx.commit, tx.expires)
     })
 
-    /** Creates a [[TxResult]] data type out of the response json. Check the
+    /** Creates a list of [[TxResult]] data type out of the response json. Check the
       * cypher transactional endpoint documentation to see the structure of the result.
       */
-    def txResult: Future[TxResult] = {
+    def allResults: Future[List[TxResult]] = {
       val results = (response.json \ "results").as[List[JsValue]]
       if (results.length > 0) {
-        val rs = results.map { case result =>
-          val columns = (result \ "columns").as[List[String]] zip Stream.from(0)
-          val data = (result \ "data" \\ "row").map(_.as[List[JsValue]])
-          (columns.map { case (col, i) =>
-            (col -> (data.map { case json =>
-              json(i).as[JsValue]
-            }).toList)
-          }).toMap
-        }
-        Future(rs)
+        Future(results.map(deserializeOneResult))
       }
       else {
         Future(List.empty[Map[String, List[JsValue]]])
       }
+    }
+
+    /** Creates a [[TxResult]] data type out of the response json. Check the
+      * cypher transactional endpoint documentation to see the structure of the result.
+      */
+    def result: Future[TxResult] = {
+      val results = (response.json \ "results").as[List[JsValue]]
+      if (results.length > 0) {
+        Future(deserializeOneResult(results.head))
+      }
+      else {
+        Future(Map.empty[String, List[JsValue]])
+      }
+    }
+
+    /** Check the cypher transactional endpoint documentation to see the structure of the result. */
+    private def deserializeOneResult (json: JsValue): TxResult = {
+      val columns = (json \ "columns").as[List[String]] zip Stream.from(0)
+      val data = (json \ "data" \\ "row").map(_.as[List[JsValue]])
+      (columns.map { case (col, i) =>
+        (col -> (data.map { json =>
+          json(i).as[JsValue]
+        }).toList)
+      }).toMap
     }
   }
 }

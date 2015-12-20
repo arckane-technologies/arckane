@@ -69,17 +69,17 @@ package object session {
     }
 
     def getSessionInfo (sessionId: String, viewer: String): Future[Option[JsObject]] = for {
-      response <- query(Json.obj(
+      result <- query(Json.obj(
         "statement" ->
           ( "MATCH (s:"+tag.str+" {url: {sessionid}})<-[:MENTORS]-(u:User) "
           + "RETURN s.session_date, s.length, s.current, s.limit, s.price, u.url, u.firstname, u.lastname, u.rating"),
         "parameters" -> Json.obj(
           "sessionid" -> sessionId
         )))
-    } yield if (response(0)("u.firstname").length == 0) {
+    } yield if (result("u.firstname").length == 0) {
       None
     } else {
-      val res = response(0)
+      val res = result
       val sessionDate = res("s.session_date").head.as[Long]
       Some(Json.obj(
         "is_owner" -> (if (viewer == res("u.url").head.as[String]) {
@@ -107,7 +107,7 @@ package object session {
     }
 
     def getSessionEditData (sessionId: String): Future[Option[JsObject]] = for {
-      response <- query(Json.obj(
+      result <- query(Json.obj(
         "statement" ->
           ( "MATCH (s:"+tag.str+" {url: {sessionid}}) "
           + "RETURN "
@@ -125,27 +125,26 @@ package object session {
         "parameters" -> Json.obj(
           "sessionid" -> sessionId
         )))
-    } yield if (response(0)("s.session_date").length == 0) {
+    } yield if (result("s.session_date").length == 0) {
       None
     } else {
-      val res = response(0)
       Some(Json.obj(
-        "session_date" -> res("s.session_date").head.as[Long],
-        "creation_timestamp" -> res("s.creation_timestamp").head.as[Long],
-        "formatted_address" -> res("s.formatted_address").head.as[String],
-        "location_name" -> res("s.location_name").head.as[String],
-        "location_web" -> res("s.location_web").head.as[String],
-        "latitude" -> res("s.latitude").head.as[Float],
-        "longitude" -> res("s.longitude").head.as[Float],
-        "length" -> res("s.length").head.as[Float],
-        "price" -> res("s.price").head.as[Float],
-        "current" -> res("s.current").head.as[Int],
-        "limit" -> res("s.limit").head.as[Int]
+        "session_date" -> result("s.session_date").head.as[Long],
+        "creation_timestamp" -> result("s.creation_timestamp").head.as[Long],
+        "formatted_address" -> result("s.formatted_address").head.as[String],
+        "location_name" -> result("s.location_name").head.as[String],
+        "location_web" -> result("s.location_web").head.as[String],
+        "latitude" -> result("s.latitude").head.as[Float],
+        "longitude" -> result("s.longitude").head.as[Float],
+        "length" -> result("s.length").head.as[Float],
+        "price" -> result("s.price").head.as[Float],
+        "current" -> result("s.current").head.as[Int],
+        "limit" -> result("s.limit").head.as[Int]
       ))
     }
 
     def retriveMentorSessions (mentor: String): Future[JsArray] = for {
-      response <- query(Json.obj(
+      result <- query(Json.obj(
         "statement" ->
           ( "MATCH (u:User {url: {userid}})-[:MENTORS]->(s:"+tag.str+") "
           + "RETURN s.url"),
@@ -153,7 +152,7 @@ package object session {
           "userid" -> mentor
         )
       ))
-    } yield response(0)("s.url").map { x =>
+    } yield result("s.url").map { x =>
       Json.obj("sessionId" -> x)
     }.foldLeft(JsArray()) { (acc, x) =>
       acc ++ Json.arr(x)
@@ -198,7 +197,7 @@ package object session {
     } yield Unit
 
     def isOwner (user: String, session: String): Future[Boolean] = for {
-      response <- query(Json.obj(
+      result <- query(Json.obj(
         "statement" ->
           ( "MATCH (s:"+tag.str+" {url: {sessionid}})<-[:MENTORS]-(u:User {url: {userid}}) "
           + "RETURN u"),
@@ -207,7 +206,7 @@ package object session {
           "userid" -> user
         )
       ))
-    } yield if (response(0)("u").length == 0) {
+    } yield if (result("u").length == 0) {
       false
     } else {
       true

@@ -42,11 +42,11 @@ package object syntaxling {
         "parameters" -> Json.obj(
           "regex" -> ("(?i).*"+queryString.trim.escapeParenthesis+".*")
         )))
-      response <- if (result(0)("n.title").length > 0) {
-        Future(Json.toJson(result(0)("n.title").zipWithIndex.map { case (title, index) => Json.obj(
+      response <- if (result("n.title").length > 0) {
+        Future(Json.toJson(result("n.title").zipWithIndex.map { case (title, index) => Json.obj(
           "from_database" -> true,
           "title" -> title,
-          "web" -> result(0)("n.web")(index)
+          "web" -> result("n.web")(index)
         )}).as[JsArray])
       } else {
         wikiSearchPrefix(queryString.trim)

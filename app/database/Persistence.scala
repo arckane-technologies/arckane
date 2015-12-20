@@ -25,8 +25,8 @@ package object persistence {
         "parameters" -> Json.obj(
           "urlmatcher" -> url
         )))
-    } yield if (result(0)("n").length > 0)
-        Some(Arcklet(tag, url, result(0)("n")(0).as[JsObject]))
+    } yield if (result("n").length > 0)
+        Some(Arcklet(tag, url, result("n")(0).as[JsObject]))
       else
         None
 
@@ -36,8 +36,8 @@ package object persistence {
         "parameters" -> Json.obj(
           "urlmatcher" -> url
         )))
-    } yield if(result(0)("n").length > 0)
-        Some(Arcklet(tag, url, result(0)("n")(0).as[P]))
+    } yield if(result("n").length > 0)
+        Some(Arcklet(tag, url, result("n")(0).as[P]))
       else
         None
 
@@ -47,8 +47,8 @@ package object persistence {
         "parameters" -> Json.obj(
           "urlmatcher" -> url
         )))
-    } yield if (result(0)("n").length > 0)
-        result(0)("n")(0).as[JsObject]
+    } yield if (result("n").length > 0)
+        result("n")(0).as[JsObject]
       else
         Json.obj("error" -> "not found")
 
@@ -86,7 +86,7 @@ package object persistence {
       tx <- openTransaction
       result <- tx lastly Json.obj(
         "statement" -> ("MATCH (n:"+tag.str+") RETURN count(n)"))
-      count <- Future(result(0)("count(n)")(0).as[Int])
+      count <- Future(result("count(n)")(0).as[Int])
     } yield count
 
     def createUrl (tx: Transaction): Future[String] = for {
@@ -94,7 +94,7 @@ package object persistence {
                               ON CREATE SET id.count = 1
                               ON MATCH SET id.count = id.count + 1
                               RETURN id.count"""
-      url <- result(0)("id.count")(0).as[Int] match {
+      url <- result("id.count")(0).as[Int] match {
         case uid => Future("/"+tag.str.toLowerCase+"/"+uid.toString)
       }
     } yield url
@@ -109,7 +109,7 @@ package object persistence {
         "parameters" -> Json.obj(
           "urlmatcher" -> arcklet.url,
           "prop" -> prop))
-    } yield result(0)("n."+prop)(0).as[A]
+    } yield result("n."+prop)(0).as[A]
 
     def set[A] (prop: String, value: A)(implicit pw: Writes[A]): Future[Arcklet[T, (String, A)]] = for {
       tx <- openTransaction

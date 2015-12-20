@@ -9,19 +9,18 @@ publishArtifact in (Compile, packageDoc) := false
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
-scalaVersion := "2.11.6"
+scalaVersion := "2.11.7"
+
+addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full)
 
 libraryDependencies ++= Seq(
   jdbc,
   cache,
   ws,
-  specs2 % Test
-)
-
-libraryDependencies ++= Seq(
-  ws,
+  specs2 % Test,
   "org.scalaz" %% "scalaz-core" % "7.1.3",
-  "com.github.nscala-time" %% "nscala-time" % "2.6.0"
+  "com.github.nscala-time" %% "nscala-time" % "2.6.0",
+  "com.github.mpilquist" %% "simulacrum" % "0.5.0"
 )
 
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"

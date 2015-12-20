@@ -33,13 +33,13 @@ package object user {
           "emailmatch" -> email,
           "passmatch" -> password
         )))
-    } yield if (result(0)("n.url").length == 0)
+    } yield if (result("n.url").length == 0)
         None
       else {
         Some(Json.obj(
-          "url" -> result(0)("n.url")(0),
+          "url" -> result("n.url").head,
           "email" -> email,
-          "name" -> result(0)("n.firstname")(0)
+          "name" -> result("n.firstname").head
         ))
       }
 
@@ -72,9 +72,9 @@ package object user {
           "user" -> user
         )
       ))
-    } yield if (result(0)("u.lat").length == 1) Json.obj(
-      "lat" -> result(0)("u.lat")(0),
-      "lon" -> result(0)("u.lon")(0)
+    } yield if (result("u.lat").length == 1) Json.obj(
+      "lat" -> result("u.lat").head,
+      "lon" -> result("u.lon").head
     ) else Json.obj("error" -> "no such user")
   }
 }

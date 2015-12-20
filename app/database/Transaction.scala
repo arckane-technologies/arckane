@@ -16,8 +16,20 @@ import arckane.db.txresponse._
 
 package object transaction {
 
+  /* First list is for results of every cypher query, then a map for each match and their list of value. */
+  type TxResult = Map[String, List[JsValue]]
+
+  /** Data type for neo4j transaction errors.
+    *
+    * @see [[http://neo4j.com/docs/stable/rest-api-transactional.html]] for Neo4j cypher transactional endpoint docs.
+    */
+  case class DeserializedTxErr (code: String, message: Option[String])
+
+  /** RuntimeException for transaction error. */
+  case class TxErr (message: String) extends RuntimeException(message)
+
   /** RESTful API endpoint for Neo4j's cypher transactional endpoint. */
-  private val transactionalEndpoint = address + "/db/data/transaction/"
+  private val transactionalEndpoint = address + "/db/data/transaction"
 
   /** Creates a new Neo4j cypher transaction endpoint [[Transaction]].
     * Throws any RuntimeException that may occur in the process.
@@ -31,25 +43,43 @@ package object transaction {
     transaction <- response.transaction
   } yield transaction
 
-  /** Creates a transaction, sends several cypher queries and commits the transaction.
+  /** Generic request to the transactional end point.
     *
-    * @param statement array of json objects with parameters and queries to be executed.
-    * @return the [[TxResult]] of the executed query wraped in a Future.
+    * @param statements array of json objects with parameters and queries to be executed.
+    * @return [[WSResponse]] of the request.
     */
-  def query (statement: JsArray): Future[TxResult] = for {
-    tx <- openTransaction
-    result <- tx lastly statement
-  } yield result
+  def transactionRequest (path: String, statements: JsArray): Future[WSResponse] = for {
+    response <- withAuth(path).post(Json.obj("statements" -> statements))
+    _ <- response statusMustBe 200
+    _ <- response.checkForTransactionErrs
+  } yield response
 
-  /** Creates a transaction, sends a cypher query and commits the transaction.
+  /** Creates a transaction, sends several cypher queries, commits the transaction and
+    * retrives the list of results from all the queries.
+    *
+    * @param statements array of json objects with parameters and queries to be executed.
+    * @return the list of [[TxResult]] for the executed query wraped in a Future.
+    */
+  def query (statements: JsArray): Future[List[TxResult]] =
+    transactionRequest(
+      transactionalEndpoint+"/commit",
+      statements
+    ).flatMap(_.allResults)
+
+  /** Creates a transaction, sends a cypher query, commits the transaction and
+    * returns the unique result.
     *
     * @param statement json object with the query and parameters to be executed.
     * @return the [[TxResult]] of the executed query wraped in a Future.
     */
   def query (statement: JsObject): Future[TxResult] =
-    query(Json.arr(statement))
+    transactionRequest(
+      transactionalEndpoint+"/commit",
+      Json.arr(statement)
+    ).flatMap(_.result)
 
-  /** Creates a transaction, sends a cypher query and commits the transaction.
+  /** Creates a transaction, sends a cypher query, commits the transaction and
+    * returns the unique result.
     *
     * @param statement query string to be executed.
     * @return the [[TxResult]] of the executed query wraped in a Future.
@@ -66,14 +96,13 @@ package object transaction {
     /** Sends several cypher queries with this transaction without commiting.
       *
       * @param statement array of json objects with parameters and queries to be executed.
-      * @return the [[TxResult]] of the executed query wraped in a Future.
+      * @return the list of [[TxResult]] for the executed query wraped in a Future.
       */
-    def execute (statements: JsArray): Future[TxResult] = for {
-      response <- withAuth(tx.self).post(Json.obj("statements" -> statements))
-      _ <- response statusMustBe 200
-      _ <- response.checkForTransactionErrs
-      result <- response.txResult
-    } yield result
+    def execute (statements: JsArray): Future[List[TxResult]] =
+      transactionRequest(
+        tx.self,
+        statements
+      ).flatMap(_.allResults)
 
     /** Sends a json object with parameters and a query with this transaction without commiting.
       *
@@ -81,7 +110,10 @@ package object transaction {
       * @return the [[TxResult]] of the executed query wraped in a Future.
       */
     def execute (statement: JsObject): Future[TxResult] =
-      tx execute Json.arr(statement)
+      transactionRequest(
+        tx.self,
+        Json.arr(statement)
+      ).flatMap(_.result)
 
     /** Sends a query string with this transaction without commiting.
       *
@@ -89,19 +121,18 @@ package object transaction {
       * @return the [[TxResult]] of the executed query wraped in a Future.
       */
     def execute (statement: String): Future[TxResult] =
-      tx execute Json.obj("statement" -> statement)
+      execute(Json.obj("statement" -> statement))
 
     /** Sends several cypher queries with this transaction and commiting in the end.
       *
       * @param statement array of json objects with parameters and queries to be executed.
-      * @return the [[TxResult]] of the executed query wraped in a Future.
+      * @return the list of [[TxResult]] for the executed query wraped in a Future.
       */
-    def lastly (statements: JsArray): Future[TxResult] = for {
-      response <- withAuth(tx.commit).post(Json.obj("statements" -> statements))
-      _ <- response statusMustBe 200
-      _ <- response.checkForTransactionErrs
-      result <- response.txResult
-    } yield result
+    def lastly (statements: JsArray): Future[List[TxResult]] =
+      transactionRequest(
+        tx.commit,
+        statements
+      ).flatMap(_.allResults)
 
     /** Sends a json object with parameters and a query with this transaction and commiting in the end.
       *
@@ -109,7 +140,10 @@ package object transaction {
       * @return the [[TxResult]] of the executed query wraped in a Future.
       */
     def lastly (statement: JsObject): Future[TxResult] =
-      tx lastly Json.arr(statement)
+      transactionRequest(
+        tx.commit,
+        Json.arr(statement)
+      ).flatMap(_.result)
 
     /** Sends a query string with this transaction and commiting in the end.
       *
@@ -117,7 +151,7 @@ package object transaction {
       * @return the [[TxResult]] of the executed query wraped in a Future.
       */
     def lastly (statement: String): Future[TxResult] =
-      tx lastly Json.obj("statement" -> statement)
+      lastly(Json.obj("statement" -> statement))
 
     /** Commits this transaction. */
     def finish: Future[Unit] = for {
@@ -131,18 +165,6 @@ package object transaction {
       _ <- response.checkForTransactionErrs
     } yield Unit
   }
-
-  /** Data type for neo4j transaction errors.
-    *
-    * @see [[http://neo4j.com/docs/stable/rest-api-transactional.html]] for Neo4j cypher transactional endpoint docs.
-    */
-  case class DeserializedTxErr (code: String, message: Option[String])
-
-  /** RuntimeException for transaction error. */
-  case class TxErr (message: String) extends RuntimeException(message)
-
-  /* First list is for results of every cypher query, then a map for each match and their list of value. */
-  type TxResult = List[Map[String, List[JsValue]]]
 
   /** Used to transform objects from json to its equivalent [[Transaction]] data type.
     *
