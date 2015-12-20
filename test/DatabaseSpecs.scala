@@ -17,6 +17,7 @@ import play.api.libs.json._
 import play.api.libs.ws._
 
 import arckane.db.transaction._
+import arckane.db.Tag
 
 class DatabaseSpecs extends Specification {
 
@@ -43,11 +44,18 @@ class DatabaseSpecs extends Specification {
     "Execute and respond one map for one query" in new WithApplication with TestEntities {
       import play.api.libs.concurrent.Execution.Implicits._
 
-      println(
-        await(for {
-          result <- query("MATCH (n) RETURN n")
-        } yield result)
-      )
+      val uri = await(Tag.create(Json.obj(
+        "name" -> "Franco"
+      ))("Person"))
+      await(Tag.set(uri, Json.obj(
+        "name" -> "Francisco",
+        "lastname" -> "Aramburo"
+      )))
+      await(Tag.set(uri, Json.obj(
+        "lastname" -> "Ara"
+      )))
+      println(await(Tag.get(uri)))
+      await(Tag.delete(uri))
       true must beEqualTo(true)
     }
   }
