@@ -11,8 +11,8 @@ import play.api.mvc._
 import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits._
 
+import arckane.db.Tag
 import arckane.db.transaction._
-import arckane.db.persistence._
 import arckane.users.user._
 
 /** Play Framework controller for the users service. */
@@ -27,7 +27,9 @@ class UsersApi extends Controller {
       user <- request.queryString.get("user")
       prop <- request.queryString.get("prop")
       value <- request.queryString.get("value")
-      response <- Some(Arcklet(UserTag, user.head, Unit).set(prop.head, value.head))
+      response <- Some(Tag.set(user.head, Json.obj(
+        prop.head -> value.head
+      )))
     } yield response.map { props =>
       Ok
     }).getOrElse {
@@ -42,9 +44,12 @@ class UsersApi extends Controller {
   def getProps = Action.async { request =>
     (for {
       user <- request.queryString.get("user")
-      response <- Some(UserTag.getProps(user.head))
+      response <- Some(Tag.get(user.head))
     } yield response.map { props =>
-      Ok(props)
+      props match {
+        case Some(props) => Ok(props)
+        case None => NotFound
+      }
     }).getOrElse {
       Future(BadRequest("Expected a user in the query string."))
     }
@@ -63,28 +68,28 @@ class UsersApi extends Controller {
       val password = form("password").head
       for {
         tx <- openTransaction
-        user <- UserTag.create(tx, Json.obj(
+        uri <- Tag.create(tx, Json.obj(
           "firstname" -> firstname,
           "lastname" -> lastname,
           "email" -> email,
           "password" -> password,
           "rating" -> 0
-        ))
+        ))("User")
         _ <- if (invitation != "") tx.lastly(Json.obj(
           "statement" ->
-            ( "MATCH (host:User)-[r:INVITES]->(i:InvitationPending {uuid: {invitation}}),(u:User {url: {user}})"
+            ( "MATCH (host:User)-[r:INVITES]->(i:InvitationPending {uuid: {invitation}}),(u:User {uri: {urimatcher}})"
             + "DELETE r,i CREATE (host)-[:INVITES]->(u)"),
           "parameters" -> Json.obj(
             "invitation" -> invitation,
-            "user" -> user.url)))
+            "urimatcher" -> uri)))
           else tx.finish
       } yield Ok(Json.obj("success" -> true))
           .withSession(
             "email" -> email,
             "name" -> firstname,
-            "home" -> user.url)
+            "home" -> uri)
     }.getOrElse {
-      Future(BadRequest("Expected a url encoded form."))
+      Future(BadRequest("Expected a uri encoded form."))
     }
   }
 
@@ -96,16 +101,23 @@ class UsersApi extends Controller {
     request.body.asFormUrlEncoded.map { form =>
       val email = form("email").head
       val password = form("password").head
-      UserTag.authenticate(email, password).map {
-        case Some(user) => Ok(Json.obj("success" -> true, "user" -> user))
-          .withSession(
+      authenticate(email, password).map {
+        case Some(user) =>
+          Ok(Json.obj(
+            "success" -> true,
+            "user" -> user
+          )).withSession(
             "email" -> (user \ "email").as[String],
             "name" -> (user \ "name").as[String],
-            "home" -> (user \ "url").as[String])
-        case None => Ok(Json.obj("success" -> false))
+            "home" -> (user \ "uri").as[String]
+          )
+        case None =>
+          Ok(Json.obj(
+            "success" -> false
+          ))
       }
     }.getOrElse {
-      Future(BadRequest("Expected a url encoded form."))
+      Future(BadRequest("Expected a uri encoded form."))
     }
   }
 

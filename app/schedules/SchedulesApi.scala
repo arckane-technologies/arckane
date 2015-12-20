@@ -11,8 +11,8 @@ import play.api.mvc._
 import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits._
 
+import arckane.db.Tag
 import arckane.db.transaction._
-import arckane.db.persistence._
 import arckane.schedules.session._
 
 /** Play Framework controller for the schedules service. */
@@ -20,10 +20,10 @@ class SchedulesApi extends Controller {
 
   def getSessionInfo (sessionId: String) = Action.async { request =>
     val viewer = request.session.get("home") match {
-      case Some(url) => url
+      case Some(uri) => uri
       case None => ""
     }
-    SessionTag.getSessionInfo("/session/"+sessionId, viewer).map { session =>
+    sessionInfo("/session/"+sessionId, viewer).map { session =>
       session match {
         case Some(session) => Ok(session)
         case None => NotFound("Not such session id.")
@@ -34,7 +34,7 @@ class SchedulesApi extends Controller {
   def getMentorSessions = Action.async { request =>
     (for {
       user <- request.session.get("home")
-      response <- Some(SessionTag.retriveMentorSessions(user))
+      response <- Some(retriveMentorSessions(user))
     } yield response.map { sessions =>
       Ok(sessions)
     }).getOrElse {
@@ -45,7 +45,7 @@ class SchedulesApi extends Controller {
   def deleteSession (sessionId: String) = Action.async { request =>
     (for {
       user <- request.session.get("home")
-      response <- Some(SessionTag.deleteSession("/session/"+sessionId, user))
+      response <- Some(sessionDelete("/session/"+sessionId, user))
     } yield response.map { Unit =>
       Redirect("/mentor")
     }).getOrElse {
@@ -56,16 +56,16 @@ class SchedulesApi extends Controller {
   def createSession = Action.async { request =>
     (for {
       user <- request.session.get("home")
-      response <- Some(SessionTag.createSession(user))
-    } yield response.map { arcklet =>
-      Ok(Json.obj("sessionId" -> arcklet.url))
+      response <- Some(sessionCreate(user))
+    } yield response.map { uri =>
+      Ok(Json.obj("sessionId" -> uri))
     }).getOrElse {
       Future(BadRequest("You need an active session."))
     }
   }
 
   def getSessionEditData (sessionId: String) = Action.async { request =>
-    SessionTag.getSessionEditData("/session/"+sessionId).map { session =>
+    sessionEditData("/session/"+sessionId).map { session =>
       session match {
         case Some(session) => Ok(session)
         case None => NotFound("Not such session id.")
@@ -82,13 +82,17 @@ class SchedulesApi extends Controller {
       user <- request.session.get("home")
       prop <- request.queryString.get("prop")
       value <- request.queryString.get("value")
-      isOwner <- Some(SessionTag.isOwner(user, "/session/"+sessionId))
+      isOwner <- Some(isOwner(user, "/session/"+sessionId))
     } yield isOwner.flatMap { isOwner =>
       if (isOwner) {
         if (numeric) {
-          Arcklet(SessionTag, "/session/"+sessionId, Unit).set(prop.head, value.head.toDouble).map { _ => Ok }
+          Tag.set("/session/"+sessionId, Json.obj(
+            prop.head -> value.head.toDouble
+          )).map { _ => Ok }
         } else {
-          Arcklet(SessionTag, "/session/"+sessionId, Unit).set(prop.head, value.head).map { _ => Ok }
+          Tag.set("/session/"+sessionId, Json.obj(
+            prop.head -> value.head
+          )).map { _ => Ok }
         }
       } else {
         Future(BadRequest)

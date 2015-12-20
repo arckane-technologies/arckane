@@ -12,7 +12,6 @@ import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits._
 
 import arckane.db.transaction._
-import arckane.db.persistence._
 import arckane.schedules.session._
 
 /** Play Framework controller for everything related to Arckane's app serving and authentication. */
@@ -68,7 +67,7 @@ class Application extends Controller {
     (for {
       user <- request.session.get("home")
       userSession <- getSession(request)
-      response <- Some(SessionTag.isOwner(user, "/session/"+id))
+      response <- Some(isOwner(user, "/session/"+id))
     } yield response.map { isOwner =>
       if (isOwner) Ok(views.html.editSession(userSession, id))
       else Redirect("/")

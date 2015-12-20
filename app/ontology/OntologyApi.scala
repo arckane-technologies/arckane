@@ -12,7 +12,6 @@ import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits._
 
 import arckane.db.transaction._
-import arckane.db.persistence._
 import arckane.ontology.syntaxling._
 
 /** Play Framework controller for the ontology service. */
@@ -28,7 +27,7 @@ class OntologyApi extends Controller {
     (for {
       user <- request.session.get("home")
       search <- request.queryString.get("search")
-      response <- Some(SyntaxlingTag.search(search.head))
+      response <- Some(syntaxlingSearch(search.head))
     } yield response.map { array =>
       Ok(array)
     }).getOrElse {
