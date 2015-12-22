@@ -24,7 +24,9 @@ class SchedulesApi extends Controller {
     } yield response.map { uri =>
       Ok(Json.obj("uri" -> uri))
     }).getOrElse {
-      Future(BadRequest("You need an active session."))
+      Future(Unauthorized(Json.obj(
+        "error" -> "You need an active session."
+      )))
     }
   }
 
@@ -33,7 +35,9 @@ class SchedulesApi extends Controller {
       user <- request.session.get("home")
       response <- Some(sessionMentors(user))
     } yield response.map(Ok(_))).getOrElse {
-      Future(BadRequest("You need an active session."))
+      Future(Unauthorized(Json.obj(
+        "error" -> "You need an active session."
+      )))
     }
   }
 
@@ -54,7 +58,9 @@ class SchedulesApi extends Controller {
       case true => Node.set(uri, request.body.as[JsObject]).map{_=> Ok}
       case false => Future(BadRequest("You don't own that resource."))
     })).getOrElse {
-      Future(BadRequest("You need an active session."))
+      Future(Unauthorized(Json.obj(
+        "error" -> "You need an active session."
+      )))
     }
   }
 
@@ -66,7 +72,9 @@ class SchedulesApi extends Controller {
       case true => Node.delete(uri).map{_=> Ok}
       case false => Future(BadRequest("You don't own that resource."))
     })).getOrElse {
-      Future(BadRequest("You need an active session."))
+      Future(Unauthorized(Json.obj(
+        "error" -> "You need an active session."
+      )))
     }
   }
 }
