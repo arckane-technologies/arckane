@@ -56,7 +56,7 @@ class SchedulesApi extends Controller {
       isOwner <- Some(sessionIsOwner(user, uri))
     } yield isOwner.flatMap(_ match {
       case true => Node.set(uri, request.body.as[JsObject]).map{_=> Ok}
-      case false => Future(BadRequest("You don't own that resource."))
+      case false => Future(Forbidden("you don't own that resource"))
     })).getOrElse {
       Future(Unauthorized(Json.obj(
         "error" -> "you need an active session"
@@ -70,7 +70,7 @@ class SchedulesApi extends Controller {
       isOwner <- Some(sessionIsOwner(user, uri))
     } yield isOwner.flatMap(_ match {
       case true => Node.delete(uri).map{_=> Ok}
-      case false => Future(BadRequest("You don't own that resource."))
+      case false => Future(Forbidden("you don't own that resource"))
     })).getOrElse {
       Future(Unauthorized(Json.obj(
         "error" -> "you need an active session"

@@ -44,4 +44,7 @@ package object user {
       ))
     }
   }
+
+  def userDelete (uri: String): Future[Unit] =
+    Node.delete(uri)
 }

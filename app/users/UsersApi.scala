@@ -58,4 +58,14 @@ class UsersApi extends Controller {
       Future(BadRequest("Expected a uri encoded form."))
     }
   }
+
+  def deleteUser = Action.async { request =>
+    request.session.get("user-uri").map { uri =>
+      userDelete(uri).map {_=>Ok}
+    }.getOrElse {
+      Future(Unauthorized(Json.obj(
+        "error" -> "you need an active session"
+      )))
+    }
+  }
 }
