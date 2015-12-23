@@ -89,7 +89,7 @@ drawer. The app frame is found in `<arckane-menu-frame>` which uses this element
       <!-- Drawer header -->
       <!-- User -->
       <template is="dom-if" if="{{!user.guest}}">
-        <a href="[[user.home]]">
+        <a href="/user/[[user.user-uri]]">
           <div id="drawer-header" class="horizontal layout center">
             <iron-icon class="flex self-center" icon="account-circle"></iron-icon>
           </div>
@@ -122,7 +122,7 @@ drawer. The app frame is found in `<arckane-menu-frame>` which uses this element
         <template is="dom-if" if="{{!user.guest}}">
           <!-- Sign out -->
           <div class="container option">
-            <a href="/api/users/signout">
+            <a href="/signout">
               <iron-icon icon="assignment-turned-in"></iron-icon>
               Sign Out
             </a>

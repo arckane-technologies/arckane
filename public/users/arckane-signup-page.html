@@ -9,25 +9,18 @@
 
 <link rel="import" href="../components/paper-styles/color.html">
 <link rel="import" href="../utils/arckane-styles.html">
-<link rel="import" href="../utils/arckane-search-validator.html">
+
+<link rel="import" href="arckane-users-api.html">
 
 <!--
 `<arckane-signup-page>` is a simple form for user registration to the system.
 -->
 <dom-module id="arckane-signup-page">
   <style>
-    :host {
-    }
-
-    input {
-      border: 0;
-      margin-top: 10px;
-      padding-top: 10px;
-      padding-bottom: 10px;
-      border-radius: 3px;
+    paper-button {
+      margin: 20px 0px;
       color: white;
       width: 100%;
-      font-size: 20px;
       background-color: var(--arckane-aqua-100);
     }
 
@@ -47,79 +40,65 @@
   </style>
 
   <template>
-    <form is="iron-form" id="signUpForm" method="post" action="/api/users/signup" on-iron-form-response="_formResponse">
-      <!-- Invitation -->
-      <!--
-      <paper-input
-        name="invitation"
-        label="Invitation Pass"
-        value="{{invitation}}"
-        invalid="{{!invalidInvitation}}"
-        error-message="Wrong invitation"
-        required>
-      </paper-input>
-      <arckane-search-validator value="{{invitation}}" invalid="{{invalidInvitation}}" attribute="uuid" tags=":InvitationPending" cleaning="invitation"></arckane-search-validator>
-      -->
+    <arckane-users-api id="api"></arckane-users-api>
 
-      <!-- First Name -->
-      <paper-input
-        name="firstname"
-        value="{{firstname}}"
-        label="First name"
-        char-counter
-        minlength="3"
-        maxlength="20"
-        required>
-      </paper-input>
+    <!-- First Name -->
+    <paper-input
+      name="firstname"
+      value="{{firstname}}"
+      label="First name"
+      char-counter
+      minlength="3"
+      maxlength="20"
+      required>
+    </paper-input>
 
-      <!-- Second Name -->
-      <paper-input
-        name="lastname"
-        value="{{lastname}}"
-        label="Last name"
-        char-counter
-        minlength="3"
-        maxlength="20"
-        required>
-      </paper-input>
+    <!-- Second Name -->
+    <paper-input
+      name="lastname"
+      value="{{lastname}}"
+      label="Last name"
+      char-counter
+      minlength="3"
+      maxlength="20"
+      required>
+    </paper-input>
 
-      <!-- Email -->
-      <paper-input
-        name="email"
-        value="{{email}}"
-        label="Email"
-        invalid="{{invalidEmail}}"
-        error-message="Email taken or not a valid email"
-        required>
-      </paper-input>
-      <arckane-search-validator value="{{email}}" invalid="{{invalidEmail}}" attribute="email" tags=":User" cleaning="none" email></arckane-search-validator>
+    <!-- Email -->
+    <paper-input
+      name="email"
+      value="{{email}}"
+      label="Email"
+      invalid="{{invalidEmail}}"
+      error-message="Email taken or not a valid email"
+      required>
+    </paper-input>
 
-      <!-- Password -->
-      <paper-input
-        name="password"
-        value="{{password}}"
-        label="Choose a password"
-        type="password"
-        char-counter
-        minlength="8"
-        required>
-      </paper-input>
+    <!-- Password -->
+    <paper-input
+      name="password"
+      value="{{password}}"
+      label="Choose a password"
+      type="password"
+      char-counter
+      minlength="8"
+      required>
+    </paper-input>
 
-      <!-- Second password -->
-      <paper-input
-        value="{{secondPassword}}"
-        label="Type your password again"
-        type="password"
-        invalid="{{passwordMatches}}"
-        error-message="Passwords must match"
-        char-counter
-        minlength="8"
-        required>
-      </paper-input>
+    <!-- Second password -->
+    <paper-input
+      value="{{secondPassword}}"
+      label="Type your password again"
+      type="password"
+      invalid="{{passwordsDiffer}}"
+      error-message="Passwords must match"
+      char-counter
+      minlength="8"
+      required>
+    </paper-input>
 
-      <!-- Button -->
-      <input type="submit" value="Sign Up">
-    </form>
+    <!-- Button -->
+    <paper-button on-tap="_signup">Sign In</paper-button>
   </template>
 </dom-module>
 
@@ -128,27 +107,62 @@
     is: "arckane-signup-page",
 
     properties: {
+      email: {
+        type: String,
+        observer: "_emailChanged"
+      },
       secondPassword: {
         type: String,
-        observer: '_secondPasswordChanged'
+        observer: "_secondPasswordChanged"
       }
     },
 
-    /** Handles the response of the form. */
-    _formResponse: function (event) {
-      var info = event.detail.__data__.response;
-      if (info.success)
-        window.location.assign('/');
-      else
-        this.fire('warning', {message: info.message});
+    _signup: function (event) {
+      if (this.invalidEmail
+        || this.passwordsDiffer
+        || this.firstname == "" || typeof this.firstname === "undefined"
+        || this.lastname == "" || typeof this.lastname === "undefined"
+        || this.email == "" || typeof this.email === "undefined"
+        || this.password == "" || typeof this.password === "undefined"
+      ) return;
+      var self = this;
+      this.$.api.signup(
+        this.firstname,
+        this.lastname,
+        this.email,
+        this.password,
+        function (response) {
+          if (response.success)
+            window.location.assign('/');
+        }
+      )
+    },
+
+    _emailChanged: function (email) {
+      if (email == "" || typeof email === "undefined") return;
+      var self = this;
+      // Email regexp
+      if (!(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,4}$/.test(email))) {
+        self.invalidEmail = true;
+        return;
+      }
+      this.debounce("typing-email", function () {
+        self.$.api.emailTaken(email, function (response) {
+          if (response.taken) {
+            self.invalidEmail = true;
+          } else {
+            self.invalidEmail = false;
+          }
+        })
+      }, 500);
     },
 
     /** Listener for when the second password changes, checks if it matches with the first one. */
     _secondPasswordChanged: function (pass) {
       if (this.password == pass)
-        this.passwordMatches = false;
+        this.passwordsDiffer = false;
       else
-        this.passwordMatches = true;
+        this.passwordsDiffer = true;
     },
 
     /**

@@ -18,6 +18,7 @@ GET     /api/ontology/search        arckane.ontology.OntologyApi.search
 POST    /api/users/signup           arckane.users.UsersApi.signup
 POST    /api/users/signin           arckane.users.UsersApi.signin
 DELETE  /api/users/self             arckane.users.UsersApi.deleteUser
+POST    /api/users/email/taken      arckane.users.UsersApi.postEmailTaken
 
 # Schedules service routes
 POST    /api/schedules/session             arckane.schedules.SchedulesApi.postSession

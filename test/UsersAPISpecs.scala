@@ -94,6 +94,24 @@ class UsersAPISpecs extends Specification {
       } yield name == "Someone" && uri.length > 0) must beSome(true)
     }
 
+    "POST /api/users/email/taken : 400 (bad json object)" in new WithApplication {
+      val Some(result) = route(FakeRequest(POST, "/api/users/email/taken").withJsonBody(
+        Json.obj("bad" -> "json")
+      ))
+      status(result) must equalTo(BAD_REQUEST)
+      contentType(result) must beSome("application/json")
+      contentAsJson(result) must equalTo(Json.obj("error" -> "bad json object"))
+    }
+
+    "POST /api/users/email/taken : 200" in new WithApplication {
+      val Some(result) = route(FakeRequest(POST, "/api/users/email/taken").withJsonBody(
+        Json.obj("email" -> "test@mail.com")
+      ))
+      status(result) must equalTo(OK)
+      contentType(result) must beSome("application/json")
+      contentAsJson(result) must equalTo(Json.obj("taken" -> true))
+    }
+
     "DELETE /api/users/self : 401 (with no active session)" in new WithApplication {
       val Some(result) = route(FakeRequest(DELETE, "/api/users/self"))
       status(result) must equalTo(UNAUTHORIZED)
@@ -105,5 +123,6 @@ class UsersAPISpecs extends Specification {
       val Some(result) = route(FakeRequest(DELETE, "/api/users/self").withSession("user-uri" -> userUri))
       status(result) must equalTo(OK)
     }
+
   }
 }

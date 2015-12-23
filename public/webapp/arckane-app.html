@@ -3,9 +3,6 @@
 -->
 
 <link rel="import" href="../components/polymer/polymer.html">
-<link rel="import" href="../components/more-routing/more-routing.html">
-<link rel="import" href="../components/iron-pages/iron-pages.html">
-
 <link rel="import" href="../components/paper-toast/paper-toast.html">
 <link rel="import" href="../components/paper-styles/typography.html">
 <link rel="import" href="../components/paper-styles/color.html">
@@ -150,9 +147,8 @@ interface is loaded and managed by `<more-routing>`
        * @return {undefined}
        */
       _displayErrorToast: function (event) {
-        this.$.errorToast.text = event.detail.error;
+        this.$.errorToast.text = event.detail.message;
         this.$.errorToast.show();
-        MoreRouting.navigateTo("/");
       }
     });
   </script>

@@ -70,4 +70,16 @@ class UsersApi extends Controller {
       )))
     }
   }
+
+  def postEmailTaken = Action.async(parse.json) { request =>
+    (request.body.as[JsObject] \ "email").asOpt[String].map { email =>
+      userEmailTaken(email).map { result =>
+        Ok(Json.obj("taken" -> result))
+      }
+    }.getOrElse {
+      Future(BadRequest(Json.obj(
+        "error" -> "bad json object"
+      )))
+    }
+  }
 }

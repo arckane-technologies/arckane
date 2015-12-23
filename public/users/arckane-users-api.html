@@ -1,0 +1,70 @@
+<!--
+@author Francisco Miguel Aramburo Torres - atfm05@gmail.com
+-->
+
+<link rel="import" href="../components/polymer/polymer.html">
+<link rel="import" href="../components/iron-ajax/iron-ajax.html">
+
+<dom-module id="arckane-users-api">
+  <template>
+    <iron-ajax id="ajax" on-response="_onResponse" on-error="_onError"></iron-ajax>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+
+    is: "arckane-users-api",
+
+    _onResponse: function (event, request) {
+      if (typeof request.callback !== "undefined")
+        request.callback(request.response);
+    },
+
+    _onError: function (event) {
+      this.fire("error", {message: event.detail.error.message});
+    },
+
+    /* POST /api/users/signup arckane.users.UsersApi.signup */
+    signup: function (firstname, lastname, email, password, callback) {
+      this.$.ajax.method = "POST";
+      this.$.ajax.url = "/api/users/signup";
+      this.$.ajax.contentType = "application/json";
+      this.$.ajax.body = {
+        firstname: firstname,
+        lastname: lastname,
+        email: email,
+        password: password
+      };
+      this.$.ajax.generateRequest().callback = callback;
+    },
+
+    /* POST /api/users/signin arckane.users.UsersApi.signin */
+    signin: function (email, password, callback) {
+      this.$.ajax.method = "POST";
+      this.$.ajax.url = "/api/users/signin";
+      this.$.ajax.contentType = "application/json";
+      this.$.ajax.body = {
+        email: email,
+        password: password
+      };
+      this.$.ajax.generateRequest().callback = callback;
+    },
+
+    /* DELETE /api/users/self arckane.users.UsersApi.deleteUser */
+    delete: function (callback) {
+      this.$.ajax.method = "DELETE";
+      this.$.ajax.url = "/api/users/self";
+      this.$.ajax.generateRequest().callback = callback;
+    },
+
+    /* POST /api/users/email/taken arckane.users.UsersApi.getEmailTaken */
+    emailTaken: function (email, callback) {
+      this.$.ajax.method = "POST";
+      this.$.ajax.url = "/api/users/email/taken";
+      this.$.ajax.contentType = "application/json";
+      this.$.ajax.body = { email: email };
+      this.$.ajax.generateRequest().callback = callback;
+    }
+  });
+</script>

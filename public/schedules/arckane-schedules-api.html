@@ -7,18 +7,22 @@
 
 <dom-module id="arckane-schedules-api">
   <template>
-    <iron-ajax id="ajax" on-response="_onResponse"></iron-ajax>
+    <iron-ajax id="ajax" on-response="_onResponse" on-error="_onError"></iron-ajax>
   </template>
 </dom-module>
 
 <script>
   Polymer({
+
     is: "arckane-schedules-api",
 
-    _onResponse: function (event) {
-      var request = event.detail;
+    _onResponse: function (event, request) {
       if (typeof request.callback !== "undefined")
         request.callback(request.response);
+    },
+
+    _onError: function (event) {
+      this.fire("error", {message: event.detail.error.message});
     },
 
     /* POST /api/schedules/session arckane.schedules.SchedulesApi.postSession */

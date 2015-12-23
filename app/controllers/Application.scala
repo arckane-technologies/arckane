@@ -18,16 +18,16 @@ import arckane.schedules.session._
 class Application extends Controller {
 
   def getSession (request: Request[AnyContent]): Option[String] = for {
-    name <- request.session.get("name")
-    home <- request.session.get("home")
+    name <- request.session.get("user-name")
+    uri <- request.session.get("user-uri")
   } yield Json.obj(
-    "name" -> name,
-    "home" -> home
+    "user-name" -> name,
+    "user-uri" -> uri
   ).toString
 
   def guest: String = Json.obj("guest" -> true).toString
 
-  def isGuest (request: Request[AnyContent]): Boolean = request.session.get("name") match {
+  def isGuest (request: Request[AnyContent]): Boolean = request.session.get("user-name") match {
     case Some(name) => false
     case None => true
   }
@@ -69,7 +69,7 @@ class Application extends Controller {
 
   def editSession (uri: String) = Action.async { request =>
     (for {
-      user <- request.session.get("home")
+      user <- request.session.get("user-uri")
       userSession <- getSession(request)
       response <- Some(sessionIsOwner(user, uri))
     } yield response.map { isOwner =>

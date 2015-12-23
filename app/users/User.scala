@@ -21,7 +21,8 @@ package object user {
       "firstname" -> firstname,
       "lastname" -> lastname,
       "email" -> email,
-      "password" -> BCrypt.hashpw(password, BCrypt.gensalt())
+      "password" -> BCrypt.hashpw(password, BCrypt.gensalt()),
+      "timestamp" -> System.currentTimeMillis
     ))("User")
   } yield uri
 
@@ -34,9 +35,7 @@ package object user {
         "emailmatch" -> email
       )))
   } yield {
-    val resultLengthCheck = result("n.uri").length > 0
-    val passwordEncryptionCheck = BCrypt.checkpw(password, result("n.password").head.as[String])
-    (resultLengthCheck && passwordEncryptionCheck) match {
+    (result("n.uri").length > 0 && BCrypt.checkpw(password, result("n.password").head.as[String])) match {
       case false => None
       case true => Some((
         result("n.uri").head.as[String],
@@ -47,4 +46,13 @@ package object user {
 
   def userDelete (uri: String): Future[Unit] =
     Node.delete(uri)
+
+  def userEmailTaken (email: String): Future[Boolean] = for {
+    result <- query(Json.obj(
+      "statement" -> """MATCH (n:User {email: {emailmatch}})
+                        RETURN count(n)""",
+      "parameters" -> Json.obj(
+        "emailmatch" -> email
+      )))
+  } yield result("count(n)").head.as[Int] > 0
 }

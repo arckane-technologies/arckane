@@ -4,28 +4,22 @@
 
 <link rel="import" href="../components/polymer/polymer.html">
 <link rel="import" href="../components/paper-input/paper-input.html">
-<link rel="import" href="../components/iron-form/iron-form.html">
+<link rel="import" href="../components/paper-button/paper-button.html">
 
 <link rel="import" href="../components/paper-styles/color.html">
 <link rel="import" href="../utils/arckane-styles.html">
+
+<link rel="import" href="arckane-users-api.html">
 
 <!--
 `<arckane-signin-page>` is a simple form for user authentication.
 -->
 <dom-module id="arckane-signin-page">
   <style>
-    :host {
-    }
-
-    input {
-      border: 0;
-      margin-top: 10px;
-      padding-top: 10px;
-      padding-bottom: 10px;
-      border-radius: 3px;
+    paper-button {
+      margin: 20px 0px;
       color: white;
       width: 100%;
-      font-size: 20px;
       background-color: var(--arckane-aqua-100);
     }
 
@@ -36,11 +30,10 @@
   </style>
 
   <template>
-    <form is="iron-form" id="signInForm" method="post" action="/api/users/signin">
-      <paper-input id="email" name="email" label="Email"></paper-input>
-      <paper-input id="password" name="password" label="Password" type="password"></paper-input>
-      <input type="submit" value="Sign In">
-    </form>
+    <arckane-users-api id="api"></arckane-users-api>
+    <paper-input label="Email" value="{{email}}"></paper-input>
+    <paper-input label="Password" type="password" value="{{password}}"></paper-input>
+    <paper-button on-tap="_signin">Sign In</paper-button>
   </template>
 </dom-module>
 
@@ -48,24 +41,14 @@
   Polymer({
     is: "arckane-signin-page",
 
-    listeners: {
-      'iron-form-response': '_formResponse',
-      'iron-form-error': '_formError'
-    },
-
-    _formResponse: function (event) {
-      var result = event.detail.__data__.response;
-      console.log(result);
-      if (result.success) {
-        window.location.assign('/');
-      } else {
-        alert('Incorrect email or password.');
-      }
-    },
-
-    _formError: function (event) {
-      alert('Sorry, there was an error with your request.');
-      console.log(event.detail.error);
+    _signin: function (event) {
+      var self = this;
+      this.$.api.signin(this.email, this.password, function (response) {
+        if (response.success)
+          window.location.assign("/");
+        else
+          self.fire("error", {message: "Couldn't sign in, wrong email or password."});
+      });
     }
   });
 </script>
