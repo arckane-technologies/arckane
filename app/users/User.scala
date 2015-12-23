@@ -9,6 +9,8 @@ import scala.concurrent.Future
 import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits._
 
+import org.mindrot.jbcrypt.BCrypt
+
 import arckane.db.Node
 import arckane.db.transaction._
 
@@ -19,23 +21,24 @@ package object user {
       "firstname" -> firstname,
       "lastname" -> lastname,
       "email" -> email,
-      "password" -> password
+      "password" -> BCrypt.hashpw(password, BCrypt.gensalt())
     ))("User")
   } yield uri
 
   /** Authenticates the user, returns a json with basic info. */
   def authenticate (email: String, password: String): Future[Option[(String, String)]] = for {
     result <- query(Json.obj(
-      "statement" -> """MATCH (n:User {email: {emailmatch}, password: {passmatch}})
-                        RETURN n.uri, n.firstname""",
+      "statement" -> """MATCH (n:User {email: {emailmatch}})
+                        RETURN n.uri, n.firstname, n.password""",
       "parameters" -> Json.obj(
-        "emailmatch" -> email,
-        "passmatch" -> password
+        "emailmatch" -> email
       )))
   } yield {
-    result("n.uri").length match {
-      case 0 => None
-      case _ => Some((
+    val resultLengthCheck = result("n.uri").length > 0
+    val passwordEncryptionCheck = BCrypt.checkpw(password, result("n.password").head.as[String])
+    (resultLengthCheck && passwordEncryptionCheck) match {
+      case false => None
+      case true => Some((
         result("n.uri").head.as[String],
         result("n.firstname").head.as[String]
       ))

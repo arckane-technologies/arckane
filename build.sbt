@@ -18,8 +18,8 @@ libraryDependencies ++= Seq(
   cache,
   ws,
   specs2 % Test,
+  "org.mindrot" % "jbcrypt" % "0.3m",
   "org.scalaz" %% "scalaz-core" % "7.1.3",
-  "com.github.nscala-time" %% "nscala-time" % "2.6.0",
   "com.github.mpilquist" %% "simulacrum" % "0.5.0"
 )
 
