@@ -55,7 +55,9 @@ class UsersApi extends Controller {
           "success" -> false
         ))
     }).getOrElse {
-      Future(BadRequest("Expected a uri encoded form."))
+      Future(BadRequest(Json.obj(
+        "error" -> "bad json object"
+      )))
     }
   }
 

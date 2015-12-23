@@ -19,7 +19,7 @@
 //import arckane.db.transaction._
 //import arckane.db.Node
 //
-//class ScheduleAPISpecs extends Specification {
+//class SchedulesAPISpecs extends Specification {
 //
 //  trait TestEntities extends Around with Scope {
 //
