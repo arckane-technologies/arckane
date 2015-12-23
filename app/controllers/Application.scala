@@ -49,6 +49,10 @@ class Application extends Controller {
     else Redirect("/")
   }
 
+  def signout = Action {
+    Redirect("/").withNewSession
+  }
+
   def profile (uri: String) = Action { request =>
     getSession(request) match {
       case Some(session) => Ok(views.html.profile(session, uri))
@@ -63,7 +67,7 @@ class Application extends Controller {
     }
   }
 
-  def edit (uri: String) = Action.async { request =>
+  def editSession (uri: String) = Action.async { request =>
     (for {
       user <- request.session.get("home")
       userSession <- getSession(request)

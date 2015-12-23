@@ -6,19 +6,17 @@
 GET     /                           controllers.Application.index
 GET     /signin                     controllers.Application.signin
 GET     /signup                     controllers.Application.signup
-GET     /user/:uri                   controllers.Application.profile(uri: String)
+GET     /signout                    controllers.Application.signout
 GET     /mentor                     controllers.Application.mentor
-GET     /edit/session/:uri           controllers.Application.edit(uri: String)
+GET     /user/:uri                  controllers.Application.profile(uri: String)
+GET     /edit/session/:uri          controllers.Application.editSession(uri: String)
 
 # Ontology service routes
 GET     /api/ontology/search        arckane.ontology.OntologyApi.search
 
 # Users service routes
-POST    /api/users/props            arckane.users.UsersApi.setProp
-GET     /api/users/props            arckane.users.UsersApi.getProps
 POST    /api/users/signup           arckane.users.UsersApi.signup
 POST    /api/users/signin           arckane.users.UsersApi.signin
-GET     /api/users/signout          arckane.users.UsersApi.signout
 
 # Schedules service routes
 POST    /api/schedules/session             arckane.schedules.SchedulesApi.postSession

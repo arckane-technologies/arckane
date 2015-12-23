@@ -9,12 +9,22 @@ import scala.concurrent.Future
 import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits._
 
+import arckane.db.Node
 import arckane.db.transaction._
 
 package object user {
 
+  def userCreate (firstname: String, lastname: String, email: String, password: String): Future[String] = for {
+    uri <- Node.create(Json.obj(
+      "firstname" -> firstname,
+      "lastname" -> lastname,
+      "email" -> email,
+      "password" -> password
+    ))("User")
+  } yield uri
+
   /** Authenticates the user, returns a json with basic info. */
-  def authenticate (email: String, password: String): Future[Option[JsObject]] = for {
+  def authenticate (email: String, password: String): Future[Option[(String, String)]] = for {
     result <- query(Json.obj(
       "statement" -> """MATCH (n:User {email: {emailmatch}, password: {passmatch}})
                         RETURN n.uri, n.firstname""",
@@ -25,10 +35,9 @@ package object user {
   } yield {
     result("n.uri").length match {
       case 0 => None
-      case _ => Some(Json.obj(
-        "uri" -> result("n.uri").head,
-        "email" -> email,
-        "name" -> result("n.firstname").head
+      case _ => Some((
+        result("n.uri").head.as[String],
+        result("n.firstname").head.as[String]
       ))
     }
   }
